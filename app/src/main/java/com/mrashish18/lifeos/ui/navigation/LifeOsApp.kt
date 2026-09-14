@@ -30,10 +30,12 @@ import com.mrashish18.lifeos.feature.intelligence.IntelligenceScreen
 import com.mrashish18.lifeos.feature.realitycheck.RealityCheckScreen
 import com.mrashish18.lifeos.feature.resilience.ResilienceScreen
 import com.mrashish18.lifeos.feature.tasks.TasksScreen
+import com.mrashish18.lifeos.feature.tasks.TasksViewModel
 
 @Composable
 fun LifeOsApp(
     dashboardViewModel: DashboardViewModel,
+    tasksViewModel: TasksViewModel,
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(LifeOsDestination.DASHBOARD) }
@@ -78,9 +80,13 @@ fun LifeOsApp(
                 uiState = dashboardUiState,
                 onAcceptRecommendation = { dashboardViewModel.acceptRecommendation(it) },
                 onDismissRecommendation = { dashboardViewModel.dismissRecommendation(it) },
+                onNavigateToTasks = { currentDestination = LifeOsDestination.TASKS },
                 modifier = Modifier.padding(innerPadding)
             )
-            LifeOsDestination.TASKS -> TasksScreen(modifier = Modifier.padding(innerPadding))
+            LifeOsDestination.TASKS -> TasksScreen(
+                viewModel = tasksViewModel,
+                modifier = Modifier.padding(innerPadding)
+            )
             LifeOsDestination.GOALS -> GoalsScreen(modifier = Modifier.padding(innerPadding))
             LifeOsDestination.INTELLIGENCE -> IntelligenceScreen(modifier = Modifier.padding(innerPadding))
             LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(modifier = Modifier.padding(innerPadding))

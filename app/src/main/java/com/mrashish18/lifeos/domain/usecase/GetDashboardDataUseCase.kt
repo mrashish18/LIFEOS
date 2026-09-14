@@ -5,41 +5,58 @@ import com.mrashish18.lifeos.core.decision.DecisionEngine
 import com.mrashish18.lifeos.core.model.ContextSnapshot
 import com.mrashish18.lifeos.core.model.Recommendation
 import com.mrashish18.lifeos.core.model.Task
+import com.mrashish18.lifeos.core.model.TaskStatus
+import com.mrashish18.lifeos.core.model.UserBehaviorModel
 import com.mrashish18.lifeos.domain.repository.TaskRepository
+import com.mrashish18.lifeos.domain.repository.UserBehaviorRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
 /**
- * Domain data bundle required to populate the foundational Dashboard.
+ * Real aggregated dashboard domain state bundle.
  */
 data class DashboardData(
     val snapshot: ContextSnapshot,
     val recommendations: List<Recommendation>,
-    val tasks: List<Task>
+    val tasks: List<Task>,
+    val pendingCount: Int,
+    val completedCount: Int,
+    val behaviorModel: UserBehaviorModel
 )
 
 /**
- * Use case that orchestrates context observation, task retrieval, and decision evaluation.
+ * Use case that aggregates real persisted task data, live context, behavior metrics, and explainable recommendations.
  */
 class GetDashboardDataUseCase(
     private val contextEngine: ContextEngine,
     private val decisionEngine: DecisionEngine,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val userBehaviorRepository: UserBehaviorRepository
 ) {
     operator fun invoke(): Flow<DashboardData> {
         return combine(
             contextEngine.observeSnapshot(),
-            taskRepository.getTasks()
-        ) { snapshot, tasks ->
-            // Enriched snapshot with active task if present
-            val activeTask = tasks.find { it.status == com.mrashish18.lifeos.core.model.TaskStatus.IN_PROGRESS }
+            taskRepository.getTasks(),
+            userBehaviorRepository.observeUserBehaviorModel()
+        ) { snapshot, tasks, behaviorModel ->
+            val activeTask = tasks.find { it.status == TaskStatus.IN_PROGRESS }
             val enrichedSnapshot = snapshot.copy(activeTask = activeTask)
-            val recommendations = decisionEngine.evaluate(enrichedSnapshot)
+            val recommendations = decisionEngine.evaluate(
+                snapshot = enrichedSnapshot,
+                candidateTasks = tasks,
+                behaviorModel = behaviorModel
+            )
+
+            val pendingCount = tasks.count { it.status == TaskStatus.PENDING || it.status == TaskStatus.IN_PROGRESS }
+            val completedCount = tasks.count { it.status == TaskStatus.COMPLETED }
 
             DashboardData(
                 snapshot = enrichedSnapshot,
                 recommendations = recommendations,
-                tasks = tasks
+                tasks = tasks,
+                pendingCount = pendingCount,
+                completedCount = completedCount,
+                behaviorModel = behaviorModel
             )
         }
     }

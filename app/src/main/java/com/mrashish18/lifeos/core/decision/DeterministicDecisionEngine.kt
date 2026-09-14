@@ -3,84 +3,255 @@ package com.mrashish18.lifeos.core.decision
 import com.mrashish18.lifeos.core.model.ContextSnapshot
 import com.mrashish18.lifeos.core.model.NetworkState
 import com.mrashish18.lifeos.core.model.Recommendation
+import com.mrashish18.lifeos.core.model.RecommendationFactor
 import com.mrashish18.lifeos.core.model.RecommendationType
+import com.mrashish18.lifeos.core.model.Task
+import com.mrashish18.lifeos.core.model.TaskPriority
+import com.mrashish18.lifeos.core.model.TaskStatus
 import com.mrashish18.lifeos.core.model.UserAvailability
+import com.mrashish18.lifeos.core.model.UserBehaviorModel
 import com.mrashish18.lifeos.core.model.WorkloadLevel
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
 /**
- * Deterministic implementation of [DecisionEngine].
+ * Deterministic, explainable implementation of [DecisionEngine].
  *
- * Rules are explicitly codified, predictable, and explainable:
- * 1. High/Critical Workload -> Recommends a restorative break.
- * 2. Network Disconnection -> Informs user of offline-first local queue resilience mode.
- * 3. Active Task in progress -> Suggests sustained focus and context-switch minimization.
- * 4. Available with no active task -> Suggests task selection from queue.
+ * Scoring and ranking use transparent deterministic heuristics:
+ * - Urgency (due dates / overdue status)
+ * - Priority weighting
+ * - Effort / Quick Win fit
+ * - Observed behavioral adaptation (momentum in preferred categories, completion rate)
+ * - Contextual guardrails (workload pacing, offline mode)
  */
 class DeterministicDecisionEngine(
     private val idGenerator: () -> String = { UUID.randomUUID().toString() },
     private val clock: () -> Instant = { Instant.now() }
 ) : DecisionEngine {
 
-    override fun evaluate(snapshot: ContextSnapshot): List<Recommendation> {
+    override fun evaluate(
+        snapshot: ContextSnapshot,
+        candidateTasks: List<Task>,
+        behaviorModel: UserBehaviorModel?
+    ): List<Recommendation> {
         val recommendations = mutableListOf<Recommendation>()
+        val now = clock()
 
-        // Rule 1: High Cognitive / Task Workload
+        // Rule 1: High/Critical Cognitive Workload Alert
         if (snapshot.workloadLevel == WorkloadLevel.CRITICAL || snapshot.workloadLevel == WorkloadLevel.HIGH) {
+            val factors = listOf(
+                RecommendationFactor(
+                    name = "High Workload State",
+                    description = "Workload assessed as ${snapshot.workloadLevel.name.lowercase()}",
+                    scoreContribution = 0.50
+                ),
+                RecommendationFactor(
+                    name = "Cognitive Pacing",
+                    description = "Rest interval recommended before initiating new demanding tasks",
+                    scoreContribution = 0.45
+                )
+            )
             recommendations.add(
                 Recommendation(
                     id = idGenerator(),
                     type = RecommendationType.BREAK_SUGGESTION,
                     title = "Workload Pace Alert",
-                    reason = "Assessed workload level is ${snapshot.workloadLevel.name.lowercase()}. A short cognitive break is recommended to sustain performance.",
+                    reason = "Assessed workload level is ${snapshot.workloadLevel.name.lowercase()}. A short cognitive break is recommended.",
                     confidence = 0.95,
-                    createdAt = clock()
+                    factors = factors,
+                    createdAt = now
                 )
             )
         }
 
-        // Rule 2: Offline Resilience Alert
+        // Rule 2: Offline Resilience Mode Alert
         if (snapshot.networkState == NetworkState.DISCONNECTED) {
+            val factors = listOf(
+                RecommendationFactor(
+                    name = "Offline Connectivity",
+                    description = "Device is currently disconnected from network",
+                    scoreContribution = 0.50
+                ),
+                RecommendationFactor(
+                    name = "Local-First Storage",
+                    description = "Task edits and events are safely stored in Room SQLite",
+                    scoreContribution = 0.40
+                )
+            )
             recommendations.add(
                 Recommendation(
                     id = idGenerator(),
                     type = RecommendationType.RESILIENCE_ALERT,
                     title = "Offline Resilience Mode",
-                    reason = "Device is offline. Local-first operations are engaged; all changes will be queued and synchronized upon reconnection.",
+                    reason = "Device is offline. Running in local-first resilience mode; changes are safely queued on-device.",
                     confidence = 0.90,
-                    createdAt = clock()
+                    factors = factors,
+                    createdAt = now
                 )
             )
         }
 
-        // Rule 3: Active Task Focus
-        val currentTask = snapshot.activeTask
-        if (currentTask != null) {
+        // Rule 3: Active In-Progress Task Focus
+        val activeTask = snapshot.activeTask ?: candidateTasks.find { it.status == TaskStatus.IN_PROGRESS }
+        if (activeTask != null) {
+            val factors = listOf(
+                RecommendationFactor(
+                    name = "Active Task",
+                    description = "Task '${activeTask.title}' is currently checked out",
+                    scoreContribution = 0.50
+                ),
+                RecommendationFactor(
+                    name = "Context Protection",
+                    description = "Guarding against fragmentation and parallel multitasking",
+                    scoreContribution = 0.35
+                )
+            )
             recommendations.add(
                 Recommendation(
                     id = idGenerator(),
                     type = RecommendationType.TASK_FOCUS,
-                    title = "Focus: ${currentTask.title}",
-                    reason = "Active task '${currentTask.title}' is in progress. Guard against context switching until current milestone is reached.",
+                    title = "Focus: ${activeTask.title}",
+                    reason = "Active task '${activeTask.title}' is in progress. Minimize context switches.",
                     confidence = 0.85,
-                    createdAt = clock()
+                    factors = factors,
+                    targetTaskId = activeTask.id,
+                    createdAt = now
                 )
             )
-        } else if (snapshot.userAvailability == UserAvailability.AVAILABLE) {
-            // Rule 4: Idle availability with no active task
-            recommendations.add(
-                Recommendation(
-                    id = idGenerator(),
-                    type = RecommendationType.TASK_FOCUS,
-                    title = "Select Next Priority Task",
-                    reason = "You are currently available with no active task checked out. Review prioritized pending items.",
-                    confidence = 0.80,
-                    createdAt = clock()
+        } else {
+            // Rule 4: Rank Pending/Postponed Tasks to recommend the next best action
+            val actionableTasks = candidateTasks.filter {
+                it.status == TaskStatus.PENDING || it.status == TaskStatus.POSTPONED
+            }
+
+            if (actionableTasks.isNotEmpty()) {
+                val scoredTasks = actionableTasks.map { task ->
+                    scoreTask(task, now, behaviorModel)
+                }.sortedByDescending { it.totalScore }
+
+                val topCandidate = scoredTasks.first()
+                val confidence = (topCandidate.totalScore / 100.0).coerceIn(0.60, 0.95)
+
+                recommendations.add(
+                    Recommendation(
+                        id = idGenerator(),
+                        type = RecommendationType.TASK_FOCUS,
+                        title = "Recommended Focus: ${topCandidate.task.title}",
+                        reason = topCandidate.factors.joinToString(" • ") { it.description },
+                        confidence = confidence,
+                        factors = topCandidate.factors,
+                        targetTaskId = topCandidate.task.id,
+                        createdAt = now
+                    )
                 )
-            )
+            } else if (snapshot.userAvailability == UserAvailability.AVAILABLE) {
+                // Rule 5: Idle with no tasks in queue
+                val factors = listOf(
+                    RecommendationFactor(
+                        name = "Availability",
+                        description = "Marked as available with clear queue",
+                        scoreContribution = 0.80
+                    )
+                )
+                recommendations.add(
+                    Recommendation(
+                        id = idGenerator(),
+                        type = RecommendationType.TASK_FOCUS,
+                        title = "Select Next Priority Task",
+                        reason = "You are currently available with no active task checked out.",
+                        confidence = 0.80,
+                        factors = factors,
+                        createdAt = now
+                    )
+                )
+            }
         }
 
         return recommendations
+    }
+
+    private data class ScoredTask(
+        val task: Task,
+        val totalScore: Double,
+        val factors: List<RecommendationFactor>
+    )
+
+    private fun scoreTask(
+        task: Task,
+        now: Instant,
+        behaviorModel: UserBehaviorModel?
+    ): ScoredTask {
+        var score = 0.0
+        val factors = mutableListOf<RecommendationFactor>()
+
+        // 1. Priority Weight
+        when (task.priority) {
+            TaskPriority.URGENT -> {
+                score += 40.0
+                factors.add(RecommendationFactor("Priority", "Urgent priority task", 0.40))
+            }
+            TaskPriority.HIGH -> {
+                score += 30.0
+                factors.add(RecommendationFactor("Priority", "High priority item", 0.30))
+            }
+            TaskPriority.MEDIUM -> {
+                score += 20.0
+                factors.add(RecommendationFactor("Priority", "Standard priority item", 0.20))
+            }
+            TaskPriority.LOW -> {
+                score += 10.0
+                factors.add(RecommendationFactor("Priority", "Low priority backlog", 0.10))
+            }
+        }
+
+        // 2. Deadline Urgency
+        if (task.dueAt != null) {
+            val durationToDue = Duration.between(now, task.dueAt)
+            when {
+                durationToDue.isNegative -> {
+                    score += 40.0
+                    factors.add(RecommendationFactor("Overdue", "Task past target deadline", 0.40))
+                }
+                durationToDue.toHours() <= 24 -> {
+                    score += 30.0
+                    factors.add(RecommendationFactor("Due Soon", "Due within 24 hours", 0.30))
+                }
+                durationToDue.toDays() <= 3 -> {
+                    score += 15.0
+                    factors.add(RecommendationFactor("Upcoming", "Due within 3 days", 0.15))
+                }
+            }
+        }
+
+        // 3. Quick Win / Estimated Duration Fit
+        val minutes = task.estimatedMinutes
+        if (minutes != null && minutes <= 30) {
+            score += 15.0
+            factors.add(RecommendationFactor("Quick Win", "Estimated effort <= 30 minutes ($minutes min)", 0.15))
+        }
+
+        // 4. Behavioral Adaptation (only when sufficient observations exist)
+        if (behaviorModel != null && behaviorModel.hasSufficientData) {
+            // Category momentum bonus: award to top preferred category
+            val topCategory = behaviorModel.preferredCategories.maxByOrNull { it.value }?.key
+            val completedInCat = behaviorModel.preferredCategories[task.category] ?: 0
+            if (task.category == topCategory && completedInCat > 0) {
+                score += 15.0
+                factors.add(RecommendationFactor("Category Habit", "Demonstrated momentum in ${task.category.name}", 0.15))
+            } else if (completedInCat > 0) {
+                score += 5.0
+                factors.add(RecommendationFactor("Familiar Category", "Historical completion in ${task.category.name}", 0.05))
+            }
+
+            // High completion rate positive reinforcement
+            val completionRate = behaviorModel.completionRate
+            if (completionRate != null && completionRate >= 0.70) {
+                score += 5.0
+                factors.add(RecommendationFactor("High Completion Rate", "${(completionRate * 100).toInt()}% historical task completion", 0.05))
+            }
+        }
+
+        return ScoredTask(task, score, factors)
     }
 }
