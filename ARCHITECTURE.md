@@ -4,8 +4,8 @@
 **LIFEOS** is an adaptive personal intelligence platform designed to:
 1. **Observe** user context and situational signals.
 2. **Understand** immediate conditions, priorities, and constraints.
-3. **Decide** by generating explainable recommendations through deterministic rules (augmented by AI interpretation in later milestones).
-4. **Learn & Adapt** by tracking user responses and measuring objective outcomes to tune future behavior.
+3. **Decide** by generating explainable recommendations through deterministic rules and heuristics (augmented by AI assistance in future milestones).
+4. **Learn & Adapt** by tracking user responses, measuring objective outcomes, and deriving an empirical user behavior model to refine future recommendations.
 
 ---
 
@@ -13,44 +13,51 @@
 
 LIFEOS organizes intelligence capabilities into three distinct domains:
 
-### 1. Personal Intelligence
-- **Focus**: Tasks, goals, habit patterns, and cognitive workload management.
-- **Goal**: Adaptive productivity without burnout, prioritizing tasks according to real-time availability and capacity.
+### 1. Personal Intelligence (Active in Milestone 2)
+- **Focus**: Persistent tasks, user behavioral events, adaptive prioritization, and cognitive workload management.
+- **Goal**: Adaptive productivity without burnout, prioritizing tasks according to real-time availability, urgency, effort, and historical execution habits.
 
-### 2. Trust Intelligence (RealityCheck)
+### 2. Trust Intelligence (RealityCheck — Future Milestone)
 - **Focus**: Claim analysis, factual grounding, and evidence aggregation.
-- **Workflow (Future Milestones)**: Text/URL ingestion → claim extraction → evidence retrieval → source credibility weighting → confidence-calibrated summary.
+- **Workflow**: Text/URL ingestion → claim extraction → evidence retrieval → source credibility weighting → confidence-calibrated summary.
 
-### 3. Resilience Intelligence (RescueMesh)
+### 3. Resilience Intelligence (RescueMesh — Future Milestone)
 - **Focus**: Offline continuity and emergency peer communications.
-- **Workflow (Future Milestones)**: Local-first message queues, peer-to-peer ad-hoc relay, Time-to-Live (TTL) tracking, duplicate suppression, and opportunistic synchronization when connectivity resumes.
+- **Workflow**: Local-first message queues, peer-to-peer ad-hoc relay, Time-to-Live (TTL) tracking, duplicate suppression, and opportunistic synchronization when connectivity resumes.
 
 ---
 
 ## 3. Layered Android Architecture
 
-LIFEOS is structured using clean architecture and modern Android standards (MVVM, Jetpack Compose, Kotlin Flow/Coroutines):
+LIFEOS is structured using clean architecture, MVVM, Jetpack Compose, Kotlin Coroutines, and Room local persistence:
 
 ```
 com.mrashish18.lifeos/
 ├── core/                  # Core abstractions and intelligence logic
-│   ├── model/             # Domain entities (Task, Goal, ContextSnapshot, Recommendation, etc.)
+│   ├── model/             # Domain entities (Task, Goal, ContextSnapshot, Recommendation,
+│   │                      # UserBehaviorModel, BehaviorEvent, RecommendationFactor)
 │   ├── context/           # Context Engine interfaces & local providers (time, network)
 │   ├── decision/          # Decision Engine, deterministic rule engine, Learning Loop
 │   └── common/            # Dispatchers, Resource wrappers, shared utilities
 │
-├── data/                  # Data access and synchronization
-│   ├── local/             # Room-ready data access contracts (e.g. TaskLocalDataSource)
-│   ├── remote/            # Retrofit-ready network contracts (e.g. LifeOsRemoteDataSource)
-│   └── repository/        # Repository implementations (e.g. InMemoryTaskRepository)
+├── data/                  # Data access and local persistence
+│   ├── local/             # Room SQLite persistence (LifeOsDatabase, entities, DAOs)
+│   │   ├── entity/        # TaskEntity, BehaviorEventEntity
+│   │   └── dao/           # TaskDao, BehaviorEventDao
+│   ├── remote/            # Retrofit-ready network contracts (LifeOsRemoteDataSource)
+│   └── repository/        # Repository implementations (RoomTaskRepository,
+│                          # RoomBehaviorEventRepository, InMemoryTaskRepository)
 │
 ├── domain/                # Enterprise domain contracts and business logic
-│   ├── repository/        # Clean repository interfaces (TaskRepository, GoalRepository)
-│   └── usecase/           # Domain use cases (e.g. GetDashboardDataUseCase)
+│   ├── repository/        # Clean repository interfaces (TaskRepository, GoalRepository,
+│   │                      # BehaviorEventRepository, UserBehaviorRepository)
+│   └── usecase/           # Domain use cases (CreateTaskUseCase, UpdateTaskUseCase,
+│                          # TransitionTaskStatusUseCase, DeleteTaskUseCase,
+│                          # GetDashboardDataUseCase)
 │
-├── feature/               # Feature screens & ViewModels
-│   ├── dashboard/         # Active Dashboard screen & DashboardViewModel
-│   ├── tasks/             # Personal Intelligence: Tasks placeholder
+├── feature/               # Feature presentation & ViewModels
+│   ├── dashboard/         # Real metrics Dashboard screen & DashboardViewModel
+│   ├── tasks/             # Interactive Task management UI & TasksViewModel
 │   ├── goals/             # Personal Intelligence: Goals placeholder
 │   ├── intelligence/      # Cognitive engine analytics placeholder
 │   ├── realitycheck/      # Trust Intelligence placeholder
@@ -58,69 +65,151 @@ com.mrashish18.lifeos/
 │
 └── ui/                    # Presentation foundation
     ├── components/        # Reusable Compose widgets
-    ├── navigation/        # Top-level scaffold and navigation destinations
+    ├── navigation/        # Top-level scaffold, navigation bar, and destination routing
     └── theme/             # Material3 typography, colors, and styling
 ```
 
 ---
 
-## 4. Context Engine
-The **Context Engine** (`ContextEngine`) aggregates disparate situational inputs into an immutable `ContextSnapshot`.
+## 4. Local Persistence Architecture (Room)
 
-### Key Components:
-- `ContextProvider<T>`: Modular interface for individual context providers.
-- `AndroidNetworkContextProvider`: Safe, read-only observer utilizing Android's `ConnectivityManager` (requiring only normal permission `ACCESS_NETWORK_STATE`).
-- `DefaultContextEngine`: Combines time, day of week, network state, active tasks, workload level, and user availability.
-- Reactive: Exposes both a point-in-time snapshot (`captureSnapshot()`) and a reactive stream (`observeSnapshot(): Flow<ContextSnapshot>`).
+To ensure tasks and behavioral records survive process restarts, app terminations, and device reboots, LIFEOS utilizes **Android Room** via KSP Kotlin codegen (`room.generateKotlin = "true"`):
+
+### Database Schema
+- **Database**: `LifeOsDatabase` (SQLite database `lifeos_database.db`, version 1).
+- **`tasks` Table**:
+  - `id` (TEXT, Primary Key)
+  - `title` (TEXT)
+  - `description` (TEXT)
+  - `priority` (TEXT: `LOW`, `MEDIUM`, `HIGH`, `URGENT`)
+  - `status` (TEXT: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `POSTPONED`, `ABANDONED`)
+  - `dueAtEpochMillis` (INTEGER, nullable)
+  - `estimatedMinutes` (INTEGER, nullable)
+  - `category` (TEXT: `WORK`, `PERSONAL`, `HEALTH`, `LEARNING`, `GENERAL`)
+  - `createdAtEpochMillis` (INTEGER)
+  - `updatedAtEpochMillis` (INTEGER)
+- **`behavior_events` Table**:
+  - `id` (TEXT, Primary Key)
+  - `type` (TEXT: event type name)
+  - `timestampEpochMillis` (INTEGER)
+  - `metadataJson` (TEXT: JSON key-value pairs)
+
+### Domain vs. Entity Separation
+Domain models (`Task`, `BehaviorEvent`) are decoupled from database entities (`TaskEntity`, `BehaviorEventEntity`). Repositories translate between persistence entities and domain models, ensuring Room annotations do not leak into domain use cases or the UI.
 
 ---
 
-## 5. Decision Engine & Separation of Deterministic Logic vs. AI
+## 5. Task & Behavior Event Data Flow
 
-### Architectural Principle
-**Deterministic rules must govern authoritative application decisions.**
+### Task Lifecycle Flow
+```
+User Action (UI) ──► TasksViewModel ──► TaskUseCases (Domain)
+                                              │
+                         ┌────────────────────┴────────────────────┐
+                         ▼                                         ▼
+                 TaskRepository                             BehaviorEventRepository
+                 (Room SQLite: tasks)                       (Room SQLite: behavior_events)
+```
+
+1. **Create Task**: `CreateTaskUseCase` validates input, persists `Task` with `PENDING` status, and logs a `TASK_CREATED` event with metadata (`taskId`, `title`, `priority`, `category`, `estimatedMinutes`).
+2. **Start Task**: `TransitionTaskStatusUseCase` marks status `IN_PROGRESS` and logs `TASK_STARTED`.
+3. **Complete Task**: `TransitionTaskStatusUseCase` marks status `COMPLETED`, calculates duration elapsed, and logs `TASK_COMPLETED` with duration metadata.
+4. **Postpone Task**: `TransitionTaskStatusUseCase` marks status `POSTPONED` and logs `TASK_POSTPONED`.
+5. **Abandon Task**: `TransitionTaskStatusUseCase` marks status `ABANDONED` and logs `TASK_ABANDONED`.
+6. **Delete Task**: `DeleteTaskUseCase` removes task from database.
+
+---
+
+## 6. Deterministic User Behavior Model
+
+The `UserBehaviorModel` represents measurable patterns derived strictly from observed `BehaviorEvent` history:
+- `totalTasksCreated`: Total tasks created.
+- `totalTasksCompleted`: Total tasks completed.
+- `totalTasksPostponed`: Total tasks postponed.
+- `totalTasksAbandoned`: Total tasks abandoned.
+- `completionRate`: $\frac{\text{Completed}}{\text{Completed} + \text{Abandoned}}$
+- `abandonmentRate`: $\frac{\text{Abandoned}}{\text{Completed} + \text{Abandoned}}$
+- `postponementRate`: $\frac{\text{Postponed}}{\text{Created}}$
+- `averageCompletedDurationMinutes`: Average duration of completed tasks.
+- `preferredCategories`: Distribution of completed tasks across categories.
+- `completionsByTimeOfDay`: Completions grouped by time bucket (`MORNING`, `AFTERNOON`, `EVENING`, `NIGHT`).
+
+### Honest Representation of Insufficient Data
+If the user has fewer than 3 terminal task events (completed + abandoned), `hasSufficientData` is `false`, and rates (`completionRate`, `postponementRate`, `abandonmentRate`) are explicitly `null` rather than fabricated default numbers (like 0.0). The UI communicates that observations are being gathered.
+
+---
+
+## 7. Deterministic Adaptive Recommendation Engine & Scoring Heuristic
+
+### Architectural Boundary: Deterministic Heuristic vs. Future AI
+**Authoritative decisions are controlled by transparent, deterministic rules.**
+No LLM or stochastic black-box API makes direct decisions about user tasks or emergency operations. In future milestones, AI will only assist with unstructured text interpretation, task decomposition suggestions, and natural language explanations.
+
+### Scoring Heuristic for Pending Tasks
+Pending and postponed tasks are evaluated against a transparent scoring formula:
+
+$$\text{Score} = \text{PriorityWeight} + \text{UrgencyWeight} + \text{EffortWeight} + \text{BehavioralBonus}$$
+
+1. **Priority Weight**:
+   - `URGENT`: +40 pts
+   - `HIGH`: +30 pts
+   - `MEDIUM`: +20 pts
+   - `LOW`: +10 pts
+2. **Deadline Urgency**:
+   - Overdue: +40 pts
+   - Due within 24 hours: +30 pts
+   - Due within 3 days: +15 pts
+3. **Effort / Quick Win Fit**:
+   - Estimated duration $\le 30$ minutes: +15 pts
+4. **Behavioral Adaptation (when `hasSufficientData == true`)**:
+   - Matches user's top completed category: +15 pts
+   - Matches a familiar completed category: +5 pts
+   - High historical completion rate ($\ge 70\%$): +5 pts
+
+Confidence is calculated as:
+$$\text{Confidence} = \text{clamp}\left(\frac{\text{Score}}{100.0},\, 0.60,\, 0.95\right)$$
+
+### Structured Explainability ("Why am I seeing this?")
+Every recommendation contains structured `RecommendationFactor` items:
+- Factor Name (e.g. `Priority`, `Due Soon`, `Quick Win`, `Category Habit`)
+- Factor Description (e.g. `Urgent priority task`, `Estimated effort <= 30 minutes`, `Demonstrated momentum in WORK`)
+- Score Contribution
+
+The UI exposes an interactive **"Why am I seeing this?"** expansion so the user can inspect the exact reasons behind every recommendation.
+
+---
+
+## 8. The Learning Loop in Action
 
 ```
-Context Snapshot ──► [ Deterministic Rules Engine ] ──► Explainable Decisions
-                              ▲
-                              │ (Future milestones)
-                     [ AI / LLM Assistance ]
-                     - Interpretation
-                     - Task decomposition
-                     - Natural language rationale
-                     - Pattern discovery
+Recommendation Shown (Dashboard)
+          │
+          ├──► User Accepts ──► Logs RECOMMENDATION_ACCEPTED ──► Sets Task IN_PROGRESS
+          │                                                            │
+          │                                                            ▼
+          │                                                     User Completes Task
+          │                                                            │
+          │                                                            ▼
+          │                                                     Logs TASK_COMPLETED
+          │                                                            │
+          │                                                            ▼
+          │                                                     User Behavior Model
+          │                                                     Dynamically Updated
+          │
+          └──► User Dismisses ──► Logs RECOMMENDATION_REJECTED
 ```
 
-### Why Deterministic Logic and AI are Separated:
-1. **Safety & Predictability**: Critical operations (e.g., emergency mesh routing, high workload pause alerts, task scheduling constraints) require guarantees that cannot suffer from LLM hallucinations or stochastic non-determinism.
-2. **Offline Resilience**: The system must run on-device when disconnected without depending on remote LLM API latency or connectivity.
-3. **Explainability & Transparency**: Every recommendation includes a deterministic reason and confidence score (0.0 to 1.0) inspectable by the user.
-4. **Appropriate AI Role**: In future milestones, AI will assist with unstructured language parsing, task breakdown suggestions, and nuance discovery—acting as an advisor rather than an unsupervised controller.
-
 ---
 
-## 6. The Learning Loop
-The system incorporates an adaptive feedback loop:
+## 9. Current Milestone vs. Future Milestones
 
-$$\text{Observe} \longrightarrow \text{Understand} \longrightarrow \text{Recommend} \longrightarrow \text{User Response} \longrightarrow \text{Measure Outcome} \longrightarrow \text{Update User Model}$$
-
-- **Observe**: Context Engine gathers signals (`ContextSnapshot`).
-- **Understand & Recommend**: Decision Engine outputs prioritized `Recommendation`s.
-- **User Response**: Captures whether the user `ACCEPTED`, `REJECTED`, or `DISMISSED` the recommendation via `UserFeedback`.
-- **Measure Outcome**: Evaluates objective indicators (e.g., task completion, elapsed time) via `OutcomeResult`.
-- **Update User Model**: `UserModelUpdater` adjusts contextual thresholds and preference weights.
-
----
-
-## 7. Current Milestone vs. Future Milestones
-
-| Capability | Milestone 1 (Current) | Future Milestones |
-| :--- | :--- | :--- |
-| **Core Architecture** | Fully established package structure, domain models, MVVM, Compose | Maintained and expanded across modules |
-| **Context Engine** | Local time, day of week, network status, active task state | Calendar sync, sensor signals, app usage metrics |
-| **Decision Engine** | Deterministic rule engine (`DeterministicDecisionEngine`) | Hybrid deterministic rules + on-device/cloud LLM assistance |
-| **Learning Loop** | Interfaces & models (`LearningLoop`, `UserFeedback`, `OutcomeResult`) | Empirical outcome measurement, preference calibration |
-| **Data Layer** | Room/Retrofit ready contracts + `InMemoryTaskRepository` | Room SQLite database, Retrofit HTTP clients, sync engine |
-| **RealityCheck** | Domain event definitions & navigation placeholder | Claim extraction, evidence web gathering, credibility scoring |
-| **RescueMesh** | Domain event definitions & navigation placeholder | Wi-Fi Direct / BLE peer-to-peer mesh relay, store-and-forward |
-| **UI** | Clean Compose Dashboard with live context and interactive recommendations | Comprehensive multi-screen domain UIs |
+| Capability | Milestone 1 (Foundation) | Milestone 2 (Personal Intelligence — Current) | Future Milestones |
+| :--- | :--- | :--- | :--- |
+| **Task Storage** | In-Memory | **Persistent Room SQLite (`tasks` table)** | Cloud sync / offline conflict resolution |
+| **Behavior Tracking** | Event model definitions | **Persistent event logging (`behavior_events` table)** | Automated sensor events & app usage signals |
+| **User Model** | Placeholder | **Deterministic `UserBehaviorModel` with null safety** | Adaptive bayesian weighting / machine learning |
+| **Decisions** | Static rule triggers | **Adaptive scoring heuristic + explainable factors** | Hybrid deterministic rules + LLM task assistance |
+| **Task UI** | Placeholder | **Complete interactive Compose UI (CRUD, filters)** | Subtasks, recurrence, calendar timeline |
+| **Dashboard** | Static mock metrics | **Real persisted task counts & live recommendations** | Multi-domain intelligence feeds |
+| **RealityCheck** | Domain event definitions | Domain event definitions | Claim extraction & evidence evaluation |
+| **RescueMesh** | Domain event definitions | Local-first storage foundation | Peer-to-peer BLE / Wi-Fi Direct mesh relay |
