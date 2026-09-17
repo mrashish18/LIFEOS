@@ -201,15 +201,98 @@ Recommendation Shown (Dashboard)
 
 ---
 
-## 9. Current Milestone vs. Future Milestones
+## 9. Trust Intelligence Architecture (RealityCheck — Milestone 3)
 
-| Capability | Milestone 1 (Foundation) | Milestone 2 (Personal Intelligence — Current) | Future Milestones |
-| :--- | :--- | :--- | :--- |
-| **Task Storage** | In-Memory | **Persistent Room SQLite (`tasks` table)** | Cloud sync / offline conflict resolution |
-| **Behavior Tracking** | Event model definitions | **Persistent event logging (`behavior_events` table)** | Automated sensor events & app usage signals |
-| **User Model** | Placeholder | **Deterministic `UserBehaviorModel` with null safety** | Adaptive bayesian weighting / machine learning |
-| **Decisions** | Static rule triggers | **Adaptive scoring heuristic + explainable factors** | Hybrid deterministic rules + LLM task assistance |
-| **Task UI** | Placeholder | **Complete interactive Compose UI (CRUD, filters)** | Subtasks, recurrence, calendar timeline |
-| **Dashboard** | Static mock metrics | **Real persisted task counts & live recommendations** | Multi-domain intelligence feeds |
-| **RealityCheck** | Domain event definitions | Domain event definitions | Claim extraction & evidence evaluation |
-| **RescueMesh** | Domain event definitions | Local-first storage foundation | Peer-to-peer BLE / Wi-Fi Direct mesh relay |
+### Core Principle: Separation of Evidence from Interpretation
+RealityCheck operates on an essential epistemic principle:
+$$\textbf{Source Evidence} \neq \textbf{System Analysis}$$
+The system strictly distinguishes between what independent publishers and researchers stated versus how the system interpreted and weighted those statements. Generated conclusions are never presented as infallible, independently verified metaphysical facts.
+
+### Investigation Pipeline Flow
+```
+User Input (Claim / URL)
+          │
+          ▼
+   ClaimClassifier          ──► Categorizes claim (FACTUAL, NUMERICAL, TEMPORAL, CAUSAL, OPINION)
+          │
+          ▼
+  EvidenceRepository        ──► Offline-first, verified reference corpus search (token overlap)
+          │
+          ▼
+   SourceClassifier         ──► Deterministic credibility tiering (PRIMARY, OFFICIAL, NEWS, REFERENCE)
+          │
+          ▼
+  EvidenceComparator        ──► Stance detection, weighted consensus, calibrated confidence
+          │
+          ▼
+  RealityCheckResult        ──► Investigation report (Verdict, Confidence, Reasoning, Evidence cards)
+          │
+          ▼
+  LearningLoop Logging      ──► Records CLAIM_SUBMITTED and CLAIM_VERIFIED behavior events
+```
+
+### 1. EvidenceRepository Abstraction
+To keep the domain layer decoupled from networking or specific fact-checking APIs, the domain repository contract defines:
+```kotlin
+interface EvidenceRepository {
+    suspend fun search(query: String): Result<List<Evidence>>
+}
+```
+The active implementation, `DeterministicEvidenceRepository`, operates against a verified, offline-first corpus spanning medicine, physics, technology, astronomy, and common misconceptions. It performs multi-token keyword intersection and relevance scoring without fabricated web scraping.
+
+### 2. Deterministic Claim Classification
+Claims are classified into discrete semantic categories by `ClaimClassifier`:
+- `OPINION`: Subjective aesthetic, value, or preference judgments ("best", "worst", "ugly", "overrated").
+- `CAUSAL`: Assertions of cause-and-effect ("causes", "leads to", "triggers", "results in").
+- `TEMPORAL`: Statements with explicit calendar years, centuries, or historical chronologies.
+- `NUMERICAL`: Assertions featuring quantities, percentages, or measurement metrics.
+- `FACTUAL`: Declarative propositions of objective existence or properties.
+- `UNSUPPORTED`: Input that is too brief (< 4 characters) or lacks alphabetical proposition content.
+
+### 3. Source Quality Classification & Weights
+Source categories represent institutional editorial review standards and historical reliability:
+- `PRIMARY` (Weight: $1.0$): Peer-reviewed academic journals, scientific societies, creator repositories (e.g., *The Lancet*, *Nature*, *Society for Neuroscience*, *JetBrains*).
+- `OFFICIAL` (Weight: $0.9$): Government public health agencies, international bodies (e.g., *CDC*, *WHO*, *NASA*, *NIST*).
+- `REPUTABLE_NEWS` (Weight: $0.75$): Journalistic organizations with public correction protocols (e.g., *Scientific American*, *Reuters*, *BBC*).
+- `REFERENCE` (Weight: $0.70$): General encyclopedias and clinical reference portals (e.g., *Encyclopaedia Britannica*, *Mayo Clinic*).
+- `UNKNOWN` (Weight: $0.40$): Unverified, personal, or arbitrary web endpoints.
+
+### 4. Deterministic Comparison & Verdict Rules
+Each evidence item is analyzed against the claim to determine its stance:
+- `SUPPORTS`: Corroborates the proposition or affirms a negated claim.
+- `CONTRADICTS`: Contains explicit refuting language ("do not work", "ineffective", "myth", "debunked", "no link").
+- `MENTIONS`: Contextual discussion without decisive validation or refutation.
+
+Weight contributions are calculated as:
+$$\text{WeightContribution} = \text{SourceQuality.weight} \times \text{RelevanceScore}$$
+
+Verdicts describe the objective evidentiary balance:
+- `INSUFFICIENT_EVIDENCE`: Total evidentiary signal $< 0.35$ or empty evidence list.
+- `SUPPORTED`: Corroborating signals dominate ($\text{supportWeight} \ge 1.3 \times \text{contradictWeight}$).
+- `CONTRADICTED`: Refuting signals dominate ($\text{contradictWeight} \ge 1.3 \times \text{supportWeight}$).
+- `MIXED`: Substantial evidence exists on both sides ($\text{conflictRatio} > 0.25$).
+
+### 5. Calibrated Confidence Calculation
+Empirical confidence is calculated transparently and never claims 100% certainty:
+- `INSUFFICIENT_EVIDENCE`: Clamped between $0.20$ and $0.40$.
+- `MIXED`: Derived from average source credibility and conflict degree; clamped between $0.45$ and $0.72$.
+- `SUPPORTED` / `CONTRADICTED`: Base score $0.60$, plus source credibility bonus, plus multi-source corroboration bonus, minus conflict penalty; clamped strictly between $0.65$ and $0.92$.
+
+### 6. Architectural Boundary: Deterministic Core vs. Future AI
+In Milestone 3, all classification, evidence scoring, and verdict synthesis are 100% deterministic and unit-tested. Future LLM/AI integration will be introduced as an optional assistive layer behind `ClaimClassifier` and `EvidenceComparator` for natural language summarization, but will never override deterministic evidentiary safety constraints.
+
+---
+
+## 10. Current Milestone vs. Future Milestones
+
+| Capability | Milestone 1 (Foundation) | Milestone 2 (Personal Intelligence) | Milestone 3 (Trust Intelligence — Current) | Future Milestones |
+| :--- | :--- | :--- | :--- | :--- |
+| **Task Storage** | In-Memory | Persistent Room SQLite (`tasks` table) | Persistent Room SQLite (`tasks` table) | Cloud sync / conflict resolution |
+| **Behavior Tracking** | Event model | Persistent logging (`behavior_events`) | Persistent logging + `CLAIM_*` events | Sensor events & app signals |
+| **User Model** | Placeholder | Deterministic `UserBehaviorModel` | Deterministic `UserBehaviorModel` | Bayesian / ML modeling |
+| **Decisions** | Static rules | Adaptive scoring + explainability | Adaptive scoring + explainability | Hybrid rules + LLM |
+| **Task UI** | Placeholder | Interactive Compose CRUD | Interactive Compose CRUD | Subtasks, recurrence |
+| **Dashboard** | Static mock | Live counts & recommendations | Live counts & recommendations | Unified intelligence feed |
+| **RealityCheck** | Domain events | Domain events | **Complete Investigation Engine & UI** | Live API indexing / hybrid LLM synthesis |
+| **RescueMesh** | Domain events | Storage foundation | Storage foundation | Peer-to-peer BLE / Wi-Fi Direct mesh |
+

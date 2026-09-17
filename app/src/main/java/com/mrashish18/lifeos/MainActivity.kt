@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.mrashish18.lifeos.core.common.DefaultDispatcherProvider
 import com.mrashish18.lifeos.core.context.AndroidNetworkContextProvider
 import com.mrashish18.lifeos.core.context.DefaultContextEngine
 import com.mrashish18.lifeos.core.decision.DeterministicDecisionEngine
@@ -19,6 +20,10 @@ import com.mrashish18.lifeos.domain.usecase.GetDashboardDataUseCase
 import com.mrashish18.lifeos.domain.usecase.TransitionTaskStatusUseCase
 import com.mrashish18.lifeos.domain.usecase.UpdateTaskUseCase
 import com.mrashish18.lifeos.feature.dashboard.DashboardViewModel
+import com.mrashish18.lifeos.core.realitycheck.RealityCheckEngine
+import com.mrashish18.lifeos.data.repository.DeterministicEvidenceRepository
+import com.mrashish18.lifeos.domain.usecase.PerformRealityCheckUseCase
+import com.mrashish18.lifeos.feature.realitycheck.RealityCheckViewModel
 import com.mrashish18.lifeos.feature.tasks.TasksViewModel
 import com.mrashish18.lifeos.ui.navigation.LifeOsApp
 import com.mrashish18.lifeos.ui.theme.LIFEOSTheme
@@ -30,16 +35,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val dispatcherProvider = DefaultDispatcherProvider()
+
         // 1. Establish Room Persistence
         val database = LifeOsDatabase.getInstance(applicationContext)
         val taskDao = database.taskDao()
         val behaviorEventDao = database.behaviorEventDao()
 
         val taskRepository = RoomTaskRepository(taskDao)
-        val behaviorEventRepository = RoomBehaviorEventRepository(behaviorEventDao)
+        val behaviorEventRepository = RoomBehaviorEventRepository(
+            behaviorEventDao = behaviorEventDao,
+            dispatcherProvider = dispatcherProvider
+        )
 
-        // Seed initial tasks if database is brand new
-        lifecycleScope.launch {
+        // Seed initial tasks if database is brand new (off-main-thread IO)
+        lifecycleScope.launch(dispatcherProvider.io) {
             if (taskDao.getAllTasks().isEmpty()) {
                 InMemoryTaskRepository.defaultSeedTasks().forEach { task ->
                     taskRepository.insertTask(task)
@@ -63,10 +73,19 @@ class MainActivity : ComponentActivity() {
             contextEngine = contextEngine,
             decisionEngine = decisionEngine,
             taskRepository = taskRepository,
-            userBehaviorRepository = behaviorEventRepository
+            userBehaviorRepository = behaviorEventRepository,
+            dispatcherProvider = dispatcherProvider
         )
 
-        // 5. ViewModels
+        // 5. RealityCheck Pipeline
+        val evidenceRepository = DeterministicEvidenceRepository()
+        val realityCheckEngine = RealityCheckEngine(evidenceRepository)
+        val performRealityCheckUseCase = PerformRealityCheckUseCase(
+            realityCheckEngine = realityCheckEngine,
+            behaviorEventRepository = behaviorEventRepository
+        )
+
+        // 6. ViewModels
         val dashboardFactory = DashboardViewModel.Factory(
             getDashboardDataUseCase,
             transitionTaskStatusUseCase,
@@ -83,11 +102,15 @@ class MainActivity : ComponentActivity() {
         )
         val tasksViewModel = ViewModelProvider(this, tasksFactory)[TasksViewModel::class.java]
 
+        val realityCheckFactory = RealityCheckViewModel.Factory(performRealityCheckUseCase)
+        val realityCheckViewModel = ViewModelProvider(this, realityCheckFactory)[RealityCheckViewModel::class.java]
+
         setContent {
             LIFEOSTheme {
                 LifeOsApp(
                     dashboardViewModel = dashboardViewModel,
-                    tasksViewModel = tasksViewModel
+                    tasksViewModel = tasksViewModel,
+                    realityCheckViewModel = realityCheckViewModel
                 )
             }
         }

@@ -1,5 +1,7 @@
 package com.mrashish18.lifeos.data.repository
 
+import com.mrashish18.lifeos.core.common.DefaultDispatcherProvider
+import com.mrashish18.lifeos.core.common.DispatcherProvider
 import com.mrashish18.lifeos.core.model.BehaviorEvent
 import com.mrashish18.lifeos.core.model.BehaviorEventType
 import com.mrashish18.lifeos.core.model.TaskCategory
@@ -10,6 +12,7 @@ import com.mrashish18.lifeos.data.local.entity.BehaviorEventEntity
 import com.mrashish18.lifeos.domain.repository.BehaviorEventRepository
 import com.mrashish18.lifeos.domain.repository.UserBehaviorRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.ZoneId
 
@@ -19,7 +22,8 @@ import java.time.ZoneId
  */
 class RoomBehaviorEventRepository(
     private val behaviorEventDao: BehaviorEventDao,
-    private val zoneId: ZoneId = ZoneId.systemDefault()
+    private val zoneId: ZoneId = ZoneId.systemDefault(),
+    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
 ) : BehaviorEventRepository, UserBehaviorRepository {
 
     override suspend fun recordEvent(event: BehaviorEvent) {
@@ -39,7 +43,7 @@ class RoomBehaviorEventRepository(
     override fun observeUserBehaviorModel(): Flow<UserBehaviorModel> {
         return behaviorEventDao.observeAllEvents().map { entities ->
             computeModel(entities.map { it.toDomain() }, zoneId)
-        }
+        }.flowOn(dispatcherProvider.default)
     }
 
     override suspend fun getUserBehaviorModel(): UserBehaviorModel {

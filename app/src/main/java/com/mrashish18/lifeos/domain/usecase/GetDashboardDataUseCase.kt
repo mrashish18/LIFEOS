@@ -1,5 +1,7 @@
 package com.mrashish18.lifeos.domain.usecase
 
+import com.mrashish18.lifeos.core.common.DefaultDispatcherProvider
+import com.mrashish18.lifeos.core.common.DispatcherProvider
 import com.mrashish18.lifeos.core.context.ContextEngine
 import com.mrashish18.lifeos.core.decision.DecisionEngine
 import com.mrashish18.lifeos.core.model.ContextSnapshot
@@ -11,6 +13,7 @@ import com.mrashish18.lifeos.domain.repository.TaskRepository
 import com.mrashish18.lifeos.domain.repository.UserBehaviorRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 
 /**
  * Real aggregated dashboard domain state bundle.
@@ -31,7 +34,8 @@ class GetDashboardDataUseCase(
     private val contextEngine: ContextEngine,
     private val decisionEngine: DecisionEngine,
     private val taskRepository: TaskRepository,
-    private val userBehaviorRepository: UserBehaviorRepository
+    private val userBehaviorRepository: UserBehaviorRepository,
+    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
 ) {
     operator fun invoke(): Flow<DashboardData> {
         return combine(
@@ -58,6 +62,6 @@ class GetDashboardDataUseCase(
                 completedCount = completedCount,
                 behaviorModel = behaviorModel
             )
-        }
+        }.flowOn(dispatcherProvider.default)
     }
 }
