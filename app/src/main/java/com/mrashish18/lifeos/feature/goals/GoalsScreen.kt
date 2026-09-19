@@ -105,37 +105,100 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        // 3. Strategic Objectives Cards matching Screen 4 reference
-        ReferenceGoalCard(
-            title = "Adaptive Autonomous Productivity",
-            tag = "Q4 2026",
-            tagBg = Color(0xFFDCFCE7),
-            tagColor = Color(0xFF16A34A),
-            description = "Turn daily execution into long-term compounding growth.",
-            progress = 0.30f
-        )
+        // 3. Strategic Objectives Cards matching Screen 4 reference with reactive filtering
+        val goals = remember {
+            listOf(
+                GoalItem(
+                    id = "goal_1",
+                    title = "Adaptive Autonomous Productivity",
+                    tag = "Q4 2026",
+                    tagBg = Color(0xFFDCFCE7),
+                    tagColor = Color(0xFF16A34A),
+                    description = "Turn daily execution into long-term compounding growth.",
+                    progress = 0.30f,
+                    isCompleted = false,
+                    milestones = "2 / 6 milestones"
+                ),
+                GoalItem(
+                    id = "goal_2",
+                    title = "Circadian Rhythm & Workload Pacing",
+                    tag = "Continuous",
+                    tagBg = Color(0xFFEFF6FF),
+                    tagColor = Color(0xFF2563EB),
+                    description = "Maintain healthy balance and prevent burnout.",
+                    progress = 0.60f,
+                    isCompleted = false,
+                    milestones = "3 / 5 milestones"
+                ),
+                GoalItem(
+                    id = "goal_3",
+                    title = "Deep Work Focus Habituation",
+                    tag = "Ongoing",
+                    tagBg = Color(0xFFF1F5F9),
+                    tagColor = Color(0xFF64748B),
+                    description = "Build consistent, distraction-free focus sessions.",
+                    progress = 0.20f,
+                    isCompleted = false,
+                    milestones = "1 / 5 milestones"
+                ),
+                GoalItem(
+                    id = "goal_4",
+                    title = "Core Architecture Baseline",
+                    tag = "Delivered",
+                    tagBg = Color(0xFFDCFCE7),
+                    tagColor = Color(0xFF16A34A),
+                    description = "Room persistence, Context Engine, and Decision Engine baseline established.",
+                    progress = 1.0f,
+                    isCompleted = true,
+                    milestones = "5 / 5 milestones"
+                ),
+                GoalItem(
+                    id = "goal_5",
+                    title = "Store-and-Forward Mesh Hardening",
+                    tag = "Delivered",
+                    tagBg = Color(0xFFDCFCE7),
+                    tagColor = Color(0xFF16A34A),
+                    description = "Hop-limited emergency mesh routing with deterministic deduplication.",
+                    progress = 1.0f,
+                    isCompleted = true,
+                    milestones = "4 / 4 milestones"
+                )
+            )
+        }
 
-        ReferenceGoalCard(
-            title = "Circadian Rhythm & Workload Pacing",
-            tag = "Continuous",
-            tagBg = Color(0xFFEFF6FF),
-            tagColor = Color(0xFF2563EB),
-            description = "Maintain healthy balance and prevent burnout.",
-            progress = 0.60f
-        )
+        val filteredGoals = when (selectedFilter) {
+            "Active" -> goals.filter { !it.isCompleted }
+            "Completed" -> goals.filter { it.isCompleted }
+            else -> goals
+        }
 
-        ReferenceGoalCard(
-            title = "Deep Work Focus Habituation",
-            tag = "Ongoing",
-            tagBg = Color(0xFFF1F5F9),
-            tagColor = Color(0xFF64748B),
-            description = "Build consistent, distraction-free focus sessions.",
-            progress = 0.20f
-        )
+        filteredGoals.forEach { goal ->
+            ReferenceGoalCard(
+                title = goal.title,
+                tag = goal.tag,
+                tagBg = goal.tagBg,
+                tagColor = goal.tagColor,
+                description = goal.description,
+                progress = goal.progress,
+                milestones = goal.milestones
+            )
+        }
 
         Spacer(modifier = Modifier.height(48.dp))
     }
 }
+
+private data class GoalItem(
+    val id: String,
+    val title: String,
+    val tag: String,
+    val tagBg: Color,
+    val tagColor: Color,
+    val description: String,
+    val progress: Float,
+    val isCompleted: Boolean,
+    val milestones: String
+)
 
 @Composable
 private fun ReferenceGoalCard(
@@ -144,7 +207,8 @@ private fun ReferenceGoalCard(
     tagBg: Color,
     tagColor: Color,
     description: String,
-    progress: Float
+    progress: Float,
+    milestones: String? = null
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -164,19 +228,34 @@ private fun ReferenceGoalCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Tag Pill
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(tagBg)
-                    .padding(horizontal = 7.dp, vertical = 2.dp)
+            // Tag Pill & Milestone Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = tag,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = tagColor
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(tagBg)
+                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = tag,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = tagColor
+                    )
+                }
+
+                milestones?.let { ms ->
+                    Text(
+                        text = ms,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF94A3B8)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))

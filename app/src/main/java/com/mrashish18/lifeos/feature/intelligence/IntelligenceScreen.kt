@@ -248,9 +248,116 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
             }
         }
 
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Unified Intelligence Pillars
+        Text(
+            text = "Unified Intelligence Pillars",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF0F172A)
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        listOf(
+            PillarData(
+                icon = "🎯",
+                title = "Personal Intelligence",
+                subtitle = "Cognitive Optimization",
+                description = "Closed-loop adaptation: Context + Behavior + Decision Engine with deterministic explainability.",
+                badge = "ACTIVE",
+                badgeBg = Color(0xFFDCFCE7),
+                badgeColor = Color(0xFF16A34A)
+            ),
+            PillarData(
+                icon = "🛡️",
+                title = "Trust Intelligence",
+                subtitle = "RealityCheck Engine",
+                description = "10-stage mathematical claim verification separating authoritative fact from inference.",
+                badge = "STANDBY",
+                badgeBg = Color(0xFFEEF2FF),
+                badgeColor = Color(0xFF4338CA)
+            ),
+            PillarData(
+                icon = "📡",
+                title = "Resilience Intelligence",
+                subtitle = "RescueMesh Offline Comms",
+                description = "Hop-limited store-and-forward mesh propagation when network infrastructure fails.",
+                badge = "ARMED",
+                badgeBg = Color(0xFFFEF3C7),
+                badgeColor = Color(0xFFD97706)
+            )
+        ).forEach { pillar ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+                shadowElevation = 1.dp
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = pillar.icon, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = pillar.title,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
+                                )
+                                Text(
+                                    text = pillar.subtitle,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF6366F1)
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(pillar.badgeBg)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = pillar.badge,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = pillar.badgeColor
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = pillar.description,
+                        fontSize = 11.sp,
+                        color = Color(0xFF64748B),
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(48.dp))
     }
 }
+
+private data class PillarData(
+    val icon: String,
+    val title: String,
+    val subtitle: String,
+    val description: String,
+    val badge: String,
+    val badgeBg: Color,
+    val badgeColor: Color
+)
 
 private data class StageData(
     val num: String,

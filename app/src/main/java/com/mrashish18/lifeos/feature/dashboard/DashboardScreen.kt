@@ -97,6 +97,11 @@ fun DashboardScreen(
             )
         }
 
+        // Cross-Pillar Guardian Telemetry
+        item {
+            IntelligencePillarsStrip()
+        }
+
         // 3. FLAGSHIP CENTERPIECE: WHAT MATTERS NOW
         if (uiState.recommendations.isNotEmpty()) {
             items(uiState.recommendations, key = { it.id }) { rec ->
@@ -353,6 +358,74 @@ private fun TodayMomentumCluster(
                         .clip(CircleShape)
                         .background(Color(0xFF4338CA))
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntelligencePillarsStrip() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Surface(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "🛡️", fontSize = 12.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Column {
+                    Text(
+                        text = "TRUTH ENGINE",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = "Standby • Armed",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF4338CA)
+                    )
+                }
+            }
+        }
+
+        Surface(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(10.dp),
+            color = Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "📡", fontSize = 12.sp)
+                Spacer(modifier = Modifier.width(6.dp))
+                Column {
+                    Text(
+                        text = "RESCUEMESH",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF64748B),
+                        letterSpacing = 0.5.sp
+                    )
+                    Text(
+                        text = "Offline Ready",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF059669)
+                    )
+                }
             }
         }
     }
