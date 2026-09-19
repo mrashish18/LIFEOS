@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.data.local.entity
+package com.mrashish18.lifeos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -8,8 +8,6 @@ import com.mrashish18.lifeos.core.model.MessageStatus
 import com.mrashish18.lifeos.core.model.MessageType
 import com.mrashish18.lifeos.core.model.RelayHop
 import com.mrashish18.lifeos.core.model.TransportType
-import org.json.JSONArray
-import org.json.JSONObject
 import java.time.Instant
 
 @Entity(tableName = "emergency_messages")
@@ -31,27 +29,7 @@ data class EmergencyMessageEntity(
     val relayHistoryJson: String
 ) {
     fun toDomain(): EmergencyMessage {
-        val history = mutableListOf<RelayHop>()
-        try {
-            val jsonArray = JSONArray(relayHistoryJson)
-            for (i in 0 until jsonArray.length()) {
-                val obj = jsonArray.getJSONObject(i)
-                history.add(
-                    RelayHop(
-                        hopNumber = obj.getInt("hopNumber"),
-                        relayedBy = obj.getString("relayedBy"),
-                        relayedAt = Instant.ofEpochMilli(obj.getLong("relayedAt")),
-                        transportUsed = try {
-                            TransportType.valueOf(obj.getString("transportUsed"))
-                        } catch (e: Exception) {
-                            TransportType.UNKNOWN
-                        }
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            // ignore malformed history
-        }
+        val history = parseRelayHistoryJson(relayHistoryJson)
 
         return EmergencyMessage(
             messageId = messageId,
@@ -72,18 +50,44 @@ data class EmergencyMessageEntity(
     }
 
     companion object {
-        fun fromDomain(msg: EmergencyMessage): EmergencyMessageEntity {
-            val jsonArray = JSONArray()
-            msg.relayHistory.forEach { hop ->
-                val obj = JSONObject().apply {
-                    put("hopNumber", hop.hopNumber)
-                    put("relayedBy", hop.relayedBy)
-                    put("relayedAt", hop.relayedAt.toEpochMilli())
-                    put("transportUsed", hop.transportUsed.name)
-                }
-                jsonArray.put(obj)
+        fun formatRelayHistoryJson(history: List<RelayHop>): String {
+            if (history.isEmpty()) return "[]"
+            return history.joinToString(separator = ",", prefix = "[", postfix = "]") { hop ->
+                val escapedRelayer = hop.relayedBy.replace("\"", "\\\"")
+                """{"hopNumber":${hop.hopNumber},"relayedBy":"$escapedRelayer","relayedAt":${hop.relayedAt.toEpochMilli()},"transportUsed":"${hop.transportUsed.name}"}"""
             }
+        }
 
+        fun parseRelayHistoryJson(json: String): List<RelayHop> {
+            if (json.isBlank() || json.trim() == "[]") return emptyList()
+            val list = mutableListOf<RelayHop>()
+            val objectPattern = Regex("""\{[^}]*\}""")
+            val hopNumberPattern = Regex(""""hopNumber"\s*:\s*(\d+)""")
+            val relayedByPattern = Regex(""""relayedBy"\s*:\s*"([^"]*)"""")
+            val relayedAtPattern = Regex(""""relayedAt"\s*:\s*(\d+)""")
+            val transportUsedPattern = Regex(""""transportUsed"\s*:\s*"([^"]*)"""")
+
+            for (match in objectPattern.findAll(json)) {
+                val objStr = match.value
+                val hopNumber = hopNumberPattern.find(objStr)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+                val relayedBy = relayedByPattern.find(objStr)?.groupValues?.get(1) ?: "UNKNOWN"
+                val relayedAtEpoch = relayedAtPattern.find(objStr)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                val transportName = transportUsedPattern.find(objStr)?.groupValues?.get(1) ?: "UNKNOWN"
+                val transport = try { TransportType.valueOf(transportName) } catch (e: Exception) { TransportType.UNKNOWN }
+
+                list.add(
+                    RelayHop(
+                        hopNumber = hopNumber,
+                        relayedBy = relayedBy,
+                        relayedAt = Instant.ofEpochMilli(relayedAtEpoch),
+                        transportUsed = transport
+                    )
+                )
+            }
+            return list
+        }
+
+        fun fromDomain(msg: EmergencyMessage): EmergencyMessageEntity {
             return EmergencyMessageEntity(
                 messageId = msg.messageId,
                 senderId = msg.senderId,
@@ -98,7 +102,7 @@ data class EmergencyMessageEntity(
                 maxHops = msg.maxHops,
                 transportType = msg.transportType.name,
                 fingerprintSha256 = msg.fingerprintSha256,
-                relayHistoryJson = jsonArray.toString()
+                relayHistoryJson = formatRelayHistoryJson(msg.relayHistory)
             )
         }
     }

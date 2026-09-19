@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.data.local.dao
+package com.mrashish18.lifeos.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -11,17 +11,23 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EmergencyMessageDao {
 
-    @Query("SELECT * FROM emergency_messages ORDER BY createdAtEpochMillis DESC")
+    @Query("SELECT * FROM emergency_messages ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
     fun observeAllMessages(): Flow<List<EmergencyMessageEntity>>
 
-    @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY createdAtEpochMillis ASC")
+    @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC")
     fun observeQueue(): Flow<List<EmergencyMessageEntity>>
 
-    @Query("SELECT * FROM emergency_messages ORDER BY createdAtEpochMillis DESC")
+    @Query("SELECT * FROM emergency_messages WHERE status = :status ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
+    fun observeMessagesByStatus(status: String): Flow<List<EmergencyMessageEntity>>
+
+    @Query("SELECT * FROM emergency_messages ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
     suspend fun getAllMessages(): List<EmergencyMessageEntity>
 
-    @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY createdAtEpochMillis ASC")
+    @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC")
     suspend fun getQueuedMessages(): List<EmergencyMessageEntity>
+
+    @Query("SELECT * FROM emergency_messages WHERE status = :status ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
+    suspend fun getMessagesByStatus(status: String): List<EmergencyMessageEntity>
 
     @Query("SELECT * FROM emergency_messages WHERE messageId = :id LIMIT 1")
     suspend fun getMessageById(id: String): EmergencyMessageEntity?

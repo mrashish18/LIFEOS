@@ -53,9 +53,11 @@ LIFEOS is an on-device personal intelligence system designed to observe situatio
 - **Calibrated Scoring**: Produces explainable verification verdicts (`SUPPORTED`, `CONTRADICTED`, `MIXED`, `INSUFFICIENT_EVIDENCE`) with explicit source weighting.
 
 ### 3. Resilience Intelligence (RescueMesh)
+- **Local Store-and-Forward Prototype**: Local Android proof-of-concept demonstrating offline store-and-forward relaying, Room persistence, priority queueing, and opportunistic gateway sync (does not claim an active nationwide radio mesh network).
 - **Offline Store-and-Forward**: Persistent Room SQLite emergency message queue with hop-bounded relay (`maxHops = 5`) and opportunistic transmission.
-- **Cryptographic Integrity & Deduplication**: Authentic SHA-256 payload hashing prevents spoofing, corruption, and packet duplication.
-- **Strict TTL Enforcement**: Priority-calibrated Time-to-Live limits (48h Critical, 24h High, 12h Normal) with automatic expired packet purging.
+- **Cryptographic Integrity & Deduplication**: Canonical SHA-256 payload hashing (`calculateFingerprint(senderId, payload, createdAt, ttl, hops)`) prevents corruption and packet duplication.
+- **Strict TTL Enforcement**: Priority-calibrated Time-to-Live limits (48h Critical, 24h High, 12h Normal) with automatic expired packet purging and clock injection.
+- **Priority Queueing**: Deterministic triage order (`CRITICAL` > `HIGH` > `NORMAL`) in Room database queries and sync transmission sweeps.
 - **Gateway Synchronization**: Automatic transmission when Wi-Fi/Cellular connectivity is detected, with strict delivery state tracking (`SENT` on egress; `DELIVERED` only upon recipient ACK).
 
 ---

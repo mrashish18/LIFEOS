@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.core.resilience
+package com.mrashish18.lifeos.core.resilience
 
 import com.mrashish18.lifeos.core.model.EmergencyMessage
 import com.mrashish18.lifeos.core.model.MessagePriority
@@ -62,8 +62,7 @@ class RescueMeshEngineTest {
         assertEquals(RescueMeshEngine.DEFAULT_MAX_HOPS, msg.maxHops)
         assertEquals(now.plus(RescueMeshEngine.DEFAULT_TTL_DURATION), msg.expiresAt)
 
-        val expectedRaw = "${msg.messageId}:$sender:$payload:${now.toEpochMilli()}"
-        val expectedSha = engine.computeSha256(expectedRaw)
+        val expectedSha = engine.calculateFingerprint(sender, payload, now, RescueMeshEngine.DEFAULT_TTL_DURATION, RescueMeshEngine.DEFAULT_MAX_HOPS)
         assertEquals(expectedSha, msg.fingerprintSha256)
     }
 
@@ -196,7 +195,7 @@ class RescueMeshEngineTest {
             payload = "Old message",
             createdAt = Instant.now().minus(Duration.ofHours(50)),
             ttlDuration = Duration.ofHours(48)
-        )
+        ).copy(status = MessageStatus.QUEUED)
 
         val result = engine.processRelay(
             message = expired,
@@ -206,5 +205,59 @@ class RescueMeshEngineTest {
 
         assertTrue(result.isFailure)
         assertTrue(result.exceptionOrNull()?.message?.contains("expired") == true)
+    }
+
+    @Test
+    fun testCalculateFingerprintIsDeterministic() {
+        val instant = Instant.parse("2026-09-19T12:00:00Z")
+        val fp1 = engine.calculateFingerprint(
+            senderId = "NODE-ALPHA",
+            payload = "Water supply exhausted",
+            createdAt = instant,
+            ttl = Duration.ofHours(24),
+            hops = 5
+        )
+        val fp2 = engine.calculateFingerprint(
+            senderId = "NODE-ALPHA",
+            payload = "Water supply exhausted",
+            createdAt = instant,
+            ttl = Duration.ofHours(24),
+            hops = 5
+        )
+        assertEquals(fp1, fp2)
+        assertEquals(64, fp1.length)
+        assertTrue(fp1.all { it in "0123456789abcdef" })
+
+        // Different payload changes fingerprint
+        val fpDifferent = engine.calculateFingerprint(
+            senderId = "NODE-ALPHA",
+            payload = "Water supply restored",
+            createdAt = instant,
+            ttl = Duration.ofHours(24),
+            hops = 5
+        )
+        assertFalse(fp1 == fpDifferent)
+    }
+
+    @Test
+    fun testEngineWithInjectedClock() {
+        val fixedTime = Instant.parse("2026-09-19T15:30:00Z")
+        val fixedClock = java.time.Clock.fixed(fixedTime, java.time.ZoneOffset.UTC)
+        val customEngine = RescueMeshEngine(fixedClock)
+
+        assertEquals(fixedTime, customEngine.now())
+
+        val msg = customEngine.createMessage(
+            senderId = "NODE-FIXED",
+            payload = "Fixed clock test",
+            ttlDuration = Duration.ofHours(1)
+        )
+        assertEquals(fixedTime, msg.createdAt)
+        assertEquals(fixedTime.plus(Duration.ofHours(1)), msg.expiresAt)
+
+        // At 30 mins after fixedTime, not expired
+        assertFalse(customEngine.isExpired(msg, fixedTime.plus(Duration.ofMinutes(30))))
+        // At 90 mins after fixedTime, expired
+        assertTrue(customEngine.isExpired(msg, fixedTime.plus(Duration.ofMinutes(90))))
     }
 }

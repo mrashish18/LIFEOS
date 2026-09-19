@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.domain.usecase
+package com.mrashish18.lifeos.domain.usecase
 
 import com.mrashish18.lifeos.core.model.BehaviorEvent
 import com.mrashish18.lifeos.core.model.BehaviorEventType
@@ -31,7 +31,8 @@ class CreateEmergencyMessageUseCase(
     private val engine: RescueMeshEngine,
     private val behaviorEventRepository: BehaviorEventRepository,
     private val networkTransport: NetworkGatewayTransport,
-    private val localTransport: LocalStoreAndForwardTransport
+    private val localTransport: LocalStoreAndForwardTransport,
+    private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     suspend operator fun invoke(
         senderId: String,
@@ -47,8 +48,14 @@ class CreateEmergencyMessageUseCase(
                 payload = payload,
                 type = type,
                 priority = priority,
-                recipientId = recipientId
+                recipientId = recipientId,
+                createdAt = clock.instant()
             )
+
+            // Deduplication check: reject if identical message fingerprint already stored
+            if (emergencyRepository.getMessageByFingerprint(message.fingerprintSha256) != null) {
+                return Result.failure(IllegalStateException("Duplicate message: exact message fingerprint already exists in repository"))
+            }
 
             emergencyRepository.insertMessage(message)
 
@@ -122,12 +129,17 @@ class GetEmergencyQueueUseCase(
     fun observeAll(): Flow<List<EmergencyMessage>> {
         return emergencyRepository.observeAllMessages()
     }
+
+    fun observeByStatus(status: MessageStatus): Flow<List<EmergencyMessage>> {
+        return emergencyRepository.observeMessagesByStatus(status)
+    }
 }
 
 class RelayEmergencyMessageUseCase(
     private val emergencyRepository: EmergencyMessageRepository,
     private val engine: RescueMeshEngine,
-    private val behaviorEventRepository: BehaviorEventRepository
+    private val behaviorEventRepository: BehaviorEventRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     suspend operator fun invoke(
         messageId: String,
@@ -137,7 +149,7 @@ class RelayEmergencyMessageUseCase(
         val message = emergencyRepository.getMessageById(messageId)
             ?: return Result.failure(IllegalArgumentException("Message $messageId not found"))
 
-        val now = Instant.now()
+        val now = clock.instant()
         if (engine.isExpired(message, now)) {
             val expired = message.copy(status = MessageStatus.EXPIRED)
             emergencyRepository.updateMessage(expired)
@@ -162,6 +174,10 @@ class RelayEmergencyMessageUseCase(
                 )
             )
             return Result.failure(IllegalStateException("Message $messageId exceeded maximum hop count (${message.maxHops})"))
+        }
+
+        if (!engine.validateTransition(message.status, MessageStatus.RELAYING)) {
+            return Result.failure(IllegalStateException("Invalid state transition from ${message.status} to RELAYING"))
         }
 
         val relayResult = engine.processRelay(message, relayerNodeId, transport, now)
@@ -190,14 +206,17 @@ class RelayEmergencyMessageUseCase(
 class ProcessIncomingMessageUseCase(
     private val emergencyRepository: EmergencyMessageRepository,
     private val engine: RescueMeshEngine,
-    private val behaviorEventRepository: BehaviorEventRepository
+    private val behaviorEventRepository: BehaviorEventRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     suspend operator fun invoke(incomingMessage: EmergencyMessage): Result<EmergencyMessage> {
-        if (emergencyRepository.hasMessage(incomingMessage.messageId)) {
+        if (emergencyRepository.hasMessage(incomingMessage.messageId) ||
+            emergencyRepository.getMessageByFingerprint(incomingMessage.fingerprintSha256) != null
+        ) {
             return Result.failure(IllegalStateException("Duplicate message: ${incomingMessage.messageId} already exists"))
         }
 
-        val now = Instant.now()
+        val now = clock.instant()
         if (engine.isExpired(incomingMessage, now)) {
             val expired = incomingMessage.copy(status = MessageStatus.EXPIRED)
             emergencyRepository.insertMessage(expired)
@@ -231,7 +250,8 @@ class SyncEmergencyQueueUseCase(
     private val emergencyRepository: EmergencyMessageRepository,
     private val networkTransport: NetworkGatewayTransport,
     private val engine: RescueMeshEngine,
-    private val behaviorEventRepository: BehaviorEventRepository
+    private val behaviorEventRepository: BehaviorEventRepository,
+    private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     suspend operator fun invoke(networkState: NetworkState): SyncResult {
         if (!networkTransport.isAvailable(networkState)) {
@@ -244,8 +264,8 @@ class SyncEmergencyQueueUseCase(
             )
         }
 
-        val queuedMessages = emergencyRepository.getQueuedMessages()
-        if (queuedMessages.isEmpty()) {
+        val rawQueued = emergencyRepository.getQueuedMessages()
+        if (rawQueued.isEmpty()) {
             return SyncResult(
                 processedCount = 0,
                 syncedCount = 0,
@@ -255,10 +275,21 @@ class SyncEmergencyQueueUseCase(
             )
         }
 
+        // Strict priority ordering: CRITICAL first, then HIGH, then NORMAL; tie-breaker oldest createdAt
+        val queuedMessages = rawQueued.sortedWith(
+            compareBy<EmergencyMessage> {
+                when (it.priority) {
+                    MessagePriority.CRITICAL -> 0
+                    MessagePriority.HIGH -> 1
+                    MessagePriority.NORMAL -> 2
+                }
+            }.thenBy { it.createdAt }
+        )
+
         var synced = 0
         var expired = 0
         var failed = 0
-        val now = Instant.now()
+        val now = clock.instant()
 
         for (message in queuedMessages) {
             if (engine.isExpired(message, now)) {

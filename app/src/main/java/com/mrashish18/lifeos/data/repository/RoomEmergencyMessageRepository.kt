@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.data.repository
+package com.mrashish18.lifeos.data.repository
 
 import com.mrashish18.lifeos.core.model.EmergencyMessage
 import com.mrashish18.lifeos.data.local.dao.EmergencyMessageDao
@@ -23,12 +23,22 @@ class RoomEmergencyMessageRepository(
         }
     }
 
+    override fun observeMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): Flow<List<EmergencyMessage>> {
+        return emergencyMessageDao.observeMessagesByStatus(status.name).map { list ->
+            list.map { it.toDomain() }
+        }
+    }
+
     override suspend fun getAllMessages(): List<EmergencyMessage> {
         return emergencyMessageDao.getAllMessages().map { it.toDomain() }
     }
 
     override suspend fun getQueuedMessages(): List<EmergencyMessage> {
         return emergencyMessageDao.getQueuedMessages().map { it.toDomain() }
+    }
+
+    override suspend fun getMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): List<EmergencyMessage> {
+        return emergencyMessageDao.getMessagesByStatus(status.name).map { it.toDomain() }
     }
 
     override suspend fun getMessageById(id: String): EmergencyMessage? {

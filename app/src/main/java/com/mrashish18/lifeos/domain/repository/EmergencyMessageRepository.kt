@@ -1,4 +1,4 @@
-﻿package com.mrashish18.lifeos.domain.repository
+package com.mrashish18.lifeos.domain.repository
 
 import com.mrashish18.lifeos.core.model.EmergencyMessage
 import kotlinx.coroutines.flow.Flow
@@ -6,8 +6,10 @@ import kotlinx.coroutines.flow.Flow
 interface EmergencyMessageRepository {
     fun observeAllMessages(): Flow<List<EmergencyMessage>>
     fun observeQueue(): Flow<List<EmergencyMessage>>
+    fun observeMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): Flow<List<EmergencyMessage>>
     suspend fun getAllMessages(): List<EmergencyMessage>
     suspend fun getQueuedMessages(): List<EmergencyMessage>
+    suspend fun getMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): List<EmergencyMessage>
     suspend fun getMessageById(id: String): EmergencyMessage?
     suspend fun getMessageByFingerprint(sha256: String): EmergencyMessage?
     suspend fun insertMessage(message: EmergencyMessage)

@@ -59,49 +59,73 @@ data class EmergencyMessage(
     val relayHistory: List<RelayHop> = emptyList()
 ) {
     companion object {
-        fun defaultSeedMessages(): List<EmergencyMessage> = listOf(
-            EmergencyMessage(
-                messageId = "msg_seed_01",
-                senderId = "NODE-7F4A",
-                type = MessageType.MEDICAL,
-                priority = MessagePriority.CRITICAL,
-                status = MessageStatus.QUEUED,
-                payload = "Need medical assistance",
-                createdAt = Instant.now().minusSeconds(1800),
-                expiresAt = Instant.now().plusSeconds(18000),
-                hopCount = 0,
-                maxHops = 5,
-                transportType = TransportType.LOCAL_ONLY,
-                fingerprintSha256 = "c8f2a1b9e4d3c2b1"
-            ),
-            EmergencyMessage(
-                messageId = "msg_seed_02",
-                senderId = "NODE-7F4A",
-                type = MessageType.RESCUE_REQUEST,
-                priority = MessagePriority.HIGH,
-                status = MessageStatus.QUEUED,
-                payload = "Require rescue supplies",
-                createdAt = Instant.now().minusSeconds(7200),
-                expiresAt = Instant.now().plusSeconds(28800),
-                hopCount = 0,
-                maxHops = 5,
-                transportType = TransportType.LOCAL_ONLY,
-                fingerprintSha256 = "d4e5f6a7b8c9d0e1"
-            ),
-            EmergencyMessage(
-                messageId = "msg_seed_03",
-                senderId = "NODE-7F4A",
-                type = MessageType.STATUS_UPDATE,
-                priority = MessagePriority.NORMAL,
-                status = MessageStatus.QUEUED,
-                payload = "Status update from location",
-                createdAt = Instant.now().minusSeconds(10800),
-                expiresAt = Instant.now().plusSeconds(43200),
-                hopCount = 0,
-                maxHops = 5,
-                transportType = TransportType.LOCAL_ONLY,
-                fingerprintSha256 = "a1b2c3d4e5f6a7b8"
+        private fun calculateSeedFingerprint(
+            senderId: String,
+            payload: String,
+            createdAt: Instant,
+            expiresAt: Instant,
+            maxHops: Int
+        ): String {
+            val ttlMillis = expiresAt.toEpochMilli() - createdAt.toEpochMilli()
+            val raw = "$senderId|$payload|${createdAt.toEpochMilli()}|$ttlMillis|$maxHops"
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val bytes = digest.digest(raw.toByteArray(Charsets.UTF_8))
+            return bytes.joinToString("") { "%02x".format(it) }
+        }
+
+        fun defaultSeedMessages(): List<EmergencyMessage> {
+            val now = Instant.now()
+            val created1 = now.minusSeconds(1800)
+            val expires1 = now.plusSeconds(18000)
+            val created2 = now.minusSeconds(7200)
+            val expires2 = now.plusSeconds(28800)
+            val created3 = now.minusSeconds(10800)
+            val expires3 = now.plusSeconds(43200)
+
+            return listOf(
+                EmergencyMessage(
+                    messageId = "msg_seed_01",
+                    senderId = "NODE-7F4A",
+                    type = MessageType.MEDICAL,
+                    priority = MessagePriority.CRITICAL,
+                    status = MessageStatus.QUEUED,
+                    payload = "Need medical assistance",
+                    createdAt = created1,
+                    expiresAt = expires1,
+                    hopCount = 0,
+                    maxHops = 5,
+                    transportType = TransportType.LOCAL_ONLY,
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Need medical assistance", created1, expires1, 5)
+                ),
+                EmergencyMessage(
+                    messageId = "msg_seed_02",
+                    senderId = "NODE-7F4A",
+                    type = MessageType.RESCUE_REQUEST,
+                    priority = MessagePriority.HIGH,
+                    status = MessageStatus.QUEUED,
+                    payload = "Require rescue supplies",
+                    createdAt = created2,
+                    expiresAt = expires2,
+                    hopCount = 0,
+                    maxHops = 5,
+                    transportType = TransportType.LOCAL_ONLY,
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Require rescue supplies", created2, expires2, 5)
+                ),
+                EmergencyMessage(
+                    messageId = "msg_seed_03",
+                    senderId = "NODE-7F4A",
+                    type = MessageType.STATUS_UPDATE,
+                    priority = MessagePriority.NORMAL,
+                    status = MessageStatus.QUEUED,
+                    payload = "Status update from location",
+                    createdAt = created3,
+                    expiresAt = expires3,
+                    hopCount = 0,
+                    maxHops = 5,
+                    transportType = TransportType.LOCAL_ONLY,
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Status update from location", created3, expires3, 5)
+                )
             )
-        )
+        }
     }
 }

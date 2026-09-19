@@ -300,17 +300,18 @@ Milestone 4 implements **RescueMesh**: an offline-first store-and-forward emerge
 ```
 
 ### 1. Cryptographic Payload Fingerprinting
-Every emergency message is assigned a deterministic SHA-256 fingerprint upon creation using Java's standard `java.security.MessageDigest`:
+Every emergency message is assigned a deterministic SHA-256 fingerprint upon creation using standard `java.security.MessageDigest`:
 ```kotlin
 fun calculateFingerprint(
     senderId: String,
     payload: String,
-    createdAtEpochMillis: Long,
-    type: MessageType
+    createdAt: Instant,
+    ttl: Duration,
+    hops: Int
 ): String
 ```
-- Deduplication is guaranteed by both `messageId` and SHA-256 fingerprint.
-- Any attempt to enqueue a duplicate message is identified and rejected with status `DUPLICATE`.
+- Deduplication is guaranteed by both `messageId` and the canonical SHA-256 fingerprint.
+- Any attempt to create or ingest an identical message twice is detected and rejected without creating duplicate database rows.
 
 ### 2. Explicit Finite State Machine
 Messages transition strictly through deterministic states:
@@ -319,27 +320,38 @@ Messages transition strictly through deterministic states:
 - `RELAYING`: Actively traversing intermediate mesh nodes.
 - `SENT`: Dispatched through a network gateway or external egress node.
 - `DELIVERED`: Confirmed delivered by explicit recipient acknowledgment.
-- `FAILED`: Transmission error or unrecoverable failure.
+- `FAILED`: Transmission error or unrecoverable failure (e.g., hop limit exceeded).
 - `EXPIRED`: Message passed its Time-to-Live (TTL) limit.
 - `DUPLICATE`: Redundant packet detected and discarded.
 
 > [!IMPORTANT]
 > **Strict Delivery Integrity**: In accordance with distributed systems guarantees, `NetworkGatewayTransport` transitions packets to `SENT` upon successful outbound transmission. The system **never** marks a message `DELIVERED` without explicit downstream recipient ACK.
 
-### 3. Hop Limits & TTL Expiration
+### 3. Priority Ordering & Queue Prioritization
+Messages in the emergency queue are prioritized by triage level:
+$$\text{Priority Ordering}: \quad \text{CRITICAL} > \text{HIGH} > \text{NORMAL}$$
+- SQLite queries explicitly order queued messages by priority (`CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC`).
+- During gateway synchronization, critical packets are drained and transmitted before high or normal priority items.
+
+### 4. Hop Limits, TTL Expiration & Clock Injection
 - **Hop Bound**: Every packet enforces a strict maximum hop limit (`maxHops = 5`). Packets reaching 5 hops without reaching their destination are automatically transitioned to `FAILED`.
 - **Time-to-Live (TTL)**:
   - `CRITICAL` priority: 48-hour TTL ($172,800$ seconds).
   - `HIGH` priority: 24-hour TTL ($86,400$ seconds).
   - `NORMAL` priority: 12-hour TTL ($43,200$ seconds).
 - Any message evaluated after `expiresAt` is transitioned to `EXPIRED` during queue sweeps and gateway synchronization.
+- **Clock Injection**: `RescueMeshEngine` and all use cases accept an injectable `java.time.Clock` (`default = Clock.systemUTC()`), providing 100% deterministic time manipulation during unit testing and simulated network time shifts.
 
-### 4. Transports & Physical Hardware Distinction
-1. `LocalStoreAndForwardTransport`: Local node buffer that guarantees offline durability in Room SQLite.
+### 5. Local Store-and-Forward Prototype Disclosure
+> [!NOTE]
+> **Prototype Disclosure**: RescueMesh is currently an Android proof-of-concept / local store-and-forward prototype. It implements offline Room persistence, cryptographic SHA-256 identities, hop degradation tracking, and opportunistic sync upon network return. It does **not** claim to operate an active nationwide radio mesh network.
+
+### 6. Transports & Physical Hardware Architecture
+1. `LocalStoreAndForwardTransport`: Local node buffer that guarantees offline durability in Room SQLite (`emergency_messages` table).
 2. `NetworkGatewayTransport`: Outbound network egress that automatically activates when Wi-Fi or Cellular connectivity is restored.
-3. **Physical Hardware Preview**: BLE (Bluetooth Low Energy) and Wi-Fi Direct protocols are architected behind the `MeshTransport` interface. The current implementation provides a verified local store-and-forward proof-of-concept with genuine payload structures, cryptographic hashing, and hop tracking, ready to bind to Android BLE/Wi-Fi Direct hardware drivers without altering message formats.
+3. **Physical Hardware Extension**: BLE (Bluetooth Low Energy) and Wi-Fi Direct protocols are architected behind the clean `MeshTransport` interface, ready to bind to native Android hardware radios without modifying message contracts or database schemas.
 
-### 5. Privacy & Behavioral Analytics Boundary
+### 7. Privacy & Behavioral Analytics Boundary
 Emergency messages trigger behavior events to inform cognitive load and adaptive UI systems (e.g. `EMERGENCY_MESSAGE_CREATED`, `EMERGENCY_MESSAGE_SENT`), but **never log sensitive situation payload text** into metadata, preserving absolute user privacy during crises.
 
 ---

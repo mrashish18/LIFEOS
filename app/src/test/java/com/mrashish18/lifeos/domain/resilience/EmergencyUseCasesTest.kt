@@ -238,6 +238,125 @@ class EmergencyUseCasesTest {
         assertEquals(MessageStatus.SENT, emergencyRepository.getMessageById(msg2.messageId)?.status)
     }
 
+    @Test
+    fun testCreateEmergencyMessageRejectsDuplicateFingerprint() = runBlocking {
+        val fixedInstant = Instant.parse("2026-09-19T10:00:00Z")
+        val fixedClock = java.time.Clock.fixed(fixedInstant, java.time.ZoneOffset.UTC)
+        val fixedEngine = RescueMeshEngine(fixedClock)
+        val fixedCreateUseCase = CreateEmergencyMessageUseCase(
+            emergencyRepository = emergencyRepository,
+            engine = fixedEngine,
+            behaviorEventRepository = behaviorEventRepository,
+            networkTransport = networkTransport,
+            localTransport = localTransport,
+            clock = fixedClock
+        )
+
+        val firstResult = fixedCreateUseCase(
+            senderId = "NODE-A",
+            payload = "First message payload",
+            networkState = NetworkState.DISCONNECTED
+        )
+        assertTrue(firstResult.isSuccess)
+
+        // Attempting to create identical message at same fixed time results in identical fingerprint
+        val duplicateResult = fixedCreateUseCase(
+            senderId = "NODE-A",
+            payload = "First message payload",
+            networkState = NetworkState.DISCONNECTED
+        )
+        assertTrue(duplicateResult.isFailure)
+        assertTrue(duplicateResult.exceptionOrNull()?.message?.contains("Duplicate message") == true)
+    }
+
+    @Test
+    fun testProcessIncomingMessageRejectsFingerprintDuplicate() = runBlocking {
+        val msg1 = engine.createMessage(senderId = "NODE-A", payload = "Original")
+        emergencyRepository.insertMessage(msg1)
+
+        // Different messageId but identical fingerprint
+        val msg2 = msg1.copy(messageId = "DIFFERENT_ID_SAME_FINGERPRINT")
+        val result = processIncomingMessageUseCase(msg2)
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("Duplicate") == true)
+    }
+
+    @Test
+    fun testSyncEmergencyQueueOrdersByPriorityCriticalFirst() = runBlocking {
+        val normalMsg = engine.createMessage(
+            senderId = "NODE-N",
+            payload = "Normal priority item",
+            priority = MessagePriority.NORMAL
+        ).copy(status = MessageStatus.QUEUED)
+
+        val criticalMsg = engine.createMessage(
+            senderId = "NODE-C",
+            payload = "Critical urgent item",
+            priority = MessagePriority.CRITICAL
+        ).copy(status = MessageStatus.QUEUED)
+
+        val highMsg = engine.createMessage(
+            senderId = "NODE-H",
+            payload = "High priority item",
+            priority = MessagePriority.HIGH
+        ).copy(status = MessageStatus.QUEUED)
+
+        // Insert in non-priority order
+        emergencyRepository.insertMessage(normalMsg)
+        emergencyRepository.insertMessage(criticalMsg)
+        emergencyRepository.insertMessage(highMsg)
+
+        val result = syncEmergencyQueueUseCase(NetworkState.CONNECTED_WIFI)
+        assertEquals(3, result.syncedCount)
+
+        // Behavior events should record sent messages in order of priority: CRITICAL, HIGH, NORMAL
+        val sentEvents = behaviorEventRepository.events.filter { it.type == BehaviorEventType.EMERGENCY_MESSAGE_SENT }
+        assertEquals(3, sentEvents.size)
+        assertEquals(criticalMsg.messageId, sentEvents[0].metadata["messageId"])
+        assertEquals(highMsg.messageId, sentEvents[1].metadata["messageId"])
+        assertEquals(normalMsg.messageId, sentEvents[2].metadata["messageId"])
+    }
+
+    @Test
+    fun testSyncEmergencyQueueExpiresOldMessagesWithClock() = runBlocking {
+        val baseTime = Instant.parse("2026-09-19T10:00:00Z")
+        val clock = java.time.Clock.fixed(baseTime, java.time.ZoneOffset.UTC)
+        val clockEngine = RescueMeshEngine(clock)
+
+        val msg = clockEngine.createMessage(
+            senderId = "NODE-A",
+            payload = "Expires in 1 hour",
+            createdAt = baseTime,
+            ttlDuration = Duration.ofHours(1)
+        ).copy(status = MessageStatus.QUEUED)
+        emergencyRepository.insertMessage(msg)
+
+        // Advance clock by 2 hours
+        val futureClock = java.time.Clock.fixed(baseTime.plus(Duration.ofHours(2)), java.time.ZoneOffset.UTC)
+        val futureSyncUseCase = SyncEmergencyQueueUseCase(
+            emergencyRepository = emergencyRepository,
+            networkTransport = networkTransport,
+            engine = clockEngine,
+            behaviorEventRepository = behaviorEventRepository,
+            clock = futureClock
+        )
+
+        val syncResult = futureSyncUseCase(NetworkState.CONNECTED_WIFI)
+        assertEquals(1, syncResult.expiredCount)
+        assertEquals(0, syncResult.syncedCount)
+        assertEquals(MessageStatus.EXPIRED, emergencyRepository.getMessageById(msg.messageId)?.status)
+    }
+
+    @Test
+    fun testRelayRejectsInvalidStateTransition() = runBlocking {
+        val deliveredMsg = engine.createMessage(senderId = "NODE-A", payload = "Delivered").copy(status = MessageStatus.DELIVERED)
+        emergencyRepository.insertMessage(deliveredMsg)
+
+        val result = relayEmergencyMessageUseCase(deliveredMsg.messageId, "PEER-1")
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull()?.message?.contains("Invalid state transition") == true)
+    }
+
     private class FakeEmergencyMessageRepository : EmergencyMessageRepository {
         private val messages = mutableMapOf<String, EmergencyMessage>()
         private val queueFlow = MutableStateFlow<List<EmergencyMessage>>(emptyList())
@@ -269,6 +388,14 @@ class EmergencyUseCasesTest {
 
         override suspend fun getQueuedMessages(): List<EmergencyMessage> {
             return messages.values.filter { it.status == MessageStatus.QUEUED }
+        }
+
+        override suspend fun getMessagesByStatus(status: MessageStatus): List<EmergencyMessage> {
+            return messages.values.filter { it.status == status }
+        }
+
+        override fun observeMessagesByStatus(status: MessageStatus): Flow<List<EmergencyMessage>> {
+            return MutableStateFlow(messages.values.filter { it.status == status })
         }
 
         override fun observeQueue(): Flow<List<EmergencyMessage>> = queueFlow.asStateFlow()
