@@ -202,6 +202,25 @@ fun TasksScreen(
                         strokeWidth = 3.dp
                     )
                 }
+            } else if (uiState.allTasks.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LifeOsEmptyState(
+                        iconSymbol = "📋",
+                        title = "No tasks yet",
+                        description = "Create your first task to begin building your LIFEOS behavior profile.",
+                        actionButton = {
+                            LifeOsPrimaryButton(
+                                text = "+ Create Task",
+                                onClick = { viewModel.openCreateDialog() }
+                            )
+                        }
+                    )
+                }
             } else if (uiState.filteredTasks.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -372,7 +391,6 @@ private fun PremiumTaskCard(
                         TaskCategory.HEALTH -> Color(0xFFECFDF5) to Color(0xFF059669)
                         TaskCategory.LEARNING -> Color(0xFFEFF6FF) to Color(0xFF2563EB)
                         TaskCategory.GENERAL -> Color(0xFFF1F5F9) to Color(0xFF475569)
-                        else -> Color(0xFFF1F5F9) to Color(0xFF475569)
                     }
                     Box(
                         modifier = Modifier
@@ -784,24 +802,28 @@ private fun TaskEditorBottomSheet(
                         color = Color(0xFF4F46E5)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                        color = Color(0xFFF8FAFC),
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${estimatedMinutesStr} min",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF0F172A)
-                            )
-                            Text(text = "▾", fontSize = 12.sp, color = Color(0xFF64748B))
+                        listOf(15, 25, 45, 60).forEach { mins ->
+                            val isSelected = estimatedMinutesStr == mins.toString()
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                                    .clickable { estimatedMinutesStr = mins.toString() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "${mins}m",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else Color(0xFF475569)
+                                )
+                            }
                         }
                     }
                 }

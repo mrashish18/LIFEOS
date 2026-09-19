@@ -803,24 +803,29 @@ private fun EmergencyMessageScreen(
             }
 
             // Send Message button (rich red gradient)
+            val isSendEnabled = messageText.isNotBlank()
             Box(
                 modifier = Modifier
                     .weight(1.6f)
                     .height(46.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color(0xFFEF4444),
-                                Color(0xFFF43F5E)
+                        if (isSendEnabled) {
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFFEF4444),
+                                    Color(0xFFF43F5E)
+                                )
                             )
-                        )
+                        } else {
+                            androidx.compose.ui.graphics.SolidColor(Color(0xFFCBD5E1))
+                        }
                     )
-                    .clickable {
+                    .clickable(enabled = isSendEnabled) {
                         onSend(
-                            messageText.ifBlank { "Need immediate emergency assistance." },
+                            messageText.trim(),
                             selectedPriority,
-                            destinationText
+                            destinationText.trim()
                         )
                     },
                 contentAlignment = Alignment.Center
@@ -938,15 +943,21 @@ private fun MessageQueueScreen(
                 ) {
                     Text(text = "📭", fontSize = 28.sp)
                     Spacer(modifier = Modifier.height(8.dp))
+                    val emptyTitle = if (messages.isEmpty()) "Queue clear" else "No messages in $selectedFilter queue"
+                    val emptyDesc = if (messages.isEmpty()) {
+                        "No emergency messages are waiting for relay."
+                    } else {
+                        "No emergency messages currently match the '$selectedFilter' filter."
+                    }
                     Text(
-                        text = "No messages in $selectedFilter queue",
+                        text = emptyTitle,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Messages created offline or during emergencies will be tracked and relayed here.",
+                        text = emptyDesc,
                         fontSize = 11.sp,
                         color = Color(0xFF64748B),
                         textAlign = TextAlign.Center

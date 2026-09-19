@@ -42,6 +42,10 @@ class CreateEmergencyMessageUseCase(
         recipientId: String? = null,
         networkState: NetworkState = NetworkState.UNKNOWN
     ): Result<EmergencyMessage> {
+        if (payload.isBlank()) {
+            return Result.failure(IllegalArgumentException("Emergency payload cannot be blank"))
+        }
+
         return try {
             val message = engine.createMessage(
                 senderId = senderId,

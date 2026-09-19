@@ -74,10 +74,10 @@ fun RealityCheckScreen(
                 TruthInputScreen(
                     claimText = "",
                     recentInvestigations = recentInvestigations,
-                    onClaimChanged = { viewModel.onClaimTextChanged(it) },
+                    onClaimChanged = { if (it.length <= 500) viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
-                        viewModel.onClaimTextChanged(claim)
+                        viewModel.onClaimTextChanged(claim.take(500))
                         viewModel.analyzeClaim()
                     },
                     onSelectInvestigation = { record ->
@@ -89,10 +89,10 @@ fun RealityCheckScreen(
                 TruthInputScreen(
                     claimText = state.claimText,
                     recentInvestigations = recentInvestigations,
-                    onClaimChanged = { viewModel.onClaimTextChanged(it) },
+                    onClaimChanged = { if (it.length <= 500) viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
-                        viewModel.onClaimTextChanged(claim)
+                        viewModel.onClaimTextChanged(claim.take(500))
                         viewModel.analyzeClaim()
                     },
                     onSelectInvestigation = { record ->
@@ -131,10 +131,11 @@ fun RealityCheckScreen(
                 TruthInputScreen(
                     claimText = state.lastClaimText,
                     recentInvestigations = recentInvestigations,
-                    onClaimChanged = { viewModel.onClaimTextChanged(it) },
+                    errorMessage = state.message,
+                    onClaimChanged = { if (it.length <= 500) viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
-                        viewModel.onClaimTextChanged(claim)
+                        viewModel.onClaimTextChanged(claim.take(500))
                         viewModel.analyzeClaim()
                     },
                     onSelectInvestigation = { record ->
@@ -153,6 +154,7 @@ fun RealityCheckScreen(
 private fun TruthInputScreen(
     claimText: String,
     recentInvestigations: List<InvestigationRecord>,
+    errorMessage: String? = null,
     onClaimChanged: (String) -> Unit,
     onAnalyze: () -> Unit,
     onSelectQuick: (String) -> Unit,
@@ -189,6 +191,30 @@ private fun TruthInputScreen(
                 fontSize = 12.sp,
                 color = Color(0xFF64748B)
             )
+        }
+
+        errorMessage?.let { errorMsg ->
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                color = Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "⚠️", fontSize = 13.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = errorMsg,
+                        fontSize = 11.sp,
+                        color = Color(0xFFDC2626),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -344,66 +370,32 @@ private fun TruthInputScreen(
 
         if (recentInvestigations.isEmpty()) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onSelectQuick("Earth orbits the Sun in approximately 365 days") },
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 color = Color.White,
                 shadowElevation = 1.dp,
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFFDCFCE7)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🛡️", fontSize = 16.sp)
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Earth orbits the Sun in 365 d...",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Spacer(modifier = Modifier.height(3.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFFDCFCE7))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "SUPPORTED",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF16A34A)
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "92% • 2 sources",
-                            fontSize = 10.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-
+                    Text(text = "🛡️", fontSize = 24.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "⋮",
-                        fontSize = 16.sp,
+                        text = "No investigations yet",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1B4B)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Investigate a claim to build your trusted evidence history.",
+                        fontSize = 11.sp,
                         color = Color(0xFF64748B),
-                        fontWeight = FontWeight.Bold
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
             }

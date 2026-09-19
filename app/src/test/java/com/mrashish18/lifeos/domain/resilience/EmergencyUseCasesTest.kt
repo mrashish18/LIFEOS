@@ -114,6 +114,21 @@ class EmergencyUseCasesTest {
     }
 
     @Test
+    fun testCreateEmergencyMessageRejectsBlankPayload() = runBlocking {
+        val result = createEmergencyMessageUseCase(
+            senderId = "NODE-ORIGIN",
+            payload = "   ",
+            type = MessageType.EMERGENCY,
+            priority = MessagePriority.CRITICAL,
+            networkState = NetworkState.DISCONNECTED
+        )
+
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+        assertTrue(emergencyRepository.getAllMessages().isEmpty())
+    }
+
+    @Test
     fun testCreateEmergencyMessageOnline() = runBlocking {
         val result = createEmergencyMessageUseCase(
             senderId = "NODE-ORIGIN",

@@ -48,6 +48,16 @@ class TaskLifecycleTest {
         transitionTaskStatusUseCase = TransitionTaskStatusUseCase(taskRepository, behaviorEventRepository)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun createTask_rejectsBlankTitle() {
+        runBlocking {
+            createTaskUseCase(
+                title = "   ",
+                description = "Invalid task"
+            )
+        }
+    }
+
     @Test
     fun createTask_insertsTaskAndLogsBehaviorEvent() {
         runBlocking {

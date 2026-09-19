@@ -172,16 +172,49 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
             else -> goals
         }
 
-        filteredGoals.forEach { goal ->
-            ReferenceGoalCard(
-                title = goal.title,
-                tag = goal.tag,
-                tagBg = goal.tagBg,
-                tagColor = goal.tagColor,
-                description = goal.description,
-                progress = goal.progress,
-                milestones = goal.milestones
-            )
+        if (filteredGoals.isEmpty()) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White,
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "🎯", fontSize = 24.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No goals in this view.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1B4B)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Switch filters to view active and completed strategic objectives.",
+                        fontSize = 11.sp,
+                        color = Color(0xFF64748B),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            filteredGoals.forEach { goal ->
+                ReferenceGoalCard(
+                    title = goal.title,
+                    tag = goal.tag,
+                    tagBg = goal.tagBg,
+                    tagColor = goal.tagColor,
+                    description = goal.description,
+                    progress = goal.progress,
+                    milestones = goal.milestones
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(48.dp))
