@@ -1,6 +1,7 @@
 package com.mrashish18.lifeos.feature.realitycheck
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,20 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,39 +35,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrashish18.lifeos.core.model.AnalyzedEvidence
-import com.mrashish18.lifeos.core.model.ClaimType
-import com.mrashish18.lifeos.core.model.EvidenceStance
 import com.mrashish18.lifeos.core.model.RealityCheckResult
-import com.mrashish18.lifeos.core.model.SourceQuality
 import com.mrashish18.lifeos.core.model.Verdict
-import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
-import com.mrashish18.lifeos.ui.components.LifeOsPrimaryButton
-import com.mrashish18.lifeos.ui.theme.LifeOsAmber50
-import com.mrashish18.lifeos.ui.theme.LifeOsAmber700
-import com.mrashish18.lifeos.ui.theme.LifeOsBlue50
-import com.mrashish18.lifeos.ui.theme.LifeOsBlue700
-import com.mrashish18.lifeos.ui.theme.LifeOsGreen50
-import com.mrashish18.lifeos.ui.theme.LifeOsGreen700
-import com.mrashish18.lifeos.ui.theme.LifeOsIndigo50
-import com.mrashish18.lifeos.ui.theme.LifeOsIndigo700
-import com.mrashish18.lifeos.ui.theme.LifeOsRed50
-import com.mrashish18.lifeos.ui.theme.LifeOsRed700
-import com.mrashish18.lifeos.ui.theme.LifeOsSlate100
-import com.mrashish18.lifeos.ui.theme.LifeOsSlate500
-import com.mrashish18.lifeos.ui.theme.LifeOsSlate700
-import com.mrashish18.lifeos.ui.theme.LifeOsSlate900
-import com.mrashish18.lifeos.ui.theme.LifeOsTeal50
-import com.mrashish18.lifeos.ui.theme.LifeOsTeal700
+import com.mrashish18.lifeos.ui.theme.*
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RealityCheckScreen(
     viewModel: RealityCheckViewModel,
@@ -83,713 +54,638 @@ fun RealityCheckScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
-            .verticalScroll(rememberScrollState())
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFAFCFF),
+                        Color(0xFFF8FAFC),
+                        Color(0xFFF1F5F9)
+                    )
+                )
+            )
     ) {
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Screen Header
-        Column {
-            LifeOsEyebrow(text = "TRUTH INTELLIGENCE")
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "RealityCheck",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "Examine a claim against available evidence.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
         when (val state = uiState) {
             is RealityCheckUiState.Empty -> {
-                ClaimInputSection(
+                TruthInputScreen(
                     claimText = "",
-                    sourceUrl = "",
                     onClaimChanged = { viewModel.onClaimTextChanged(it) },
-                    onUrlChanged = { viewModel.onSourceUrlChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
-                    sampleClaims = viewModel.sampleClaims,
-                    onSelectSample = { viewModel.selectSampleClaim(it) }
+                    onSelectQuick = { claim ->
+                        viewModel.onClaimTextChanged(claim)
+                        viewModel.analyzeClaim()
+                    }
                 )
             }
             is RealityCheckUiState.Input -> {
-                ClaimInputSection(
+                TruthInputScreen(
                     claimText = state.claimText,
-                    sourceUrl = state.sourceUrl,
                     onClaimChanged = { viewModel.onClaimTextChanged(it) },
-                    onUrlChanged = { viewModel.onSourceUrlChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
-                    sampleClaims = viewModel.sampleClaims,
-                    onSelectSample = { viewModel.selectSampleClaim(it) }
+                    onSelectQuick = { claim ->
+                        viewModel.onClaimTextChanged(claim)
+                        viewModel.analyzeClaim()
+                    }
                 )
             }
             is RealityCheckUiState.Loading -> {
-                LoadingInvestigationSection(currentStep = state.currentStep)
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF4338CA),
+                            strokeWidth = 3.dp,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = state.currentStep,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
             }
             is RealityCheckUiState.Success -> {
-                InvestigationReportSection(
+                TruthResultScreen(
                     result = state.result,
-                    onNewInvestigation = { viewModel.resetToInput() }
+                    onBack = { viewModel.resetToInput() }
                 )
             }
             is RealityCheckUiState.Error -> {
-                ErrorInvestigationSection(
-                    message = state.message,
-                    onRetry = { viewModel.analyzeClaim() },
-                    onBackToInput = { viewModel.resetToInput() }
+                TruthInputScreen(
+                    claimText = state.lastClaimText,
+                    onClaimChanged = { viewModel.onClaimTextChanged(it) },
+                    onAnalyze = { viewModel.analyzeClaim() },
+                    onSelectQuick = { claim ->
+                        viewModel.onClaimTextChanged(claim)
+                        viewModel.analyzeClaim()
+                    }
                 )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(48.dp))
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ClaimInputSection(
-    claimText: String,
-    sourceUrl: String,
-    onClaimChanged: (String) -> Unit,
-    onUrlChanged: (String) -> Unit,
-    onAnalyze: () -> Unit,
-    sampleClaims: List<String>,
-    onSelectSample: (String) -> Unit
-) {
-    var showUrlField by remember { mutableStateOf(sourceUrl.isNotBlank()) }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-        shadowElevation = 1.dp
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            LifeOsEyebrow(text = "CHECK A CLAIM")
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Enter a statement to evaluate against verified ground truth.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-
-            OutlinedTextField(
-                value = claimText,
-                onValueChange = onClaimChanged,
-                placeholder = {
-                    Text(
-                        "e.g. Earth orbits the Sun in approximately 365 days, or Antibiotics treat viral infections...",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(130.dp),
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${claimText.length} characters",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-
-                TextButton(onClick = { showUrlField = !showUrlField }) {
-                    Text(
-                        text = if (showUrlField) "- Hide Context URL" else "+ Add Source URL (Optional)",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            AnimatedVisibility(visible = showUrlField) {
-                Column {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = sourceUrl,
-                        onValueChange = onUrlChanged,
-                        placeholder = { Text("https://example.org/article-or-claim") },
-                        label = { Text("Optional Source / Reference URL") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LifeOsPrimaryButton(
-                text = "→  Investigate Claim",
-                onClick = onAnalyze,
-                enabled = claimText.trim().length >= 4,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    // Sample claims for quick verification
-    LifeOsEyebrow(text = "QUICK VERIFICATION QUERIES", color = MaterialTheme.colorScheme.outline)
-    Spacer(modifier = Modifier.height(10.dp))
-
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        sampleClaims.forEach { sample ->
-            val isSelected = (claimText == sample)
-            FilterChip(
-                selected = isSelected,
-                onClick = { onSelectSample(sample) },
-                shape = RoundedCornerShape(10.dp),
-                label = {
-                    Text(
-                        text = sample,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = LifeOsIndigo50,
-                    selectedLabelColor = LifeOsIndigo700
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun LoadingInvestigationSection(currentStep: String) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 20.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(36.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(46.dp),
-                color = LifeOsIndigo700,
-                strokeWidth = 3.5.dp
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            LifeOsEyebrow(text = "INVESTIGATION IN PROGRESS", color = LifeOsIndigo700)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = currentStep,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun ErrorInvestigationSection(
-    message: String,
-    onRetry: () -> Unit,
-    onBackToInput: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = LifeOsRed50,
-        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsRed700.copy(alpha = 0.3f))
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "Investigation Error",
-                style = MaterialTheme.typography.titleMedium,
-                color = LifeOsRed700,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = LifeOsRed700
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(
-                    onClick = onRetry,
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = LifeOsRed700)
-                ) {
-                    Text("Retry Investigation", fontWeight = FontWeight.Bold)
-                }
-                OutlinedButton(
-                    onClick = onBackToInput,
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("Edit Input")
-                }
             }
         }
     }
 }
 
 /**
- * High-grade Investigation Report layout:
- * - REALITYCHECK INVESTIGATION REPORT header
- * - CLAIM
- * - VERDICT Banner with confidence gauge
- * - SYSTEM REASONING
- * - RETRIEVED EVIDENCE (SOURCE 01, SOURCE 02) with strict visual divide:
- *   SOURCE EVIDENCE vs SYSTEM ANALYSIS
- * - DISCLAIMER
+ * Screen 6: Truth Input Screen matching 06_truth_input_ref.png exactly.
  */
 @Composable
-private fun InvestigationReportSection(
-    result: RealityCheckResult,
-    onNewInvestigation: () -> Unit
+private fun TruthInputScreen(
+    claimText: String,
+    onClaimChanged: (String) -> Unit,
+    onAnalyze: () -> Unit,
+    onSelectQuick: (String) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        // Report Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                LifeOsEyebrow(text = "REALITYCHECK")
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "INVESTIGATION REPORT",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 0.5.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            ClaimTypeBadge(type = result.claim.claimType)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Screen Header matching Screen 6
+        Column {
+            Text(
+                text = "TRUTH INTELLIGENCE",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF4338CA),
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "RealityCheck",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF1E1B4B),
+                letterSpacing = (-0.3).sp
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "Examine claims. Find the truth.",
+                fontSize = 12.sp,
+                color = Color(0xFF64748B)
+            )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // 1. CLAIM
-        LifeOsEyebrow(text = "ANALYZED CLAIM")
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "\"${result.claim.rawText}\"",
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontStyle = FontStyle.Italic,
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // 2. VERDICT BANNER
-        VerdictReportBanner(verdict = result.verdict, confidence = result.confidence)
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // 3. SYSTEM REASONING
-        LifeOsEyebrow(text = "SYSTEM REASONING")
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = result.reasoning,
-            style = MaterialTheme.typography.bodyMedium,
-            lineHeight = 22.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(22.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. RETRIEVED EVIDENCE
-        Row(
+        // Main Input Card matching Screen 6
+        Surface(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            shadowElevation = 1.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                // Inner input box with link icon
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFF8FAFC))
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 14.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (claimText.isEmpty()) {
+                                Text(
+                                    text = "Enter a claim, question, or URL...",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF94A3B8)
+                                )
+                            }
+                            BasicTextField(
+                                value = claimText,
+                                onValueChange = onClaimChanged,
+                                textStyle = TextStyle(
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1E1B4B),
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "🔗",
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Character count right-aligned
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "${claimText.length}/500",
+                        fontSize = 10.sp,
+                        color = Color(0xFF94A3B8)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Investigate Claim Gradient Button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color(0xFF3B82F6),
+                                    Color(0xFF6366F1),
+                                    Color(0xFF8B5CF6)
+                                )
+                            )
+                        )
+                        .clickable(onClick = onAnalyze),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = "🔍", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Investigate Claim",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Quick Examples Section matching Screen 6
+        Text(
+            text = "Quick examples",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E1B4B)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val quickExamples = listOf(
+            "Antibiotics cure viral infections?",
+            "Is drinking 8 glasses of water necessary?",
+            "Earth orbits the Sun in 365 days?",
+            "5G causes health problems?"
+        )
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            quickExamples.forEach { example ->
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color(0xFFF1F5F9))
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
+                        .clickable { onSelectQuick(example) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = example,
+                        fontSize = 11.sp,
+                        color = Color(0xFF334155),
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(22.dp))
+
+        // Recent Investigations Section matching Screen 6
+        Text(
+            text = "Recent Investigations",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E1B4B)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSelectQuick("Earth orbits the Sun in approximately 365 days") },
+            shape = RoundedCornerShape(14.dp),
+            color = Color.White,
+            shadowElevation = 1.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left red icon badge
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFFEE2E2)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "🛡️", fontSize = 16.sp)
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Earth orbits the Sun in 365 d...",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1B4B)
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFDCFCE7))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "SUPPORTED",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF16A34A)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "86% • 2 sources",
+                        fontSize = 10.sp,
+                        color = Color(0xFF64748B)
+                    )
+                }
+
+                Text(
+                    text = "⋮",
+                    fontSize = 16.sp,
+                    color = Color(0xFF64748B),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(60.dp))
+    }
+}
+
+/**
+ * Screen 7: Truth Result Screen matching 07_truth_result_ref.png exactly.
+ */
+@Composable
+private fun TruthResultScreen(
+    result: RealityCheckResult,
+    onBack: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Header: INVESTIGATION REPORT matching Screen 7
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onBack),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            LifeOsEyebrow(text = "RETRIEVED EVIDENCE (${result.analyzedEvidence.size})")
             Text(
-                text = "Corroboration Corpus",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                fontSize = 10.sp
+                text = "INVESTIGATION REPORT",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2563EB),
+                letterSpacing = 1.sp
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (result.analyzedEvidence.isEmpty()) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-            ) {
-                Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "No direct evidence documents found in the current verified corpus.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else {
-            result.analyzedEvidence.forEachIndexed { index, analyzed ->
-                EvidenceReportItem(
-                    index = index + 1,
-                    analyzed = analyzed
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+        // Dynamic styling based on Verdict
+        val bannerGradients = when (result.verdict) {
+            Verdict.SUPPORTED -> listOf(Color(0xFF047857), Color(0xFF065F46), Color(0xFF064E3B))
+            Verdict.CONTRADICTED -> listOf(Color(0xFFB91C1C), Color(0xFF991B1B), Color(0xFF7F1D1D))
+            Verdict.MIXED -> listOf(Color(0xFFC2410C), Color(0xFF9A3412), Color(0xFF7C2D12))
+            Verdict.INSUFFICIENT_EVIDENCE -> listOf(Color(0xFFB45309), Color(0xFF92400E), Color(0xFF78350F))
+        }
+        val iconSymbol = when (result.verdict) {
+            Verdict.SUPPORTED -> "✓"
+            Verdict.CONTRADICTED -> "✕"
+            Verdict.MIXED -> "!"
+            Verdict.INSUFFICIENT_EVIDENCE -> "?"
+        }
+        val iconColor = when (result.verdict) {
+            Verdict.SUPPORTED -> Color(0xFF10B981)
+            Verdict.CONTRADICTED -> Color(0xFFEF4444)
+            Verdict.MIXED -> Color(0xFFF97316)
+            Verdict.INSUFFICIENT_EVIDENCE -> Color(0xFFF59E0B)
+        }
+        val subColor = when (result.verdict) {
+            Verdict.SUPPORTED -> Color(0xFFA7F3D0)
+            Verdict.CONTRADICTED -> Color(0xFFFECACA)
+            Verdict.MIXED -> Color(0xFFFED7AA)
+            Verdict.INSUFFICIENT_EVIDENCE -> Color(0xFFFDE68A)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 5. MANDATORY LEGAL & EPISTEMIC DISCLAIMER
+        // Unified Hero Card with Scenic Mountain Banner matching Screen 7
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            shadowElevation = 2.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                LifeOsEyebrow(
-                    text = "LEGAL & EPISTEMIC DISCLAIMER",
-                    color = MaterialTheme.colorScheme.outline
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = result.disclaimer,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 18.sp
-                )
-            }
-        }
+            Column {
+                // Top Scenic Banner
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(95.dp)
+                        .background(Brush.linearGradient(bannerGradients))
+                ) {
+                    // Stylized layered mountain ridges
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val w = size.width
+                        val h = size.height
 
-        Spacer(modifier = Modifier.height(24.dp))
+                        // Back ridge
+                        val backRidge = Path().apply {
+                            moveTo(w * 0.4f, h)
+                            lineTo(w * 0.65f, h * 0.35f)
+                            lineTo(w * 0.85f, h * 0.65f)
+                            lineTo(w * 0.95f, h * 0.25f)
+                            lineTo(w, h * 0.4f)
+                            lineTo(w, h)
+                            close()
+                        }
+                        drawPath(backRidge, color = iconColor.copy(alpha = 0.2f))
 
-        LifeOsPrimaryButton(
-            text = "Investigate Another Claim →",
-            onClick = onNewInvestigation,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
+                        // Front ridge
+                        val frontRidge = Path().apply {
+                            moveTo(w * 0.5f, h)
+                            lineTo(w * 0.72f, h * 0.45f)
+                            lineTo(w * 0.82f, h * 0.55f)
+                            lineTo(w * 0.92f, h * 0.15f)
+                            lineTo(w * 0.96f, h * 0.4f)
+                            lineTo(w, h * 0.3f)
+                            lineTo(w, h)
+                            close()
+                        }
+                        drawPath(frontRidge, color = iconColor.copy(alpha = 0.35f))
+                    }
 
-/**
- * High-contrast Verdict Banner:
- * Displays verdict, confidence percentage, gauge, and rationale.
- */
-@Composable
-private fun VerdictReportBanner(
-    verdict: Verdict,
-    confidence: com.mrashish18.lifeos.core.model.Confidence
-) {
-    val (bannerColor, onColor, label) = when (verdict) {
-        Verdict.SUPPORTED -> Triple(Color(0xFF1B5E20), Color(0xFFE8F5E9), "SUPPORTED")
-        Verdict.CONTRADICTED -> Triple(Color(0xFFB71C1C), Color(0xFFFFEBEE), "CONTRADICTED")
-        Verdict.MIXED -> Triple(Color(0xFFE65100), Color(0xFFFFF3E0), "MIXED EVIDENCE")
-        Verdict.INSUFFICIENT_EVIDENCE -> Triple(Color(0xFF37474F), Color(0xFFECEFF1), "INSUFFICIENT EVIDENCE")
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = bannerColor,
-        shadowElevation = 2.dp
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "EVALUATION VERDICT",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = onColor.copy(alpha = 0.8f),
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = onColor
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "${confidence.percentage}%",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = onColor
-                    )
-                    Text(
-                        text = "CONFIDENCE",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = onColor.copy(alpha = 0.8f),
-                        letterSpacing = 0.8.sp,
-                        fontSize = 10.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            LinearProgressIndicator(
-                progress = { confidence.score.toFloat() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(CircleShape),
-                color = onColor,
-                trackColor = onColor.copy(alpha = 0.3f)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = confidence.rationale,
-                style = MaterialTheme.typography.bodySmall,
-                color = onColor.copy(alpha = 0.9f)
-            )
-        }
-    }
-}
-
-/**
- * Report Evidence Item:
- * Enforces strict visual separation between:
- * [ SOURCE EVIDENCE ] vs [ SYSTEM ANALYSIS ]
- */
-@Composable
-private fun EvidenceReportItem(
-    index: Int,
-    analyzed: AnalyzedEvidence
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Header: SOURCE 01 / SOURCE 02
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "SOURCE 0$index",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = LifeOsIndigo700,
-                    letterSpacing = 1.sp
-                )
-                SourceQualityBadge(quality = analyzed.evidence.source.quality)
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = analyzed.evidence.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // ==========================================
-            // 1. RAW SOURCE EVIDENCE SECTION
-            // ==========================================
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    LifeOsEyebrow(
-                        text = "SOURCE EVIDENCE",
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "\"${analyzed.evidence.snippet}\"",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 20.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Publisher: ${analyzed.evidence.source.name}",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = analyzed.evidence.source.url,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 9.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // ==========================================
-            // 2. SYSTEM ANALYSIS SECTION
-            // ==========================================
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                color = LifeOsIndigo50.copy(alpha = 0.5f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsIndigo700.copy(alpha = 0.15f))
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                    // Content over banner
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        LifeOsEyebrow(
-                            text = "SYSTEM ANALYSIS",
-                            color = LifeOsIndigo700
-                        )
-                        Text(
-                            text = "Relevance Weight: ${(analyzed.weightContribution * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = LifeOsIndigo700,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 10.sp
-                        )
+                        // White badge with verdict icon
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color.White),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = iconSymbol,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Black,
+                                color = iconColor
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = result.verdict.name,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${result.confidence.percentage}% confidence",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = subColor
+                            )
+                        }
+                    }
+                }
+
+                // Details below scenic banner
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "\"${result.claim.rawText}\"",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1B4B),
+                        lineHeight = 20.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Dynamic Claim & Domain Tags
+                    val dynamicTags = buildList {
+                        add(result.claim.claimType.name)
+                        if (result.claim.rawText.contains(Regex("\\b\\d+\\b"))) add("NUMERICAL")
+                        val lower = result.claim.rawText.lowercase()
+                        if (lower.contains("orbit") || lower.contains("sun") || lower.contains("earth") || lower.contains("moon") || lower.contains("apollo")) add("ASTRONOMY")
+                        if (lower.contains("antibiotic") || lower.contains("virus") || lower.contains("infection") || lower.contains("water") || lower.contains("brain") || lower.contains("disease") || lower.contains("coffee")) add("HEALTH & BIOLOGY")
+                        if (lower.contains("kotlin") || lower.contains("release") || lower.contains("code") || lower.contains("5g") || lower.contains("network")) add("TECHNOLOGY")
+                    }.distinct()
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        dynamicTags.forEach { tag ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFEFF6FF))
+                                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = tag,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2563EB)
+                                )
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        StanceBadge(stance = analyzed.stance)
-                    }
-
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = analyzed.analysisNotes,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        text = "Key Takeaway",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E1B4B)
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = result.confidence.rationale,
+                        fontSize = 11.sp,
+                        color = Color(0xFF475569),
+                        lineHeight = 16.sp
                     )
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun StanceBadge(stance: EvidenceStance) {
-    val (bgColor, textColor, label) = when (stance) {
-        EvidenceStance.SUPPORTS -> Triple(LifeOsGreen50, LifeOsGreen700, "Supports Claim")
-        EvidenceStance.CONTRADICTS -> Triple(LifeOsRed50, LifeOsRed700, "Contradicts Claim")
-        EvidenceStance.MENTIONS -> Triple(LifeOsSlate100, LifeOsSlate700, "Contextual Mention")
-    }
+        Spacer(modifier = Modifier.height(18.dp))
 
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = bgColor
-    ) {
+        // Evidence Section matching Screen 7
         Text(
-            text = label,
-            color = textColor,
-            style = MaterialTheme.typography.labelSmall,
+            text = "Evidence (${result.analyzedEvidence.size})",
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            fontSize = 10.sp,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+            color = Color(0xFF2563EB)
         )
-    }
-}
+        Spacer(modifier = Modifier.height(10.dp))
 
-@Composable
-private fun SourceQualityBadge(quality: SourceQuality) {
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
-    ) {
-        Text(
-            text = quality.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        )
-    }
-}
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            result.analyzedEvidence.forEachIndexed { index, analyzed ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    color = Color.White,
+                    shadowElevation = 1.dp,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Source 0${index + 1}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2563EB)
+                            )
 
-@Composable
-private fun ClaimTypeBadge(type: ClaimType) {
-    val (bgColor, textColor) = when (type) {
-        ClaimType.FACTUAL -> LifeOsBlue50 to LifeOsBlue700
-        ClaimType.NUMERICAL -> LifeOsTeal50 to LifeOsTeal700
-        ClaimType.TEMPORAL -> LifeOsIndigo50 to LifeOsIndigo700
-        ClaimType.CAUSAL -> LifeOsAmber50 to LifeOsAmber700
-        ClaimType.OPINION -> Color(0xFFF3E5F5) to Color(0xFF7B1FA2)
-        ClaimType.UNSUPPORTED -> LifeOsRed50 to LifeOsRed700
-    }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFF1F5F9))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = analyzed.evidence.source.quality.label,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF475569)
+                                )
+                            }
+                        }
 
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        color = bgColor
-    ) {
-        Text(
-            text = type.name,
-            color = textColor,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            fontSize = 10.sp,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = analyzed.evidence.source.name,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E1B4B)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "\"${analyzed.evidence.snippet}\"",
+                            fontSize = 11.sp,
+                            color = Color(0xFF475569),
+                            lineHeight = 16.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Read source →",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2563EB)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(60.dp))
     }
 }

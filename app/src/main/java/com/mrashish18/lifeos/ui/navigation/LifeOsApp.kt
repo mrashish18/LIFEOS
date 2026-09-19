@@ -63,6 +63,7 @@ import com.mrashish18.lifeos.feature.intelligence.IntelligenceScreen
 import com.mrashish18.lifeos.feature.realitycheck.RealityCheckScreen
 import com.mrashish18.lifeos.feature.realitycheck.RealityCheckViewModel
 import com.mrashish18.lifeos.feature.resilience.ResilienceScreen
+import com.mrashish18.lifeos.feature.resilience.ResilienceViewModel
 import com.mrashish18.lifeos.feature.tasks.TasksScreen
 import com.mrashish18.lifeos.feature.tasks.TasksViewModel
 import com.mrashish18.lifeos.ui.theme.LifeOsIndigo100
@@ -77,6 +78,7 @@ fun LifeOsApp(
     dashboardViewModel: DashboardViewModel,
     tasksViewModel: TasksViewModel,
     realityCheckViewModel: RealityCheckViewModel,
+    resilienceViewModel: ResilienceViewModel,
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(LifeOsDestination.DASHBOARD) }
@@ -111,7 +113,9 @@ fun LifeOsApp(
                 LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(
                     viewModel = realityCheckViewModel
                 )
-                LifeOsDestination.RESILIENCE -> ResilienceScreen()
+                LifeOsDestination.RESILIENCE -> ResilienceScreen(
+                    viewModel = resilienceViewModel
+                )
             }
         }
     }
@@ -127,27 +131,32 @@ private fun LifeOsBottomNavigationBar(
     onSelectDestination: (LifeOsDestination) -> Unit
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-        shadowElevation = 10.dp,
-        border = BorderStroke(1.dp, LifeOsSlate200.copy(alpha = 0.8f))
+        color = Color.White,
+        tonalElevation = 2.dp,
+        shadowElevation = 8.dp,
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .height(64.dp)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            LifeOsDestination.values().forEach { destination ->
-                val isSelected = currentDestination == destination
-                LifeOsNavigationTab(
-                    destination = destination,
-                    isSelected = isSelected,
-                    onClick = { onSelectDestination(destination) }
-                )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp)
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LifeOsDestination.values().forEach { destination ->
+                    val isSelected = currentDestination == destination
+                    LifeOsNavigationTab(
+                        destination = destination,
+                        isSelected = isSelected,
+                        onClick = { onSelectDestination(destination) }
+                    )
+                }
             }
         }
     }
@@ -174,19 +183,8 @@ private fun LifeOsNavigationTab(
         LifeOsDestination.RESILIENCE -> NavDestinationSpec(Icons.Filled.Hub, Icons.Outlined.Hub, "Mesh")
     }
 
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected) LifeOsIndigo50 else Color.Transparent,
-        label = "tabContainerColor"
-    )
-    val contentColor by animateColorAsState(
-        targetValue = if (isSelected) LifeOsIndigo700 else LifeOsSlate700,
-        label = "tabContentColor"
-    )
-    val iconScale by animateFloatAsState(
-        targetValue = if (isSelected) 1.06f else 1.0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "tabIconScale"
-    )
+    val activeColor = Color(0xFF4338CA)
+    val inactiveColor = Color(0xFF64748B)
 
     Column(
         modifier = Modifier
@@ -197,37 +195,33 @@ private fun LifeOsNavigationTab(
                 role = Role.Tab,
                 onClick = onClick
             )
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Compact Active Icon Pill Container
         Box(
             modifier = Modifier
-                .height(28.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(containerColor)
-                .padding(horizontal = 12.dp, vertical = 3.dp),
+                .height(26.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(if (isSelected) activeColor else Color.Transparent)
+                .padding(horizontal = 14.dp, vertical = 3.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isSelected) spec.filledIcon else spec.outlinedIcon,
                 contentDescription = spec.label,
-                tint = contentColor,
-                modifier = Modifier
-                    .size(20.dp)
-                    .scale(iconScale)
+                tint = if (isSelected) Color.White else inactiveColor,
+                modifier = Modifier.size(18.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // High-contrast, easily readable label
         Text(
             text = spec.label,
-            fontSize = 11.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-            color = contentColor,
+            fontSize = 10.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) activeColor else inactiveColor,
             maxLines = 1
         )
     }

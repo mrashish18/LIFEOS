@@ -73,7 +73,7 @@ val LifeOsElectricIndigo = Color(0xFF4F46E5)
 
 // Selective Brand Gradients for Hero and Primary Focus CTAs
 val LifeOsPrimaryGradient = androidx.compose.ui.graphics.Brush.horizontalGradient(
-    listOf(Color(0xFF1E3A8A), Color(0xFF4338CA))
+    listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
 )
 val LifeOsFocusBorderGradient = androidx.compose.ui.graphics.Brush.linearGradient(
     listOf(Color(0xFF3B82F6), Color(0xFF818CF8))
@@ -81,3 +81,52 @@ val LifeOsFocusBorderGradient = androidx.compose.ui.graphics.Brush.linearGradien
 val LifeOsHeroSubtleGradient = androidx.compose.ui.graphics.Brush.verticalGradient(
     listOf(Color(0xFFF8FAFC), Color(0xFFEEF2FF).copy(alpha = 0.5f))
 )
+
+// ==========================================
+// Central Semantic Design System Tokens
+// ==========================================
+object LifeOsColors {
+    val primary = Color(0xFF4F46E5)
+    val primaryStrong = Color(0xFF4338CA)
+    val secondary = Color(0xFF7C3AED)
+    val accentCyan = Color(0xFF06B6D4)
+    val success = Color(0xFF10B981)
+    val warning = Color(0xFFF59E0B)
+    val error = Color(0xFFEF4444)
+    val background = Color(0xFFF8FAFC)
+    val surface = Color(0xFFFFFFFF)
+    val surfaceSoft = Color(0xFFF1F5F9)
+    val surfaceGlass = Color(0xF8FFFFFF)
+    val border = Color(0xFFE2E8F0)
+    val borderSubtle = Color(0xFFF1F5F9)
+    val textPrimary = Color(0xFF0F172A)
+    val textSecondary = Color(0xFF475569)
+    val textMuted = Color(0xFF94A3B8)
+}
+
+object LifeOsGradients {
+    val primary = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
+    )
+    val emergency = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFFEF4444), Color(0xFFF43F5E))
+    )
+    val focus = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF2563EB), Color(0xFF4F46E5))
+    )
+    val trust = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF2563EB), Color(0xFF06B6D4))
+    )
+    val success = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF059669), Color(0xFF10B981))
+    )
+    val heroAtmosphere = androidx.compose.ui.graphics.Brush.verticalGradient(
+        listOf(Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF312E81))
+    )
+    val cardSurface = androidx.compose.ui.graphics.Brush.verticalGradient(
+        listOf(Color(0xFFFFFFFF), Color(0xFFF8FAFC))
+    )
+    val topAura = androidx.compose.ui.graphics.Brush.verticalGradient(
+        listOf(Color(0xFFEEF2FF), Color(0xFFF8FAFC))
+    )
+}

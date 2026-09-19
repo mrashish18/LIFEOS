@@ -5,8 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.mrashish18.lifeos.data.local.dao.BehaviorEventDao
+import com.mrashish18.lifeos.data.local.dao.EmergencyMessageDao
 import com.mrashish18.lifeos.data.local.dao.TaskDao
 import com.mrashish18.lifeos.data.local.entity.BehaviorEventEntity
+import com.mrashish18.lifeos.data.local.entity.EmergencyMessageEntity
 import com.mrashish18.lifeos.data.local.entity.TaskEntity
 
 /**
@@ -15,15 +17,17 @@ import com.mrashish18.lifeos.data.local.entity.TaskEntity
 @Database(
     entities = [
         TaskEntity::class,
-        BehaviorEventEntity::class
+        BehaviorEventEntity::class,
+        EmergencyMessageEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class LifeOsDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
     abstract fun behaviorEventDao(): BehaviorEventDao
+    abstract fun emergencyMessageDao(): EmergencyMessageDao
 
     companion object {
         private const val DATABASE_NAME = "lifeos_database.db"

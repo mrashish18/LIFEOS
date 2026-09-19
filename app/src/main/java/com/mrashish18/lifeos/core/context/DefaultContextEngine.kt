@@ -47,6 +47,9 @@ class DefaultContextEngine(
     }
 
     override fun observeSnapshot(): Flow<ContextSnapshot> = flow {
-        emit(captureSnapshot())
+        while (true) {
+            emit(captureSnapshot())
+            kotlinx.coroutines.delay(2000)
+        }
     }
 }

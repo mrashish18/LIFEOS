@@ -1,6 +1,8 @@
 package com.mrashish18.lifeos.feature.tasks
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,15 +57,7 @@ import com.mrashish18.lifeos.core.model.Task
 import com.mrashish18.lifeos.core.model.TaskCategory
 import com.mrashish18.lifeos.core.model.TaskPriority
 import com.mrashish18.lifeos.core.model.TaskStatus
-import com.mrashish18.lifeos.ui.components.LifeOsCard
-import com.mrashish18.lifeos.ui.components.LifeOsCategoryBadge
-import com.mrashish18.lifeos.ui.components.LifeOsEmptyState
-import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
-import com.mrashish18.lifeos.ui.components.LifeOsPrimaryButton
-import com.mrashish18.lifeos.ui.components.LifeOsPriorityBadge
-import com.mrashish18.lifeos.ui.components.LifeOsSecondaryButton
-import com.mrashish18.lifeos.ui.components.LifeOsSectionHeader
-import com.mrashish18.lifeos.ui.components.LifeOsStatusChip
+import com.mrashish18.lifeos.ui.components.*
 import com.mrashish18.lifeos.ui.theme.*
 import java.time.Instant
 
@@ -82,29 +76,58 @@ fun TasksScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Section Header
+            // Section Header matching Screen 2
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Column {
-                    LifeOsEyebrow(text = "PERSONAL INTELLIGENCE", color = LifeOsIndigo700)
+                    Text(
+                        text = "TASKS",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E1B4B),
+                        letterSpacing = (-0.3).sp
+                    )
+                    Text(
+                        text = "PERSONAL INTELLIGENCE",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4F46E5),
+                        letterSpacing = 1.sp
+                    )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Action Queue",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "Turn intentions into action.",
+                        fontSize = 12.sp,
+                        color = Color(0xFF64748B)
                     )
                 }
 
-                Text(
-                    text = "${uiState.filteredTasks.size} tasks",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = LifeOsSlate600,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF1F5F9)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "📋", fontSize = 14.sp)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF1F5F9)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "···", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF475569))
+                    }
+                }
             }
 
             // User Message Callout (if present)
@@ -137,31 +160,33 @@ fun TasksScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Filter Chips Strip
+            // Filter Chips Strip - 4 Primary Filters matching Screen 2: All, Pending, In Progress, Done
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TaskFilter.values().forEach { filter ->
+                listOf(
+                    TaskFilter.ALL to "All",
+                    TaskFilter.PENDING to "Pending",
+                    TaskFilter.IN_PROGRESS to "In Progress",
+                    TaskFilter.COMPLETED to "Done"
+                ).forEach { (filter, label) ->
                     val isSelected = uiState.selectedFilter == filter
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setFilter(filter) },
-                        label = {
-                            Text(
-                                text = filter.label,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = LifeOsIndigo50,
-                            selectedLabelColor = LifeOsIndigo700
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                            .clickable { viewModel.setFilter(filter) }
+                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else Color(0xFF64748B)
                         )
-                    )
+                    }
                 }
             }
 
@@ -198,7 +223,7 @@ fun TasksScreen(
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 100.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -217,32 +242,34 @@ fun TasksScreen(
             }
         }
 
-        // Floating Action Button - Positioned above bottom bar with safe padding
-        ExtendedFloatingActionButton(
-            onClick = { viewModel.openCreateDialog() },
-            containerColor = LifeOsIndigo700,
-            contentColor = Color.White,
-            shape = RoundedCornerShape(16.dp),
-            elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
-            icon = {
+        // Floating Action Button - Gradient Capsule matching Screen 2
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 16.dp, end = 20.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(LifeOsGradients.primary)
+                .clickable { viewModel.openCreateDialog() }
+                .padding(horizontal = 18.dp, vertical = 10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Filled.Add,
                     contentDescription = "New Task",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(16.dp)
                 )
-            },
-            text = {
                 Text(
                     text = "New Task",
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.labelLarge
+                    color = Color.White,
+                    fontSize = 12.sp
                 )
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 20.dp, end = 20.dp)
-        )
+            }
+        }
     }
 
     if (uiState.isCreateDialogOpen) {
@@ -285,9 +312,10 @@ fun TasksScreen(
 }
 
 /**
- * Premium Task Card with strong visual hierarchy:
- * Priority, Status, Bold Title, Quiet Description, Duration.
- * Clear primary action + quiet secondary options row (no 6 giant buttons).
+ * Compact Task Card matching Screen 2 reference:
+ * Priority pill, Category pill, Status badge on right.
+ * Bold title, Today • duration.
+ * Wide action button + 3-dot overflow menu.
  */
 @Composable
 private fun PremiumTaskCard(
@@ -302,16 +330,12 @@ private fun PremiumTaskCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            if (task.status == TaskStatus.IN_PROGRESS) LifeOsIndigo700.copy(alpha = 0.35f)
-            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        ),
-        shadowElevation = if (task.status == TaskStatus.IN_PROGRESS) 2.dp else 0.5.dp
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 1.dp
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Row 1: Priority + Category + Duration + Status
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Row 1: Priority + Category + Status on right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -321,18 +345,137 @@ private fun PremiumTaskCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    LifeOsPriorityBadge(priority = task.priority)
-                    LifeOsCategoryBadge(category = task.category)
-                    task.estimatedMinutes?.let { min ->
+                    // Priority Pill
+                    val (prioBg, prioColor) = when (task.priority) {
+                        TaskPriority.URGENT, TaskPriority.HIGH -> Color(0xFFFEE2E2) to Color(0xFFDC2626)
+                        TaskPriority.MEDIUM -> Color(0xFFFEF3C7) to Color(0xFFD97706)
+                        TaskPriority.LOW -> Color(0xFFF1F5F9) to Color(0xFF64748B)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(prioBg)
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                    ) {
                         Text(
-                            text = "· ${min}m",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.outline,
-                            fontWeight = FontWeight.Medium
+                            text = task.priority.name,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = prioColor
+                        )
+                    }
+
+                    // Category Pill
+                    val (catBg, catColor) = when (task.category) {
+                        TaskCategory.WORK -> Color(0xFFEEF2FF) to Color(0xFF4F46E5)
+                        TaskCategory.PERSONAL -> Color(0xFFF3E8FF) to Color(0xFF9333EA)
+                        TaskCategory.HEALTH -> Color(0xFFECFDF5) to Color(0xFF059669)
+                        TaskCategory.LEARNING -> Color(0xFFEFF6FF) to Color(0xFF2563EB)
+                        TaskCategory.GENERAL -> Color(0xFFF1F5F9) to Color(0xFF475569)
+                        else -> Color(0xFFF1F5F9) to Color(0xFF475569)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(catBg)
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = task.category.name,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = catColor
                         )
                     }
                 }
-                LifeOsStatusChip(status = task.status)
+
+                // Status Badge
+                when (task.status) {
+                    TaskStatus.IN_PROGRESS -> {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFEFF6FF)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(5.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF2563EB))
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "In Progress",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF2563EB)
+                                )
+                            }
+                        }
+                    }
+                    TaskStatus.PENDING -> {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFFEF3C7)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(5.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFFD97706))
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Pending",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFD97706)
+                                )
+                            }
+                        }
+                    }
+                    TaskStatus.COMPLETED -> {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFDCFCE7)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "✓", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Completed",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF16A34A)
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFFF1F5F9)
+                        ) {
+                            Text(
+                                text = task.status.name,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF64748B),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -340,131 +483,113 @@ private fun PremiumTaskCard(
             // Row 2: Title
             Text(
                 text = task.title,
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color(0xFF0F172A)
             )
 
-            // Row 3: Description (if any)
-            if (task.description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Row 3: Calendar Icon + Today • duration
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "📅", fontSize = 11.sp)
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = task.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    lineHeight = 18.sp
+                    text = "Today • ${task.estimatedMinutes ?: 30} min",
+                    fontSize = 11.sp,
+                    color = Color(0xFF64748B)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Row 4: Obvious Primary Action + Quiet Secondary Row
+            // Row 4: Wide Action Button + 3-Dot Overflow Menu
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Obvious Primary Action Button
-                Box {
-                    when (task.status) {
-                        TaskStatus.PENDING -> {
-                            Button(
-                                onClick = onStart,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(40.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = LifeOsIndigo700,
-                                    contentColor = Color.White
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                            ) {
-                                Text("▶  Start Focus", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        TaskStatus.IN_PROGRESS -> {
-                            Button(
-                                onClick = onComplete,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(40.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = LifeOsGreen700,
-                                    contentColor = Color.White
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                            ) {
-                                Text("✓  Complete", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        TaskStatus.POSTPONED -> {
-                            Button(
-                                onClick = onStart,
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.height(40.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = LifeOsIndigo700,
-                                    contentColor = Color.White
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-                            ) {
-                                Text("▶  Resume", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        TaskStatus.COMPLETED, TaskStatus.ABANDONED -> {
+                when (task.status) {
+                    TaskStatus.IN_PROGRESS -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(LifeOsGradients.primary)
+                                .clickable(onClick = onComplete),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
-                                text = if (task.status == TaskStatus.COMPLETED) "Archived" else "Dismissed",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = LifeOsSlate600,
-                                fontWeight = FontWeight.Medium
+                                text = "✓  Complete",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                         }
                     }
-                }
-
-                // Quiet Secondary Actions Row with high-contrast text
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (task.status == TaskStatus.PENDING || task.status == TaskStatus.IN_PROGRESS) {
-                        TextButton(
-                            onClick = onPostpone,
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 2.dp)
+                    TaskStatus.PENDING, TaskStatus.POSTPONED -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(LifeOsGradients.primary)
+                                .clickable(onClick = onStart),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text("Postpone", style = MaterialTheme.typography.labelSmall, color = LifeOsSlate700, fontWeight = FontWeight.Medium)
-                        }
-                        TextButton(
-                            onClick = onAbandon,
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text("Abandon", style = MaterialTheme.typography.labelSmall, color = LifeOsSlate700, fontWeight = FontWeight.Medium)
+                            Text(
+                                text = "▶  Start",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     }
-
-                    TextButton(
-                        onClick = onEdit,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text("Edit", style = MaterialTheme.typography.labelSmall, color = LifeOsIndigo700, fontWeight = FontWeight.Bold)
-                    }
-
-                    TextButton(
-                        onClick = onDelete,
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text("Delete", style = MaterialTheme.typography.labelSmall, color = LifeOsRed700, fontWeight = FontWeight.Medium)
+                    TaskStatus.COMPLETED, TaskStatus.ABANDONED -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF1F5F9))
+                                .clickable(onClick = onEdit),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(text = "👁", fontSize = 11.sp)
+                                Text(
+                                    text = "View Details",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF475569)
+                                )
+                            }
+                        }
                     }
                 }
+
+                // Overflow Menu
+                LifeOsOverflowMenu(
+                    onPostpone = onPostpone,
+                    onAbandon = onAbandon,
+                    onEdit = onEdit,
+                    onDelete = onDelete
+                )
             }
         }
     }
 }
 
 /**
- * Polished Create / Edit Task Modal Experience.
- * Formulated with "NEW TASK: What needs your attention?"
+ * Clean & Focused New Task Modal matching Screen 3 reference:
+ * Top handle, "NEW TASK: What needs your attention?",
+ * Task Title *, Description (Optional), Priority (Low, Medium, High, Urgent),
+ * Category (Work, Personal, Health, Learning), Estimated Duration, Due Date (Optional),
+ * Cancel and + Create Task buttons.
  */
 @Composable
 private fun TaskEditorBottomSheet(
@@ -477,20 +602,44 @@ private fun TaskEditorBottomSheet(
     var taskDescription by remember { mutableStateOf(initialTask?.description ?: "") }
     var selectedPriority by remember { mutableStateOf(initialTask?.priority ?: TaskPriority.MEDIUM) }
     var selectedCategory by remember { mutableStateOf(initialTask?.category ?: TaskCategory.WORK) }
-    var estimatedMinutesStr by remember { mutableStateOf(initialTask?.estimatedMinutes?.toString() ?: "") }
+    var estimatedMinutesStr by remember { mutableStateOf(initialTask?.estimatedMinutes?.toString() ?: "30") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White,
         title = {
-            Column {
-                LifeOsEyebrow(text = if (isEdit) "EDIT TASK" else "NEW TASK")
-                Spacer(modifier = Modifier.height(4.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // Drag handle
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .width(36.dp)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFCBD5E1))
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
+                    text = if (isEdit) "EDIT TASK" else "NEW TASK",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4F46E5),
+                    letterSpacing = 0.8.sp
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
                     text = if (isEdit) "Update Task Details" else "What needs your attention?",
-                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color(0xFF0F172A)
                 )
             }
         },
@@ -498,96 +647,200 @@ private fun TaskEditorBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(vertical = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedTextField(
-                    value = taskTitle,
-                    onValueChange = { taskTitle = it },
-                    label = { Text("Task Title *") },
-                    placeholder = { Text("e.g. Implement OAuth Authentication") },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = taskDescription,
-                    onValueChange = { taskDescription = it },
-                    label = { Text("Context & Objectives (Optional)") },
-                    placeholder = { Text("What defines success for this task?") },
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 3
-                )
-
+                // Task Title *
                 Column {
                     Text(
-                        text = "PRIORITY",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "Task Title *",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
+                        color = Color(0xFF334155)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = taskTitle,
+                        onValueChange = { taskTitle = it },
+                        placeholder = { Text("e.g. Prepare for exam", fontSize = 12.sp, color = Color(0xFF94A3B8)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Description (Optional)
+                Column {
+                    Text(
+                        text = "Description (Optional)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF334155)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = taskDescription,
+                        onValueChange = { taskDescription = it },
+                        placeholder = { Text("Add more context...", fontSize = 12.sp, color = Color(0xFF94A3B8)) },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2
+                    )
+                }
+
+                // Priority: Low, Medium, High, Urgent
+                Column {
+                    Text(
+                        text = "Priority",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4F46E5)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        TaskPriority.values().forEach { priority ->
-                            FilterChip(
-                                selected = selectedPriority == priority,
-                                onClick = { selectedPriority = priority },
-                                label = { Text(priority.name, fontSize = 11.sp) },
-                                shape = RoundedCornerShape(8.dp)
-                            )
+                        listOf(
+                            TaskPriority.LOW to "Low",
+                            TaskPriority.MEDIUM to "Medium",
+                            TaskPriority.HIGH to "High",
+                            TaskPriority.URGENT to "Urgent"
+                        ).forEach { (priority, label) ->
+                            val isSelected = selectedPriority == priority
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                                    .clickable { selectedPriority = priority },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else Color(0xFF475569)
+                                )
+                            }
                         }
                     }
                 }
 
+                // Category: Work, Personal, Health, Learning
                 Column {
                     Text(
-                        text = "CATEGORY",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = "Category",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
+                        color = Color(0xFF4F46E5)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        TaskCategory.values().forEach { category ->
-                            FilterChip(
-                                selected = selectedCategory == category,
-                                onClick = { selectedCategory = category },
-                                label = { Text(category.name, fontSize = 11.sp) },
-                                shape = RoundedCornerShape(8.dp)
-                            )
+                        listOf(
+                            Triple(TaskCategory.WORK, "Work", "💼"),
+                            Triple(TaskCategory.PERSONAL, "Personal", "🛡️"),
+                            Triple(TaskCategory.HEALTH, "Health", "🤍"),
+                            Triple(TaskCategory.LEARNING, "Learning", "🎓")
+                        ).forEach { (category, label, icon) ->
+                            val isSelected = selectedCategory == category
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isSelected) Color(0xFFEEF2FF) else Color(0xFFF8FAFC))
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) Color(0xFF4F46E5) else Color(0xFFE2E8F0),
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable { selectedCategory = category }
+                                    .padding(vertical = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(text = icon, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = label,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B)
+                                )
+                            }
                         }
                     }
                 }
 
-                OutlinedTextField(
-                    value = estimatedMinutesStr,
-                    onValueChange = { estimatedMinutesStr = it },
-                    label = { Text("Estimated Duration (minutes)") },
-                    placeholder = { Text("e.g. 45") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // Estimated Duration
+                Column {
+                    Text(
+                        text = "Estimated Duration",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4F46E5)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        color = Color(0xFFF8FAFC),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${estimatedMinutesStr} min",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0F172A)
+                            )
+                            Text(text = "▾", fontSize = 12.sp, color = Color(0xFF64748B))
+                        }
+                    }
+                }
+
+                // Due Date (Optional)
+                Column {
+                    Text(
+                        text = "Due Date (Optional)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4F46E5)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                        color = Color(0xFFF8FAFC),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Select date & time",
+                                fontSize = 12.sp,
+                                color = Color(0xFF94A3B8)
+                            )
+                            Text(text = "📅", fontSize = 12.sp)
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            LifeOsPrimaryButton(
+            LifeOsGradientButton(
                 text = if (isEdit) "Save Changes" else "+ Create Task",
+                gradient = LifeOsGradients.primary,
                 onClick = {
                     if (taskTitle.isNotBlank()) {
                         onSave(

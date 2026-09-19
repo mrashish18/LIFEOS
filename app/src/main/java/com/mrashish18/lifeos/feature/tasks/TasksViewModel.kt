@@ -23,7 +23,7 @@ enum class TaskFilter(val label: String) {
     ALL("All"),
     PENDING("Pending"),
     IN_PROGRESS("In Progress"),
-    COMPLETED("Completed"),
+    COMPLETED("Done"),
     POSTPONED("Postponed"),
     ABANDONED("Abandoned")
 }

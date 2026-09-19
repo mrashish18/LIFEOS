@@ -2,6 +2,7 @@ package com.mrashish18.lifeos.feature.goals
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,164 +31,328 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
-import com.mrashish18.lifeos.ui.theme.LifeOsIndigo50
-import com.mrashish18.lifeos.ui.theme.LifeOsIndigo700
-import com.mrashish18.lifeos.ui.theme.LifeOsTeal50
-import com.mrashish18.lifeos.ui.theme.LifeOsTeal700
+import com.mrashish18.lifeos.ui.components.LifeOsFilterPill
+import com.mrashish18.lifeos.ui.components.ScenicGoalBanner
+import com.mrashish18.lifeos.ui.theme.*
 
 @Composable
 fun GoalsScreen(modifier: Modifier = Modifier) {
+    var selectedFilter by remember { mutableStateOf("All") }
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .padding(horizontal = 18.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
-        // Header
+        // Section Header matching Screen 4
         Column {
-            LifeOsEyebrow(text = "GOALS")
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Long-Term Direction",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                text = "GOALS",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF1E1B4B),
+                letterSpacing = (-0.3).sp
             )
-            Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Strategic alignment between daily execution and life outcomes.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "LONG-TERM DIRECTION",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF4F46E5),
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "Small steps. A bigger you.",
+                fontSize = 12.sp,
+                color = Color(0xFF64748B)
             )
         }
 
-        // COMING NEXT Roadmap Banner
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            color = LifeOsIndigo50,
-            border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsIndigo700.copy(alpha = 0.25f))
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "◎", color = LifeOsIndigo700, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "ARCHITECTURE ROADMAP",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = LifeOsIndigo700,
-                        letterSpacing = 0.8.sp
-                    )
-                }
+        // 1. Scenic Mountain Banner with quote matching Screen 4
+        ScenicGoalBanner()
 
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.surface
+        // 2. Filter Pills: All, Active, Completed
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("All", "Active", "Completed").forEach { filter ->
+                val isSelected = selectedFilter == filter
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                        .clickable { selectedFilter = filter }
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "COMING NEXT",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        text = filter,
+                        fontSize = 11.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else Color(0xFF64748B)
                     )
                 }
             }
         }
 
-        // Structured Goal Direction Rows
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-                .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            LifeOsEyebrow(text = "OBJECTIVE CADENCE")
+        // 3. Strategic Objectives Cards matching Screen 4 reference
+        ReferenceGoalCard(
+            title = "Adaptive Autonomous Productivity",
+            tag = "Q4 2026",
+            tagBg = Color(0xFFDCFCE7),
+            tagColor = Color(0xFF16A34A),
+            description = "Turn daily execution into long-term compounding growth.",
+            progress = 0.30f
+        )
 
-            GoalDirectionItem(
-                category = "WORK & INTEL",
-                title = "Adaptive Autonomous Productivity",
-                targetHorizon = "Q4 Milestone",
-                relationship = "Daily tasks feed behavioral velocity into Decision Engine to pace multi-week milestones."
-            )
+        ReferenceGoalCard(
+            title = "Circadian Rhythm & Workload Pacing",
+            tag = "Continuous",
+            tagBg = Color(0xFFEFF6FF),
+            tagColor = Color(0xFF2563EB),
+            description = "Maintain healthy balance and prevent burnout.",
+            progress = 0.60f
+        )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        ReferenceGoalCard(
+            title = "Deep Work Focus Habituation",
+            tag = "Ongoing",
+            tagBg = Color(0xFFF1F5F9),
+            tagColor = Color(0xFF64748B),
+            description = "Build consistent, distraction-free focus sessions.",
+            progress = 0.20f
+        )
 
-            GoalDirectionItem(
-                category = "HEALTH & FOCUS",
-                title = "Circadian Rhythm & Workload Pacing",
-                targetHorizon = "Continuous",
-                relationship = "Prevents burnout by enforcing rest periods when Context Engine detects peak workload levels."
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-            GoalDirectionItem(
-                category = "LEARNING & MASTERY",
-                title = "Deep Work Focus Habituation",
-                targetHorizon = "Ongoing",
-                relationship = "Maintains category momentum and tracks uninterrupted focus streaks in the Behavior Model."
-            )
-        }
-
-        Spacer(modifier = Modifier.height(56.dp))
+        Spacer(modifier = Modifier.height(48.dp))
     }
 }
 
 @Composable
-private fun GoalDirectionItem(
+private fun ReferenceGoalCard(
+    title: String,
+    tag: String,
+    tagBg: Color,
+    tagColor: Color,
+    description: String,
+    progress: Float
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Title
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Tag Pill
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(tagBg)
+                    .padding(horizontal = 7.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = tag,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = tagColor
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // Description
+            Text(
+                text = description,
+                fontSize = 11.sp,
+                color = Color(0xFF64748B),
+                lineHeight = 15.sp
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Progress Bar + Percentage Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF1F5F9))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .height(6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                    listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                                )
+                            )
+                    )
+                }
+
+                Text(
+                    text = "${(progress * 100).toInt()}%",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4338CA)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StrategicGoalCard(
     category: String,
     title: String,
-    targetHorizon: String,
-    relationship: String
+    horizon: String,
+    progress: Float,
+    completedMilestones: Int,
+    totalMilestones: Int,
+    dailyTaskLink: String,
+    currentMilestoneName: String
 ) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsSlate200.copy(alpha = 0.8f)),
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = LifeOsIndigo50
+                ) {
+                    Text(
+                        text = category,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOsIndigo700,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        letterSpacing = 0.6.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+                Text(
+                    text = horizon,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
-                text = category,
-                style = MaterialTheme.typography.labelSmall,
-                color = LifeOsIndigo700,
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                fontSize = 9.sp,
-                letterSpacing = 0.6.sp
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text = targetHorizon,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                fontWeight = FontWeight.Medium
-            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Milestones: $completedMilestones / $totalMilestones",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${(progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOsIndigo700,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape)
+                    .background(LifeOsSlate100)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0.04f, 1f))
+                        .height(6.dp)
+                        .clip(CircleShape)
+                        .background(LifeOsGradients.primary)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = LifeOsSlate50.copy(alpha = 0.8f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsSlate200.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("▸", color = LifeOsIndigo700, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = currentMilestoneName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = dailyTaskLink,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.outline,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
         }
-        Spacer(modifier = Modifier.height(3.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = relationship,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 17.sp
-        )
     }
 }

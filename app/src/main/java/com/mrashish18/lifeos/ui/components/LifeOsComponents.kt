@@ -19,20 +19,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -568,5 +578,794 @@ fun LifeOsTaskRow(
 
         Spacer(modifier = Modifier.height(8.dp))
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    }
+}
+
+/**
+ * Context Strip: Displays current situation signals in a clean, elevated capsule.
+ */
+@Composable
+fun ContextStrip(
+    day: String,
+    time: String,
+    network: String,
+    stateLabel: String? = null,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(LifeOsGreen600)
+                )
+                Text(
+                    text = "$day · $time · $network",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp
+                )
+            }
+            if (stateLabel != null) {
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = LifeOsIndigo50
+                ) {
+                    Text(
+                        text = stateLabel.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOsIndigo700,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Status Pill badge with subtle dot.
+ */
+@Composable
+fun StatusPill(
+    label: String,
+    color: Color = LifeOsIndigo700,
+    backgroundColor: Color = LifeOsIndigo50,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp
+            )
+        }
+    }
+}
+
+/**
+ * Flagship Adaptive Recommendation Hero for the Dashboard.
+ * Answers "What matters right now?" with high visual authority.
+ */
+@Composable
+fun AdaptiveRecommendationHero(
+    title: String,
+    confidenceScore: Double,
+    explanation: String,
+    reasons: List<String>,
+    onStartFocus: () -> Unit,
+    modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, LifeOsIndigo600.copy(alpha = 0.35f)),
+        shadowElevation = 3.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "⚡",
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = "WHAT MATTERS NOW",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOsIndigo700,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.1.sp
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = LifeOsIndigo50
+                ) {
+                    Text(
+                        text = "${(confidenceScore * 100).toInt()}% CONFIDENCE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = LifeOsIndigo700,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                lineHeight = 26.sp
+            )
+
+            if (explanation.isNotBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = explanation,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 20.sp
+                )
+            }
+
+            if (reasons.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    reasons.take(3).forEach { reason ->
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "•",
+                                color = LifeOsIndigo700,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                            Text(
+                                text = reason,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = onStartFocus,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(46.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LifeOsIndigo700,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                ) {
+                    Text(
+                        text = "▶  START FOCUS",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                if (onDismiss != null) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.height(46.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Text("Later", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 3-dot contextual overflow menu for secondary task actions.
+ */
+@Composable
+fun LifeOsOverflowMenu(
+    onPostpone: () -> Unit,
+    onAbandon: () -> Unit,
+    onEdit: (() -> Unit)? = null,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(36.dp)
+        ) {
+            Text(
+                text = "⋮",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            if (onEdit != null) {
+                DropdownMenuItem(
+                    text = { Text("Edit Task") },
+                    onClick = {
+                        expanded = false
+                        onEdit()
+                    }
+                )
+            }
+            DropdownMenuItem(
+                text = { Text("Postpone to Later") },
+                onClick = {
+                    expanded = false
+                    onPostpone()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Abandon") },
+                onClick = {
+                    expanded = false
+                    onAbandon()
+                }
+            )
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text("Delete Task", color = LifeOsRed600) },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Emergency Message Lifecycle Timeline tracker.
+ * Visually shows state: CREATED -> QUEUED -> RELAYING -> SENT -> DELIVERED
+ */
+@Composable
+fun MessageLifecycleTimeline(
+    status: String,
+    modifier: Modifier = Modifier
+) {
+    val steps = listOf("CREATED", "QUEUED", "RELAY", "SENT", "DELIVERED")
+    val currentIndex = when (status.uppercase()) {
+        "DRAFT" -> 0
+        "CREATED" -> 0
+        "QUEUED" -> 1
+        "RELAYING" -> 2
+        "SENT" -> 3
+        "DELIVERED" -> 4
+        "FAILED", "EXPIRED", "DUPLICATE" -> -1
+        else -> 1
+    }
+
+    val isFailed = status.uppercase() in listOf("FAILED", "EXPIRED", "DUPLICATE")
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Circles & Connecting lines Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, _ ->
+                val isCompleted = !isFailed && index <= currentIndex
+                val isCurrent = !isFailed && index == currentIndex
+
+                Box(
+                    modifier = Modifier
+                        .size(if (isCurrent) 18.dp else 12.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isCurrent -> LifeOsIndigo600
+                                isCompleted -> LifeOsGreen600
+                                else -> MaterialTheme.colorScheme.outlineVariant
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCompleted && !isCurrent) {
+                        Text("✓", color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                    } else if (isCurrent) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                        )
+                    }
+                }
+
+                if (index < steps.size - 1) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(2.dp)
+                            .background(
+                                if (!isFailed && index < currentIndex) LifeOsGreen600
+                                else MaterialTheme.colorScheme.outlineVariant
+                            )
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Evenly spaced labels
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            steps.forEachIndexed { index, stepName ->
+                val isCompleted = !isFailed && index <= currentIndex
+                val isCurrent = !isFailed && index == currentIndex
+
+                Text(
+                    text = stepName,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 8.sp,
+                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isCurrent) LifeOsIndigo700 else if (isCompleted) LifeOsGreen700 else MaterialTheme.colorScheme.outline,
+                    maxLines = 1
+                )
+            }
+        }
+
+        if (isFailed) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Surface(
+                shape = RoundedCornerShape(6.dp),
+                color = LifeOsRed50,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+                    text = "STATUS: $status",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LifeOsRed700,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Modern gradient action button matching reference style.
+ */
+@Composable
+fun LifeOsGradientButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    gradient: Brush = LifeOsGradients.primary,
+    icon: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .background(if (enabled) gradient else Brush.linearGradient(listOf(LifeOsSlate300, LifeOsSlate400)))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (icon != null) {
+                    icon()
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                Text(
+                    text = text,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Filter capsule pill matching reference style.
+ */
+@Composable
+fun LifeOsFilterPill(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    activeGradient: Brush = LifeOsGradients.primary
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) Color.Transparent else LifeOsColors.surface,
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, LifeOsColors.border)
+    ) {
+        Box(
+            modifier = Modifier
+                .then(if (isSelected) Modifier.background(activeGradient) else Modifier)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = if (isSelected) Color.White else LifeOsColors.textSecondary,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+/**
+ * 2x2 metric tile for current situation.
+ */
+@Composable
+fun LifeOsMetricTile(
+    icon: ImageVector,
+    iconTint: Color,
+    iconBg: Color,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = LifeOsColors.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsColors.borderSubtle),
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(iconBg),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = label.uppercase(),
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = LifeOsColors.textMuted,
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = value,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = LifeOsColors.textPrimary
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Atmospheric dusk & mountain vector header for Dashboard matching reference Screen 1.
+ */
+@Composable
+fun ScenicMountainHeader(
+    systemStatus: String = "ACTIVE",
+    dateString: String = "Thu, 18 Sep 2026",
+    subtitle: String = "Your day, intelligently organized.",
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(LifeOsGradients.heroAtmosphere)
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .matchParentSize()
+            ) {
+                val w = size.width
+                val h = size.height
+
+                // Moon / star glow crest
+                drawCircle(
+                    color = Color(0xFF6366F1).copy(alpha = 0.25f),
+                    radius = w * 0.35f,
+                    center = androidx.compose.ui.geometry.Offset(w * 0.85f, h * 0.2f)
+                )
+
+                // Background mountain ridge
+                val bgPath = Path().apply {
+                    moveTo(0f, h * 0.75f)
+                    cubicTo(w * 0.25f, h * 0.5f, w * 0.45f, h * 0.7f, w * 0.7f, h * 0.45f)
+                    lineTo(w, h * 0.65f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(bgPath, color = Color(0xFF4338CA).copy(alpha = 0.45f))
+
+                // Foreground mountain ridge
+                val fgPath = Path().apply {
+                    moveTo(0f, h * 0.85f)
+                    cubicTo(w * 0.3f, h * 0.65f, w * 0.6f, h * 0.85f, w, h * 0.7f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(fgPath, color = Color(0xFF1E1B4B).copy(alpha = 0.85f))
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "LIFEOS",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = (-0.5).sp
+                        )
+                        Text(
+                            text = "ADAPTIVE INTELLIGENCE",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF818CF8),
+                            letterSpacing = 1.2.sp
+                        )
+                    }
+
+                    // System Active Badge
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFF1E1B4B).copy(alpha = 0.8f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF10B981))
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = "SYSTEM ACTIVE",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                letterSpacing = 0.6.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Understand. Decide. Adapt.",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = dateString,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFC7D2FE)
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = Color(0xFF94A3B8)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Scenic Goals Banner with winding road and quote overlay matching reference Screen 4.
+ */
+@Composable
+fun ScenicGoalBanner(
+    quote: String = "\"Disciplined today.\nA better tomorrow.\"",
+    author: String = "— LIFEOS",
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        color = Color.Transparent
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF1E293B), Color(0xFF0F172A), Color(0xFF064E3B))
+                    )
+                )
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .matchParentSize()
+            ) {
+                val w = size.width
+                val h = size.height
+
+                // Mountain silhouettes
+                val mtnPath = Path().apply {
+                    moveTo(0f, h * 0.7f)
+                    lineTo(w * 0.35f, h * 0.25f)
+                    lineTo(w * 0.65f, h * 0.6f)
+                    lineTo(w * 0.85f, h * 0.35f)
+                    lineTo(w, h * 0.75f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(mtnPath, color = Color(0xFF065F46).copy(alpha = 0.6f))
+
+                // Winding green path
+                val roadPath = Path().apply {
+                    moveTo(w * 0.45f, h * 0.4f)
+                    cubicTo(w * 0.4f, h * 0.6f, w * 0.6f, h * 0.75f, w * 0.5f, h)
+                    lineTo(w * 0.6f, h)
+                    cubicTo(w * 0.7f, h * 0.75f, w * 0.48f, h * 0.6f, w * 0.48f, h * 0.4f)
+                    close()
+                }
+                drawPath(roadPath, color = Color(0xFF10B981).copy(alpha = 0.85f))
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = quote,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    lineHeight = 20.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = author,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF6EE7B7),
+                    letterSpacing = 0.8.sp
+                )
+            }
+        }
     }
 }

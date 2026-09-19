@@ -17,13 +17,13 @@ LIFEOS organizes intelligence capabilities into three distinct domains:
 - **Focus**: Persistent tasks, user behavioral events, adaptive prioritization, and cognitive workload management.
 - **Goal**: Adaptive productivity without burnout, prioritizing tasks according to real-time availability, urgency, effort, and historical execution habits.
 
-### 2. Trust Intelligence (RealityCheck — Future Milestone)
+### 2. Trust Intelligence (RealityCheck — Active in Milestone 3)
 - **Focus**: Claim analysis, factual grounding, and evidence aggregation.
 - **Workflow**: Text/URL ingestion → claim extraction → evidence retrieval → source credibility weighting → confidence-calibrated summary.
 
-### 3. Resilience Intelligence (RescueMesh — Future Milestone)
-- **Focus**: Offline continuity and emergency peer communications.
-- **Workflow**: Local-first message queues, peer-to-peer ad-hoc relay, Time-to-Live (TTL) tracking, duplicate suppression, and opportunistic synchronization when connectivity resumes.
+### 3. Resilience Intelligence (RescueMesh — Active in Milestone 4)
+- **Focus**: Offline survivability, opportunistic relay, cryptographic integrity, and network synchronization.
+- **Workflow**: Local-first message queues, peer-to-peer ad-hoc relay, Time-to-Live (TTL) tracking, SHA-256 duplicate suppression, and opportunistic synchronization when connectivity resumes.
 
 ---
 
@@ -283,16 +283,110 @@ In Milestone 3, all classification, evidence scoring, and verdict synthesis are 
 
 ---
 
-## 10. Current Milestone vs. Future Milestones
+## 10. Resilience Intelligence Architecture (RescueMesh)
 
-| Capability | Milestone 1 (Foundation) | Milestone 2 (Personal Intelligence) | Milestone 3 (Trust Intelligence — Current) | Future Milestones |
-| :--- | :--- | :--- | :--- | :--- |
-| **Task Storage** | In-Memory | Persistent Room SQLite (`tasks` table) | Persistent Room SQLite (`tasks` table) | Cloud sync / conflict resolution |
-| **Behavior Tracking** | Event model | Persistent logging (`behavior_events`) | Persistent logging + `CLAIM_*` events | Sensor events & app signals |
-| **User Model** | Placeholder | Deterministic `UserBehaviorModel` | Deterministic `UserBehaviorModel` | Bayesian / ML modeling |
-| **Decisions** | Static rules | Adaptive scoring + explainability | Adaptive scoring + explainability | Hybrid rules + LLM |
-| **Task UI** | Placeholder | Interactive Compose CRUD | Interactive Compose CRUD | Subtasks, recurrence |
-| **Dashboard** | Static mock | Live counts & recommendations | Live counts & recommendations | Unified intelligence feed |
-| **RealityCheck** | Domain events | Domain events | **Complete Investigation Engine & UI** | Live API indexing / hybrid LLM synthesis |
-| **RescueMesh** | Domain events | Storage foundation | Storage foundation | Peer-to-peer BLE / Wi-Fi Direct mesh |
+Milestone 4 implements **RescueMesh**: an offline-first store-and-forward emergency messaging system built to survive network partitions, localized infrastructure failures, and emergency situations.
+
+```
++-------------------------------------------------------------+
+|               RescueMesh Command Center (UI)                |
++-------------------------------------------------------------+
+                              |
+                              v
++-------------------------------------------------------------+
+|              ResilienceViewModel & Use Cases                |
+|  - CreateEmergencyMessageUseCase   - RelayEmergencyMessage  |
+|  - GetEmergencyQueueUseCase        - SyncEmergencyQueue     |
++-------------------------------------------------------------+
+          |                                      |
+          v                                      v
++------------------------+             +----------------------+
+|    RescueMeshEngine    |             |  BehaviorEventRepo   |
+|  - SHA-256 Fingerprint |             |  (Privacy Protected: |
+|  - State Machine       |             |   No Payload Logged) |
+|  - TTL Expiration      |             +----------------------+
+|  - Hop Limits (<= 5)   |
+|  - Deduplication       |
++------------------------+
+          |
+          v
++-------------------------------------------------------------+
+|               EmergencyMessageRepository                    |
+|             (Room SQLite: emergency_messages)               |
++-------------------------------------------------------------+
+          |                                      |
+          v                                      v
++--------------------------+           +----------------------+
+| LocalStoreAndForward     |           | NetworkGateway       |
+| Transport (Offline Store)|           | Transport (Egress)   |
++--------------------------+           +----------------------+
+```
+
+### 1. Cryptographic Payload Fingerprinting
+Every emergency message is assigned a deterministic SHA-256 fingerprint upon creation using Java's standard `java.security.MessageDigest`:
+```kotlin
+fun calculateFingerprint(
+    senderId: String,
+    payload: String,
+    createdAtEpochMillis: Long,
+    type: MessageType
+): String
+```
+- Deduplication is guaranteed by both `messageId` and SHA-256 fingerprint.
+- Any attempt to enqueue a duplicate message is identified and rejected with status `DUPLICATE`.
+
+### 2. Explicit Finite State Machine
+Messages transition strictly through deterministic states:
+- `DRAFT`: Initial construction state before queuing.
+- `QUEUED`: Stored locally in SQLite offline queue awaiting opportunistic transport.
+- `RELAYING`: Actively traversing intermediate mesh nodes.
+- `SENT`: Dispatched through a network gateway or external egress node.
+- `DELIVERED`: Confirmed delivered by explicit recipient acknowledgment.
+- `FAILED`: Transmission error or unrecoverable failure.
+- `EXPIRED`: Message passed its Time-to-Live (TTL) limit.
+- `DUPLICATE`: Redundant packet detected and discarded.
+
+> [!IMPORTANT]
+> **Strict Delivery Integrity**: In accordance with distributed systems guarantees, `NetworkGatewayTransport` transitions packets to `SENT` upon successful outbound transmission. The system **never** marks a message `DELIVERED` without explicit downstream recipient ACK.
+
+### 3. Hop Limits & TTL Expiration
+- **Hop Bound**: Every packet enforces a strict maximum hop limit (`maxHops = 5`). Packets reaching 5 hops without reaching their destination are automatically transitioned to `FAILED`.
+- **Time-to-Live (TTL)**:
+  - `CRITICAL` priority: 48-hour TTL ($172,800$ seconds).
+  - `HIGH` priority: 24-hour TTL ($86,400$ seconds).
+  - `NORMAL` priority: 12-hour TTL ($43,200$ seconds).
+- Any message evaluated after `expiresAt` is transitioned to `EXPIRED` during queue sweeps and gateway synchronization.
+
+### 4. Transports & Physical Hardware Distinction
+1. `LocalStoreAndForwardTransport`: Local node buffer that guarantees offline durability in Room SQLite.
+2. `NetworkGatewayTransport`: Outbound network egress that automatically activates when Wi-Fi or Cellular connectivity is restored.
+3. **Physical Hardware Preview**: BLE (Bluetooth Low Energy) and Wi-Fi Direct protocols are architected behind the `MeshTransport` interface. The current implementation provides a verified local store-and-forward proof-of-concept with genuine payload structures, cryptographic hashing, and hop tracking, ready to bind to Android BLE/Wi-Fi Direct hardware drivers without altering message formats.
+
+### 5. Privacy & Behavioral Analytics Boundary
+Emergency messages trigger behavior events to inform cognitive load and adaptive UI systems (e.g. `EMERGENCY_MESSAGE_CREATED`, `EMERGENCY_MESSAGE_SENT`), but **never log sensitive situation payload text** into metadata, preserving absolute user privacy during crises.
+
+---
+
+## 11. Dynamic Theme & Adaptive UI Engine
+
+The `DynamicThemeEngine` bridges real-time contextual signals to high-contrast, tactile UI styles across all screens:
+- **Calm State**: Soft indigos, cool slates, high typography contrast.
+- **Urgent / Focus State**: Warm ambers, accent rings, distraction-free surfaces.
+- **Emergency Crisis State**: High-visibility reds, alert banners, immediate action buttons.
+- All colors resolve through `LifeOsSemanticColors` for centralized design system compliance.
+
+---
+
+## 12. Current Milestone vs. Future Milestones
+
+| Capability | Milestone 1 (Foundation) | Milestone 2 (Personal Intelligence) | Milestone 3 (Trust Intelligence) | Milestone 4 (Resilience Intelligence — Current) | Future Milestones |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Task Storage** | In-Memory | Persistent Room SQLite (`tasks` table) | Persistent Room SQLite (`tasks` table) | Persistent Room SQLite (`tasks` table) | Cloud sync / conflict resolution |
+| **Emergency Storage** | None | None | None | **Persistent Room SQLite (`emergency_messages`)** | Multi-device encrypted backup |
+| **Behavior Tracking** | Event model | Persistent logging (`behavior_events`) | Persistent logging + `CLAIM_*` events | Persistent logging + `EMERGENCY_*` events | Sensor events & ambient signals |
+| **User Model** | Placeholder | Deterministic `UserBehaviorModel` | Deterministic `UserBehaviorModel` | Deterministic `UserBehaviorModel` | Multi-agent behavioral modeling |
+| **Decisions** | Static rules | Adaptive scoring + explainability | Adaptive scoring + explainability | Adaptive scoring + explainability | Hybrid rules + LLM |
+| **RealityCheck** | Domain events | Domain events | **Complete Investigation Engine & UI** | Complete Investigation Engine & UI | Live web indexing & claim retrieval |
+| **RescueMesh** | Domain events | Storage foundation | Storage foundation | **Full Store & Forward Engine, SHA-256, UI** | Physical BLE / Wi-Fi Direct hardware binding |
+| **Dynamic UI** | Static Material3 | Static Material3 | Refined high-contrast UI | **Dynamic Theme Engine & Semantic Colors** | Fluid ambient micro-interactions |
 

@@ -21,9 +21,18 @@ import com.mrashish18.lifeos.domain.usecase.TransitionTaskStatusUseCase
 import com.mrashish18.lifeos.domain.usecase.UpdateTaskUseCase
 import com.mrashish18.lifeos.feature.dashboard.DashboardViewModel
 import com.mrashish18.lifeos.core.realitycheck.RealityCheckEngine
+import com.mrashish18.lifeos.core.resilience.RescueMeshEngine
+import com.mrashish18.lifeos.core.resilience.transport.LocalStoreAndForwardTransport
+import com.mrashish18.lifeos.core.resilience.transport.NetworkGatewayTransport
 import com.mrashish18.lifeos.data.repository.DeterministicEvidenceRepository
+import com.mrashish18.lifeos.data.repository.RoomEmergencyMessageRepository
+import com.mrashish18.lifeos.domain.usecase.CreateEmergencyMessageUseCase
+import com.mrashish18.lifeos.domain.usecase.GetEmergencyQueueUseCase
 import com.mrashish18.lifeos.domain.usecase.PerformRealityCheckUseCase
+import com.mrashish18.lifeos.domain.usecase.RelayEmergencyMessageUseCase
+import com.mrashish18.lifeos.domain.usecase.SyncEmergencyQueueUseCase
 import com.mrashish18.lifeos.feature.realitycheck.RealityCheckViewModel
+import com.mrashish18.lifeos.feature.resilience.ResilienceViewModel
 import com.mrashish18.lifeos.feature.tasks.TasksViewModel
 import com.mrashish18.lifeos.ui.navigation.LifeOsApp
 import com.mrashish18.lifeos.ui.theme.LIFEOSTheme
@@ -85,7 +94,43 @@ class MainActivity : ComponentActivity() {
             behaviorEventRepository = behaviorEventRepository
         )
 
-        // 6. ViewModels
+        // 6. RescueMesh Resilience Pipeline
+        val emergencyMessageDao = database.emergencyMessageDao()
+        val emergencyRepository = RoomEmergencyMessageRepository(emergencyMessageDao)
+        val rescueMeshEngine = RescueMeshEngine()
+        val localTransport = LocalStoreAndForwardTransport(emergencyRepository, rescueMeshEngine)
+        val networkGatewayTransport = NetworkGatewayTransport(emergencyRepository, rescueMeshEngine)
+
+        // Seed initial emergency messages if database is brand new
+        lifecycleScope.launch(dispatcherProvider.io) {
+            if (emergencyMessageDao.getAllMessages().isEmpty()) {
+                com.mrashish18.lifeos.core.model.EmergencyMessage.defaultSeedMessages().forEach { msg ->
+                    emergencyRepository.insertMessage(msg)
+                }
+            }
+        }
+
+        val createEmergencyMessageUseCase = CreateEmergencyMessageUseCase(
+            emergencyRepository = emergencyRepository,
+            engine = rescueMeshEngine,
+            behaviorEventRepository = behaviorEventRepository,
+            networkTransport = networkGatewayTransport,
+            localTransport = localTransport
+        )
+        val getEmergencyQueueUseCase = GetEmergencyQueueUseCase(emergencyRepository)
+        val relayEmergencyMessageUseCase = RelayEmergencyMessageUseCase(
+            emergencyRepository = emergencyRepository,
+            engine = rescueMeshEngine,
+            behaviorEventRepository = behaviorEventRepository
+        )
+        val syncEmergencyQueueUseCase = SyncEmergencyQueueUseCase(
+            emergencyRepository = emergencyRepository,
+            networkTransport = networkGatewayTransport,
+            engine = rescueMeshEngine,
+            behaviorEventRepository = behaviorEventRepository
+        )
+
+        // 7. ViewModels
         val dashboardFactory = DashboardViewModel.Factory(
             getDashboardDataUseCase,
             transitionTaskStatusUseCase,
@@ -105,12 +150,22 @@ class MainActivity : ComponentActivity() {
         val realityCheckFactory = RealityCheckViewModel.Factory(performRealityCheckUseCase)
         val realityCheckViewModel = ViewModelProvider(this, realityCheckFactory)[RealityCheckViewModel::class.java]
 
+        val resilienceFactory = ResilienceViewModel.Factory(
+            contextEngine = contextEngine,
+            createEmergencyMessageUseCase = createEmergencyMessageUseCase,
+            getEmergencyQueueUseCase = getEmergencyQueueUseCase,
+            relayEmergencyMessageUseCase = relayEmergencyMessageUseCase,
+            syncEmergencyQueueUseCase = syncEmergencyQueueUseCase
+        )
+        val resilienceViewModel = ViewModelProvider(this, resilienceFactory)[ResilienceViewModel::class.java]
+
         setContent {
             LIFEOSTheme {
                 LifeOsApp(
                     dashboardViewModel = dashboardViewModel,
                     tasksViewModel = tasksViewModel,
-                    realityCheckViewModel = realityCheckViewModel
+                    realityCheckViewModel = realityCheckViewModel,
+                    resilienceViewModel = resilienceViewModel
                 )
             }
         }

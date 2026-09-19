@@ -43,13 +43,7 @@ import com.mrashish18.lifeos.core.model.ContextSnapshot
 import com.mrashish18.lifeos.core.model.Recommendation
 import com.mrashish18.lifeos.core.model.Task
 import com.mrashish18.lifeos.core.model.UserBehaviorModel
-import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
-import com.mrashish18.lifeos.ui.components.LifeOsPrimaryButton
-import com.mrashish18.lifeos.ui.components.LifeOsSecondaryButton
-import com.mrashish18.lifeos.ui.components.LifeOsStatusChip
-import com.mrashish18.lifeos.ui.components.LifeOsPriorityBadge
-import com.mrashish18.lifeos.ui.components.LifeOsCategoryBadge
-import com.mrashish18.lifeos.ui.components.LifeOsTaskRow
+import com.mrashish18.lifeos.ui.components.*
 import com.mrashish18.lifeos.ui.theme.*
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -78,13 +72,12 @@ fun DashboardScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // 1. COMMAND CENTER HERO NARRATIVE
+        // 1. BRANDING & HERO SCENIC MOUNTAIN HEADER
         item {
-            Spacer(modifier = Modifier.height(12.dp))
-            HeroCommandHeader(systemStatus = uiState.systemStatus)
+            ScenicMountainHeader(systemStatus = uiState.systemStatus)
         }
 
         // Feedback Banner (if any)
@@ -94,7 +87,7 @@ fun DashboardScreen(
             }
         }
 
-        // 2. TODAY MOMENTUM CLUSTER (Open canvas, not a boxed card)
+        // 2. TODAY MOMENTUM PROGRESS (Card matching reference design)
         item {
             TodayMomentumCluster(
                 pendingCount = uiState.pendingCount,
@@ -104,7 +97,7 @@ fun DashboardScreen(
             )
         }
 
-        // 3. CENTERPIECE: WHAT MATTERS NOW
+        // 3. FLAGSHIP CENTERPIECE: WHAT MATTERS NOW
         if (uiState.recommendations.isNotEmpty()) {
             items(uiState.recommendations, key = { it.id }) { rec ->
                 WhatMattersNowCenterpiece(
@@ -119,9 +112,9 @@ fun DashboardScreen(
             }
         }
 
-        // 4. CURRENT STATE (Spatial telemetry hierarchy, not a card)
-        item {
-            uiState.contextSnapshot?.let { snapshot ->
+        // 4. CURRENT SITUATION (2x2 Telemetry Grid matching reference Screen 1)
+        uiState.contextSnapshot?.let { snapshot ->
+            item {
                 CurrentStateTelemetry(snapshot = snapshot)
             }
         }
@@ -253,108 +246,122 @@ private fun TodayMomentumCluster(
     val completionRatio = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
     val completionPct = (completionRatio * 100).toInt()
 
-    Column(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-            .padding(18.dp)
+            .clickable(onClick = onViewTasks),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 1.dp
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LifeOsEyebrow(text = "TODAY'S MOMENTUM", color = LifeOsIndigo700)
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            // Top Row: Title
             Text(
-                text = "$completionPct%",
-                style = MaterialTheme.typography.labelSmall,
-                color = LifeOsSlate600,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "$pendingCount",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "pending",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LifeOsSlate600,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Text(
-                text = "·",
-                style = MaterialTheme.typography.titleMedium,
-                color = LifeOsSlate400,
-                fontWeight = FontWeight.Bold
+                text = "Today's Momentum",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF0F172A)
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "$completedCount",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = LifeOsGreen700
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "completed",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LifeOsSlate600,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            TextButton(
-                onClick = onViewTasks,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 0.dp)
+            // Middle Row: 3 Pending | 1 Completed | [ 25% ] Box
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Tasks →",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = LifeOsIndigo700,
-                    fontWeight = FontWeight.SemiBold
+                Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+                    Column {
+                        Text(
+                            text = "$pendingCount",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+                        Text(
+                            text = "Pending",
+                            fontSize = 11.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "$completedCount",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+                        Text(
+                            text = "Completed",
+                            fontSize = 11.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                // Soft lavender/blue rounded box with 25%
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFEEF2FF))
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "$completionPct%",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4338CA)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Bottom Row: Thin Progress Bar with small dot on the right
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(5.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFF1F5F9))
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(completionRatio.coerceIn(0.1f, 1f))
+                        .height(5.dp)
+                        .clip(CircleShape)
+                        .background(
+                            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                            )
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF4338CA))
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        LinearProgressIndicator(
-            progress = { completionRatio },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(5.dp)
-                .clip(CircleShape),
-            color = LifeOsIndigo700,
-            trackColor = LifeOsSlate200
-        )
     }
 }
 
 /**
  * Centerpiece — "✦ WHAT MATTERS NOW":
  * Elevated focal surface with subtle gradient border, bold typography,
- * high-emphasis primary CTA, confidence gauge, and expandable explainability.
+ * high-emphasis primary CTA, and reference layout matching Screen 1.
  */
 @Composable
 private fun WhatMattersNowCenterpiece(
@@ -371,14 +378,14 @@ private fun WhatMattersNowCenterpiece(
             .border(
                 width = 1.5.dp,
                 brush = LifeOsFocusBorderGradient,
-                shape = RoundedCornerShape(18.dp)
+                shape = RoundedCornerShape(16.dp)
             ),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 3.dp
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        shadowElevation = 2.dp
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            // Header Row
+        Column(modifier = Modifier.padding(14.dp)) {
+            // Header Row: ✦ WHAT MATTERS NOW | [ 85% confidence ]
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -387,24 +394,26 @@ private fun WhatMattersNowCenterpiece(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "✦",
-                        color = LifeOsElectricIndigo,
-                        fontSize = 13.sp
+                        color = Color(0xFF4F46E5),
+                        fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    LifeOsEyebrow(
+                    Text(
                         text = "WHAT MATTERS NOW",
-                        color = LifeOsElectricIndigo
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4F46E5),
+                        letterSpacing = 0.8.sp
                     )
                 }
 
                 Surface(
-                    color = LifeOsIndigo50,
-                    shape = RoundedCornerShape(6.dp)
+                    color = Color(0xFF4338CA),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "$confidencePct% confidence",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LifeOsIndigo700,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 10.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -412,145 +421,97 @@ private fun WhatMattersNowCenterpiece(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Main Recommendation Title
             Text(
                 text = recommendation.title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.3).sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A)
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Rationale Description
             Text(
                 text = recommendation.reason,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                fontSize = 11.sp,
+                color = Color(0xFF64748B),
+                lineHeight = 16.sp,
+                maxLines = 2
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Confidence Gauge Row
+            // Action Buttons Row: [ ▶ Start Focus ]  [ Dismiss ]
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = "Confidence",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 10.sp
-                )
-                LinearProgressIndicator(
-                    progress = { recommendation.confidence.toFloat().coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(5.dp)
-                        .clip(CircleShape),
-                    color = LifeOsIndigo700,
-                    trackColor = MaterialTheme.colorScheme.outlineVariant
-                )
-                Text(
-                    text = "$confidencePct%",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = LifeOsIndigo700,
-                    fontSize = 11.sp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // High-emphasis Primary CTA Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LifeOsPrimaryButton(
+                LifeOsGradientButton(
                     text = "▶  Start Focus",
+                    gradient = LifeOsGradients.focus,
                     onClick = onAccept,
-                    modifier = Modifier.weight(2f)
+                    modifier = Modifier.weight(1.4f)
                 )
 
                 LifeOsSecondaryButton(
                     text = "Dismiss",
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(0.9f)
                 )
             }
 
-            // Expandable "Why this recommendation? →"
-            if (recommendation.factors.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
+            // Bottom Link: Why this recommendation? →
+            Text(
+                text = "Why this recommendation? →",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF3B82F6),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { isExplanationExpanded = !isExplanationExpanded }
+                    .padding(vertical = 2.dp)
+            )
+
+            AnimatedVisibility(visible = isExplanationExpanded) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { isExplanationExpanded = !isExplanationExpanded }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(top = 8.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF8FAFC))
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = if (isExplanationExpanded) "▾ Hide Decision Factors" else "Why this recommendation? →",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = "${recommendation.factors.size} factors weighed",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
-                        fontSize = 10.sp
-                    )
-                }
-
-                AnimatedVisibility(visible = isExplanationExpanded) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
-                            .padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        recommendation.factors.forEach { factor ->
-                            Row(
-                                verticalAlignment = Alignment.Top,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                    recommendation.factors.forEach { factor ->
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "✦",
+                                color = Color(0xFF4F46E5),
+                                fontSize = 10.sp,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Column {
                                 Text(
-                                    text = "✦",
-                                    color = LifeOsIndigo700,
-                                    fontSize = 10.sp,
-                                    modifier = Modifier.padding(top = 2.dp)
+                                    text = factor.name,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF0F172A)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = factor.name,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = factor.description,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Text(
+                                    text = factor.description,
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF64748B)
+                                )
                             }
                         }
                     }
@@ -593,140 +554,147 @@ private fun NominalFocusState() {
     }
 }
 
-/**
- * CURRENT STATE Telemetry:
- * Structured 2x2 Telemetry Grid and dedicated Availability / Focus status.
- * Eliminates text collisions completely.
- */
 @Composable
 private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a").withZone(ZoneId.systemDefault())
-    val formattedTime = formatter.format(snapshot.currentTime)
+    val formattedTime = formatter.format(snapshot.currentTime).uppercase()
+    val networkLabel = when (snapshot.networkState.name) {
+        "CONNECTED_WIFI", "CONNECTED_CELLULAR", "CONNECTED" -> "CONNECTED"
+        "DISCONNECTED" -> "OFFLINE"
+        else -> snapshot.networkState.name.uppercase()
+    }
+    val dayLabel = snapshot.dayOfWeek.name.uppercase()
+    val workloadLabel = snapshot.workloadLevel.name.uppercase()
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-            .padding(18.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            LifeOsEyebrow(text = "CURRENT SITUATION", color = LifeOsIndigo700)
             Text(
-                text = "Observation Engine",
-                style = MaterialTheme.typography.labelSmall,
-                color = LifeOsSlate600,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 10.sp
+                text = "Current Situation",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A)
+            )
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFDCFCE7),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF16A34A))
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Live",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF15803D)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 2x2 Grid of 4 compact cards matching reference Screen 1
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TelemetryGridCard(
+                icon = "🕒",
+                iconBg = Color(0xFFEEF2FF),
+                label = "Time",
+                value = formattedTime,
+                modifier = Modifier.weight(1f)
+            )
+            TelemetryGridCard(
+                icon = "📶",
+                iconBg = Color(0xFFECFDF5),
+                label = "Network",
+                value = networkLabel,
+                modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // 2x2 Telemetry Grid
-        Column(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TelemetryGridCell(
-                    label = "TIME",
-                    value = formattedTime,
-                    modifier = Modifier.weight(1f)
-                )
-                TelemetryGridCell(
-                    label = "NETWORK",
-                    value = snapshot.networkState.name,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                TelemetryGridCell(
-                    label = "DAY",
-                    value = snapshot.dayOfWeek.name,
-                    modifier = Modifier.weight(1f)
-                )
-                TelemetryGridCell(
-                    label = "WORKLOAD",
-                    value = snapshot.workloadLevel.name,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            TelemetryGridCard(
+                icon = "📅",
+                iconBg = Color(0xFFEFF6FF),
+                label = "Day",
+                value = dayLabel,
+                modifier = Modifier.weight(1f)
+            )
+            TelemetryGridCard(
+                icon = "⚡",
+                iconBg = Color(0xFFF5F3FF),
+                label = "Workload",
+                value = workloadLabel,
+                modifier = Modifier.weight(1f)
+            )
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(14.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Dedicated Availability & Active Focus Rows (No Text Collisions)
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+@Composable
+private fun TelemetryGridCard(
+    icon: String,
+    iconBg: Color,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(iconBg),
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "AVAILABILITY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = LifeOsSlate600,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    letterSpacing = 0.6.sp
-                )
-                Surface(
-                    color = LifeOsGreen50,
-                    shape = RoundedCornerShape(6.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsGreen700.copy(alpha = 0.25f))
-                ) {
-                    Text(
-                        text = snapshot.userAvailability.name,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = LifeOsGreen700,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
+                Text(text = icon, fontSize = 13.sp)
             }
-
-            snapshot.activeTask?.let { active ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(LifeOsIndigo50.copy(alpha = 0.6f))
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "ACTIVE FOCUS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = LifeOsIndigo700,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.6.sp
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = active.title,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = LifeOsIndigo700,
-                        maxLines = 2
-                    )
-                }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = label,
+                    fontSize = 9.sp,
+                    color = Color(0xFF94A3B8),
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = value,
+                    fontSize = 11.sp,
+                    color = Color(0xFF0F172A),
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
             }
         }
     }
@@ -740,9 +708,10 @@ private fun TelemetryGridCell(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(LifeOsSlate50.copy(alpha = 0.7f))
+            .border(1.dp, LifeOsSlate200.copy(alpha = 0.6f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Text(
             text = label,
@@ -752,7 +721,7 @@ private fun TelemetryGridCell(
             fontSize = 9.sp,
             letterSpacing = 0.6.sp
         )
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
@@ -768,14 +737,14 @@ private fun TelemetryGridCell(
  */
 @Composable
 private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-            .padding(18.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        shadowElevation = 1.dp
     ) {
+        Column(modifier = Modifier.padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -870,6 +839,7 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
             }
         }
     }
+}
 }
 
 @Composable
