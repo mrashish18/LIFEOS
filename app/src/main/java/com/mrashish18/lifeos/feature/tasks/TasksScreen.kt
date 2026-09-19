@@ -1,5 +1,6 @@
 package com.mrashish18.lifeos.feature.tasks
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -172,10 +173,18 @@ fun TasksScreen(
                     TaskFilter.COMPLETED to "Done"
                 ).forEach { (filter, label) ->
                     val isSelected = uiState.selectedFilter == filter
+                    val pillBg by animateColorAsState(
+                        targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9),
+                        label = "taskFilterBg"
+                    )
+                    val pillTextColor by animateColorAsState(
+                        targetValue = if (isSelected) Color.White else Color(0xFF64748B),
+                        label = "taskFilterText"
+                    )
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                            .background(pillBg)
                             .clickable { viewModel.setFilter(filter) }
                             .padding(horizontal = 14.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
@@ -184,7 +193,7 @@ fun TasksScreen(
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else Color(0xFF64748B)
+                            color = pillTextColor
                         )
                     }
                 }

@@ -187,6 +187,24 @@ private fun LifeOsNavigationTab(
     val activeColor = Color(0xFF4338CA)
     val inactiveColor = Color(0xFF64748B)
 
+    val animatedBgColor by animateColorAsState(
+        targetValue = if (isSelected) activeColor else Color.Transparent,
+        label = "navTabBg"
+    )
+    val animatedIconTint by animateColorAsState(
+        targetValue = if (isSelected) Color.White else inactiveColor,
+        label = "navTabIconTint"
+    )
+    val animatedTextColor by animateColorAsState(
+        targetValue = if (isSelected) activeColor else inactiveColor,
+        label = "navTabTextColor"
+    )
+    val animatedScale by animateFloatAsState(
+        targetValue = if (isSelected) 1.05f else 1.0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "navTabScale"
+    )
+
     Column(
         modifier = Modifier
             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
@@ -205,15 +223,17 @@ private fun LifeOsNavigationTab(
             modifier = Modifier
                 .height(26.dp)
                 .clip(RoundedCornerShape(13.dp))
-                .background(if (isSelected) activeColor else Color.Transparent)
+                .background(animatedBgColor)
                 .padding(horizontal = 14.dp, vertical = 3.dp),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = if (isSelected) spec.filledIcon else spec.outlinedIcon,
                 contentDescription = spec.label,
-                tint = if (isSelected) Color.White else inactiveColor,
-                modifier = Modifier.size(18.dp)
+                tint = animatedIconTint,
+                modifier = Modifier
+                    .size(18.dp)
+                    .scale(animatedScale)
             )
         }
 
@@ -223,7 +243,7 @@ private fun LifeOsNavigationTab(
             text = spec.label,
             fontSize = 10.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) activeColor else inactiveColor,
+            color = animatedTextColor,
             maxLines = 1
         )
     }

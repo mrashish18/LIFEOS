@@ -1,5 +1,6 @@
 package com.mrashish18.lifeos.feature.resilience
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -615,7 +616,7 @@ private fun EmergencyMessageScreen(
             }
             BasicTextField(
                 value = messageText,
-                onValueChange = { messageText = it },
+                onValueChange = { if (it.length <= 256) messageText = it },
                 textStyle = TextStyle(
                     fontSize = 12.sp,
                     color = Color(0xFF1E1B4B),
@@ -625,7 +626,28 @@ private fun EmergencyMessageScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        // Character count and mesh packet limit indicator
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Mesh packet limit: 256 chars",
+                fontSize = 10.sp,
+                color = Color(0xFF64748B)
+            )
+            Text(
+                text = "${messageText.length}/256",
+                fontSize = 10.sp,
+                color = if (messageText.length >= 240) Color(0xFFDC2626) else Color(0xFF94A3B8),
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Priority Field
         Text(
@@ -901,10 +923,18 @@ private fun MessageQueueScreen(
         ) {
             listOf("All", "Queued", "Sent", "Failed").forEach { filter ->
                 val isSelected = selectedFilter == filter
+                val pillBg by animateColorAsState(
+                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9),
+                    label = "queueFilterBg"
+                )
+                val pillTextColor by animateColorAsState(
+                    targetValue = if (isSelected) Color.White else if (filter == "All") Color(0xFF4338CA) else Color(0xFF64748B),
+                    label = "queueFilterText"
+                )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(18.dp))
-                        .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                        .background(pillBg)
                         .clickable { selectedFilter = filter }
                         .padding(horizontal = 16.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
@@ -913,7 +943,7 @@ private fun MessageQueueScreen(
                         text = filter,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else if (filter == "All") Color(0xFF4338CA) else Color(0xFF64748B)
+                        color = pillTextColor
                     )
                 }
             }

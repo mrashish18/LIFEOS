@@ -1,5 +1,7 @@
 package com.mrashish18.lifeos.feature.goals
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -87,10 +89,18 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
         ) {
             listOf("All", "Active", "Completed").forEach { filter ->
                 val isSelected = selectedFilter == filter
+                val pillBg by animateColorAsState(
+                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9),
+                    label = "goalFilterBg"
+                )
+                val pillTextColor by animateColorAsState(
+                    targetValue = if (isSelected) Color.White else Color(0xFF64748B),
+                    label = "goalFilterText"
+                )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                        .background(pillBg)
                         .clickable { selectedFilter = filter }
                         .padding(horizontal = 14.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
@@ -99,7 +109,7 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                         text = filter,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else Color(0xFF64748B)
+                        color = pillTextColor
                     )
                 }
             }
@@ -243,6 +253,11 @@ private fun ReferenceGoalCard(
     progress: Float,
     milestones: String? = null
 ) {
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        label = "goalCardProgress"
+    )
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -316,17 +331,19 @@ private fun ReferenceGoalCard(
                         .clip(CircleShape)
                         .background(Color(0xFFF1F5F9))
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(progress)
-                            .height(6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                    listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                    if (animatedProgress > 0f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(animatedProgress)
+                                .height(6.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                        listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                                    )
                                 )
-                            )
-                    )
+                        )
+                    }
                 }
 
                 Text(

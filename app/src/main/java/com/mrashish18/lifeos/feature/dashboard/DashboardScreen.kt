@@ -1,6 +1,7 @@
 package com.mrashish18.lifeos.feature.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -249,6 +250,10 @@ private fun TodayMomentumCluster(
     onViewTasks: () -> Unit
 ) {
     val completionRatio = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (totalCount > 0) completionRatio.coerceIn(0.08f, 1f) else 0f,
+        label = "momentumProgress"
+    )
     val completionPct = (completionRatio * 100).toInt()
 
     Surface(
@@ -340,17 +345,19 @@ private fun TodayMomentumCluster(
                         .clip(CircleShape)
                         .background(Color(0xFFF1F5F9))
                 )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(completionRatio.coerceIn(0.1f, 1f))
-                        .height(5.dp)
-                        .clip(CircleShape)
-                        .background(
-                            androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                if (animatedProgress > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(animatedProgress)
+                            .height(5.dp)
+                            .clip(CircleShape)
+                            .background(
+                                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                    listOf(Color(0xFF10B981), Color(0xFF06B6D4))
+                                )
                             )
-                        )
-                )
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
