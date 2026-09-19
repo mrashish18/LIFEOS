@@ -91,15 +91,41 @@ class RoomBehaviorEventRepository(
 
             val completionsByTime = mutableMapOf<TimeOfDayBucket, Int>()
             completedEvents.forEach { event ->
-                val hour = event.timestamp.atZone(zoneId).hour
-                val bucket = when (hour) {
-                    in 5..11 -> TimeOfDayBucket.MORNING
-                    in 12..16 -> TimeOfDayBucket.AFTERNOON
-                    in 17..21 -> TimeOfDayBucket.EVENING
-                    else -> TimeOfDayBucket.NIGHT
-                }
+                val bucket = TimeOfDayBucket.fromInstant(event.timestamp, zoneId)
                 completionsByTime[bucket] = (completionsByTime[bucket] ?: 0) + 1
             }
+
+            val peakProductivityTimeOfDay = if (completionsByTime.isNotEmpty()) {
+                completionsByTime.maxByOrNull { it.value }?.key
+            } else null
+
+            val preferredTaskSize = if (avgDuration != null) {
+                when {
+                    avgDuration <= 20.0 -> com.mrashish18.lifeos.core.model.TaskSizePreference.MICRO
+                    avgDuration <= 45.0 -> com.mrashish18.lifeos.core.model.TaskSizePreference.STANDARD
+                    else -> com.mrashish18.lifeos.core.model.TaskSizePreference.DEEP
+                }
+            } else null
+
+            // Category specific performance (completion rates per category)
+            val categoryCompletionRates = mutableMapOf<TaskCategory, Double>()
+            TaskCategory.values().forEach { cat ->
+                val catCompleted = events.count { it.type == BehaviorEventType.TASK_COMPLETED && it.metadata["category"] == cat.name }
+                val catAbandoned = events.count { it.type == BehaviorEventType.TASK_ABANDONED && it.metadata["category"] == cat.name }
+                val catTerminal = catCompleted + catAbandoned
+                if (catTerminal > 0) {
+                    categoryCompletionRates[cat] = catCompleted.toDouble() / catTerminal.toDouble()
+                }
+            }
+
+            // Session tracking metrics
+            val sessionStartedEvents = events.filter { it.type == BehaviorEventType.SESSION_STARTED }
+            val sessionCompletedEvents = events.filter { it.type == BehaviorEventType.SESSION_COMPLETED }
+            val sessionDurations = sessionCompletedEvents.mapNotNull {
+                it.metadata["durationMinutes"]?.toDoubleOrNull()
+                    ?: it.metadata["durationSeconds"]?.toDoubleOrNull()?.div(60.0)
+            }
+            val avgSessionDuration = if (sessionDurations.isNotEmpty()) sessionDurations.average() else null
 
             return UserBehaviorModel(
                 totalTasksCreated = createdCount,
@@ -112,6 +138,12 @@ class RoomBehaviorEventRepository(
                 averageCompletedDurationMinutes = avgDuration,
                 preferredCategories = preferredCategories,
                 completionsByTimeOfDay = completionsByTime,
+                preferredTaskSize = preferredTaskSize,
+                peakProductivityTimeOfDay = peakProductivityTimeOfDay,
+                categoryCompletionRates = categoryCompletionRates,
+                totalSessionsStarted = sessionStartedEvents.size,
+                totalSessionsCompleted = sessionCompletedEvents.size,
+                averageSessionDurationMinutes = avgSessionDuration,
                 hasSufficientData = hasSufficientData
             )
         }

@@ -103,5 +103,87 @@ class UserBehaviorModelTest {
         // Time of day buckets: MORNING=2, AFTERNOON=1
         assertEquals(2, model.completionsByTimeOfDay[TimeOfDayBucket.MORNING])
         assertEquals(1, model.completionsByTimeOfDay[TimeOfDayBucket.AFTERNOON])
+
+        // Peak productivity should be MORNING (2 completions vs 1)
+        assertEquals(TimeOfDayBucket.MORNING, model.peakProductivityTimeOfDay)
+
+        // Preferred task size should be STANDARD for 30.0m average duration
+        assertEquals(TaskSizePreference.STANDARD, model.preferredTaskSize)
+
+        // Category completion rates
+        assertEquals(1.0, model.categoryCompletionRates[TaskCategory.WORK]!!, 0.001)
+        assertEquals(1.0, model.categoryCompletionRates[TaskCategory.HEALTH]!!, 0.001)
+    }
+
+    @Test
+    fun computeModel_taskSizePreferences_microAndDeep() {
+        val microEvents = listOf(
+            BehaviorEvent(id = "c1", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(id = "c2", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(id = "c3", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(
+                id = "comp1",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "10")
+            ),
+            BehaviorEvent(
+                id = "comp2",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "15")
+            ),
+            BehaviorEvent(
+                id = "comp3",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "20")
+            )
+        )
+        val microModel = RoomBehaviorEventRepository.computeModel(microEvents, testZone)
+        assertEquals(TaskSizePreference.MICRO, microModel.preferredTaskSize)
+
+        val deepEvents = listOf(
+            BehaviorEvent(id = "c1", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(id = "c2", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(id = "c3", type = BehaviorEventType.TASK_CREATED),
+            BehaviorEvent(
+                id = "comp1",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "50")
+            ),
+            BehaviorEvent(
+                id = "comp2",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "60")
+            ),
+            BehaviorEvent(
+                id = "comp3",
+                type = BehaviorEventType.TASK_COMPLETED,
+                metadata = mapOf("durationMinutes" to "90")
+            )
+        )
+        val deepModel = RoomBehaviorEventRepository.computeModel(deepEvents, testZone)
+        assertEquals(TaskSizePreference.DEEP, deepModel.preferredTaskSize)
+    }
+
+    @Test
+    fun computeModel_sessionMetrics_tracksStartedCompletedAndAverageDuration() {
+        val events = listOf(
+            BehaviorEvent(id = "s1", type = BehaviorEventType.SESSION_STARTED),
+            BehaviorEvent(id = "s2", type = BehaviorEventType.SESSION_STARTED),
+            BehaviorEvent(
+                id = "sc1",
+                type = BehaviorEventType.SESSION_COMPLETED,
+                metadata = mapOf("durationMinutes" to "25.0")
+            ),
+            BehaviorEvent(
+                id = "sc2",
+                type = BehaviorEventType.SESSION_COMPLETED,
+                metadata = mapOf("durationMinutes" to "35.0")
+            )
+        )
+
+        val model = RoomBehaviorEventRepository.computeModel(events, testZone)
+        assertEquals(2, model.totalSessionsStarted)
+        assertEquals(2, model.totalSessionsCompleted)
+        assertEquals(30.0, model.averageSessionDurationMinutes!!, 0.001)
     }
 }

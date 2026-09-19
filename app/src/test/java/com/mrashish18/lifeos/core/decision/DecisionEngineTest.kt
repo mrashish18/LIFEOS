@@ -7,6 +7,8 @@ import com.mrashish18.lifeos.core.model.Task
 import com.mrashish18.lifeos.core.model.TaskCategory
 import com.mrashish18.lifeos.core.model.TaskPriority
 import com.mrashish18.lifeos.core.model.TaskStatus
+import com.mrashish18.lifeos.core.model.TaskSizePreference
+import com.mrashish18.lifeos.core.model.TimeOfDayBucket
 import com.mrashish18.lifeos.core.model.UserAvailability
 import com.mrashish18.lifeos.core.model.UserBehaviorModel
 import com.mrashish18.lifeos.core.model.WorkloadLevel
@@ -20,10 +22,12 @@ import java.time.Instant
 class DecisionEngineTest {
 
     private val fixedNow = Instant.parse("2026-09-14T10:00:00Z")
+    private val testZone = java.time.ZoneId.of("UTC")
 
     private val decisionEngine = DeterministicDecisionEngine(
         idGenerator = { "test-rec-id" },
-        clock = { fixedNow }
+        clock = { fixedNow },
+        zoneId = testZone
     )
 
     @Test
@@ -177,5 +181,139 @@ class DecisionEngineTest {
         // Work task should win because of category momentum and completion rate
         assertEquals("task-work", topRec?.targetTaskId)
         assertTrue(topRec!!.factors.any { it.name == "Category Habit" })
+    }
+
+    @Test
+    fun evaluate_circadianPeakMatch_addsCircadianPeakFactor() {
+        val task = Task(
+            id = "task-focus",
+            title = "Morning Deep Work",
+            priority = TaskPriority.MEDIUM,
+            status = TaskStatus.PENDING,
+            category = TaskCategory.WORK
+        )
+
+        // 10:00 UTC = MORNING bucket
+        val snapshot = ContextSnapshot(
+            currentTime = fixedNow,
+            dayOfWeek = DayOfWeek.MONDAY,
+            networkState = NetworkState.CONNECTED,
+            workloadLevel = WorkloadLevel.LOW
+        )
+
+        val behaviorModel = UserBehaviorModel(
+            peakProductivityTimeOfDay = TimeOfDayBucket.MORNING,
+            hasSufficientData = true
+        )
+
+        val recommendations = decisionEngine.evaluate(
+            snapshot = snapshot,
+            candidateTasks = listOf(task),
+            behaviorModel = behaviorModel
+        )
+
+        val topRec = recommendations.find { it.type == RecommendationType.TASK_FOCUS }
+        assertNotNull(topRec)
+        assertTrue(topRec!!.factors.any { it.name == "Circadian Peak" })
+    }
+
+    @Test
+    fun evaluate_effortFit_matchesPreferredTaskSize() {
+        val deepTask = Task(
+            id = "task-deep",
+            title = "Complex Refactoring",
+            priority = TaskPriority.MEDIUM,
+            status = TaskStatus.PENDING,
+            estimatedMinutes = 60
+        )
+        val microTask = Task(
+            id = "task-micro",
+            title = "Quick Reply",
+            priority = TaskPriority.MEDIUM,
+            status = TaskStatus.PENDING,
+            estimatedMinutes = 15
+        )
+
+        val snapshot = ContextSnapshot(
+            currentTime = fixedNow,
+            dayOfWeek = DayOfWeek.MONDAY,
+            networkState = NetworkState.CONNECTED,
+            workloadLevel = WorkloadLevel.LOW
+        )
+
+        val behaviorModel = UserBehaviorModel(
+            preferredTaskSize = TaskSizePreference.DEEP,
+            hasSufficientData = true
+        )
+
+        val recommendations = decisionEngine.evaluate(
+            snapshot = snapshot,
+            candidateTasks = listOf(microTask, deepTask),
+            behaviorModel = behaviorModel
+        )
+
+        val topRec = recommendations.find { it.type == RecommendationType.TASK_FOCUS }
+        assertNotNull(topRec)
+        assertEquals("task-deep", topRec?.targetTaskId)
+        assertTrue(topRec!!.factors.any { it.name == "Effort Fit" })
+    }
+
+    @Test
+    fun evaluate_postponedTask_receivesPostponementRecoveryBonus() {
+        val postponedTask = Task(
+            id = "task-postponed",
+            title = "Delayed Tax Filing",
+            priority = TaskPriority.MEDIUM,
+            status = TaskStatus.POSTPONED
+        )
+
+        val snapshot = ContextSnapshot(
+            currentTime = fixedNow,
+            dayOfWeek = DayOfWeek.MONDAY,
+            networkState = NetworkState.CONNECTED,
+            workloadLevel = WorkloadLevel.LOW
+        )
+
+        val recommendations = decisionEngine.evaluate(
+            snapshot = snapshot,
+            candidateTasks = listOf(postponedTask)
+        )
+
+        val topRec = recommendations.find { it.type == RecommendationType.TASK_FOCUS }
+        assertNotNull(topRec)
+        assertTrue(topRec!!.factors.any { it.name == "Postponement Recovery" })
+    }
+
+    @Test
+    fun evaluate_categoryConsistency_highCategoryCompletionRate() {
+        val task = Task(
+            id = "task-consistent",
+            title = "Health Checkup Routine",
+            priority = TaskPriority.MEDIUM,
+            status = TaskStatus.PENDING,
+            category = TaskCategory.HEALTH
+        )
+
+        val snapshot = ContextSnapshot(
+            currentTime = fixedNow,
+            dayOfWeek = DayOfWeek.MONDAY,
+            networkState = NetworkState.CONNECTED,
+            workloadLevel = WorkloadLevel.LOW
+        )
+
+        val behaviorModel = UserBehaviorModel(
+            categoryCompletionRates = mapOf(TaskCategory.HEALTH to 0.85),
+            hasSufficientData = true
+        )
+
+        val recommendations = decisionEngine.evaluate(
+            snapshot = snapshot,
+            candidateTasks = listOf(task),
+            behaviorModel = behaviorModel
+        )
+
+        val topRec = recommendations.find { it.type == RecommendationType.TASK_FOCUS }
+        assertNotNull(topRec)
+        assertTrue(topRec!!.factors.any { it.name == "Category Consistency" })
     }
 }

@@ -3,6 +3,9 @@ package com.mrashish18.lifeos.feature.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.mrashish18.lifeos.core.decision.LearningLoop
+import com.mrashish18.lifeos.core.decision.UserFeedback
+import com.mrashish18.lifeos.core.decision.UserResponseAction
 import com.mrashish18.lifeos.core.model.BehaviorEvent
 import com.mrashish18.lifeos.core.model.BehaviorEventType
 import com.mrashish18.lifeos.core.model.ContextSnapshot
@@ -42,7 +45,8 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val getDashboardDataUseCase: GetDashboardDataUseCase,
     private val transitionTaskStatusUseCase: TransitionTaskStatusUseCase,
-    private val behaviorEventRepository: BehaviorEventRepository
+    private val behaviorEventRepository: BehaviorEventRepository,
+    private val learningLoop: LearningLoop? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -73,20 +77,30 @@ class DashboardViewModel(
 
     fun acceptRecommendation(recommendation: Recommendation) {
         viewModelScope.launch {
-            // Log behavior event
-            behaviorEventRepository.recordEvent(
-                BehaviorEvent(
-                    id = UUID.randomUUID().toString(),
-                    type = BehaviorEventType.RECOMMENDATION_ACCEPTED,
-                    timestamp = Instant.now(),
-                    metadata = mapOf(
-                        "recommendationId" to recommendation.id,
-                        "type" to recommendation.type.name,
-                        "title" to recommendation.title,
-                        "targetTaskId" to (recommendation.targetTaskId ?: "none")
+            if (learningLoop != null) {
+                learningLoop.onUserResponse(
+                    UserFeedback(
+                        recommendationId = recommendation.id,
+                        action = UserResponseAction.ACCEPTED,
+                        notes = recommendation.title
                     )
                 )
-            )
+            } else {
+                // Log behavior event directly
+                behaviorEventRepository.recordEvent(
+                    BehaviorEvent(
+                        id = UUID.randomUUID().toString(),
+                        type = BehaviorEventType.RECOMMENDATION_ACCEPTED,
+                        timestamp = Instant.now(),
+                        metadata = mapOf(
+                            "recommendationId" to recommendation.id,
+                            "type" to recommendation.type.name,
+                            "title" to recommendation.title,
+                            "targetTaskId" to (recommendation.targetTaskId ?: "none")
+                        )
+                    )
+                )
+            }
 
             // If this recommendation has a target task, start it!
             recommendation.targetTaskId?.let { taskId ->
@@ -104,19 +118,29 @@ class DashboardViewModel(
 
     fun dismissRecommendation(recommendation: Recommendation) {
         viewModelScope.launch {
-            // Log behavior event
-            behaviorEventRepository.recordEvent(
-                BehaviorEvent(
-                    id = UUID.randomUUID().toString(),
-                    type = BehaviorEventType.RECOMMENDATION_REJECTED,
-                    timestamp = Instant.now(),
-                    metadata = mapOf(
-                        "recommendationId" to recommendation.id,
-                        "type" to recommendation.type.name,
-                        "title" to recommendation.title
+            if (learningLoop != null) {
+                learningLoop.onUserResponse(
+                    UserFeedback(
+                        recommendationId = recommendation.id,
+                        action = UserResponseAction.DISMISSED,
+                        notes = recommendation.title
                     )
                 )
-            )
+            } else {
+                // Log behavior event directly
+                behaviorEventRepository.recordEvent(
+                    BehaviorEvent(
+                        id = UUID.randomUUID().toString(),
+                        type = BehaviorEventType.RECOMMENDATION_REJECTED,
+                        timestamp = Instant.now(),
+                        metadata = mapOf(
+                            "recommendationId" to recommendation.id,
+                            "type" to recommendation.type.name,
+                            "title" to recommendation.title
+                        )
+                    )
+                )
+            }
 
             _uiState.update { current ->
                 current.copy(
@@ -135,14 +159,16 @@ class DashboardViewModel(
     class Factory(
         private val getDashboardDataUseCase: GetDashboardDataUseCase,
         private val transitionTaskStatusUseCase: TransitionTaskStatusUseCase,
-        private val behaviorEventRepository: BehaviorEventRepository
+        private val behaviorEventRepository: BehaviorEventRepository,
+        private val learningLoop: LearningLoop? = null
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
                 return DashboardViewModel(
                     getDashboardDataUseCase,
                     transitionTaskStatusUseCase,
-                    behaviorEventRepository
+                    behaviorEventRepository,
+                    learningLoop
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

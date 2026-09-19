@@ -11,8 +11,10 @@ import com.mrashish18.lifeos.core.model.TaskStatus
 import com.mrashish18.lifeos.core.model.UserAvailability
 import com.mrashish18.lifeos.core.model.UserBehaviorModel
 import com.mrashish18.lifeos.core.model.WorkloadLevel
+import com.mrashish18.lifeos.core.model.TaskCategory
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.util.UUID
 
 /**
@@ -27,7 +29,8 @@ import java.util.UUID
  */
 class DeterministicDecisionEngine(
     private val idGenerator: () -> String = { UUID.randomUUID().toString() },
-    private val clock: () -> Instant = { Instant.now() }
+    private val clock: () -> Instant = { Instant.now() },
+    private val zoneId: ZoneId = ZoneId.systemDefault()
 ) : DecisionEngine {
 
     override fun evaluate(
@@ -127,7 +130,7 @@ class DeterministicDecisionEngine(
 
             if (actionableTasks.isNotEmpty()) {
                 val scoredTasks = actionableTasks.map { task ->
-                    scoreTask(task, now, behaviorModel)
+                    scoreTask(task, now, behaviorModel, snapshot)
                 }.sortedByDescending { it.totalScore }
 
                 val topCandidate = scoredTasks.first()
@@ -180,7 +183,8 @@ class DeterministicDecisionEngine(
     private fun scoreTask(
         task: Task,
         now: Instant,
-        behaviorModel: UserBehaviorModel?
+        behaviorModel: UserBehaviorModel?,
+        snapshot: ContextSnapshot
     ): ScoredTask {
         var score = 0.0
         val factors = mutableListOf<RecommendationFactor>()
@@ -224,14 +228,39 @@ class DeterministicDecisionEngine(
             }
         }
 
-        // 3. Quick Win / Estimated Duration Fit
+        // 3. Effort Fit / Task Size Adaptation
         val minutes = task.estimatedMinutes
-        if (minutes != null && minutes <= 30) {
+        if (behaviorModel?.preferredTaskSize != null) {
+            val matchesPreferred = when (behaviorModel.preferredTaskSize) {
+                com.mrashish18.lifeos.core.model.TaskSizePreference.MICRO -> (minutes ?: 30) <= 20
+                com.mrashish18.lifeos.core.model.TaskSizePreference.STANDARD -> (minutes ?: 30) in 21..45
+                com.mrashish18.lifeos.core.model.TaskSizePreference.DEEP -> (minutes ?: 30) > 45
+            }
+            if (matchesPreferred) {
+                score += 15.0
+                factors.add(RecommendationFactor("Effort Fit", "Matches preferred focus duration (${behaviorModel.preferredTaskSize.label})", 0.15))
+            }
+        } else if (minutes != null && minutes <= 30) {
             score += 15.0
             factors.add(RecommendationFactor("Quick Win", "Estimated effort <= 30 minutes ($minutes min)", 0.15))
         }
 
-        // 4. Behavioral Adaptation (only when sufficient observations exist)
+        // 4. Circadian Energy / Peak Productivity Alignment
+        if (behaviorModel?.peakProductivityTimeOfDay != null) {
+            val currentBucket = com.mrashish18.lifeos.core.model.TimeOfDayBucket.fromInstant(snapshot.currentTime, zoneId)
+            if (currentBucket == behaviorModel.peakProductivityTimeOfDay) {
+                score += 15.0
+                factors.add(RecommendationFactor("Circadian Peak", "Matches observed peak energy window (${behaviorModel.peakProductivityTimeOfDay.name.lowercase()})", 0.15))
+            }
+        }
+
+        // 5. Postponement Recovery
+        if (task.status == TaskStatus.POSTPONED) {
+            score += 15.0
+            factors.add(RecommendationFactor("Postponement Recovery", "Prioritizing previously postponed item to prevent backlog decay", 0.15))
+        }
+
+        // 6. Behavioral Adaptation (only when sufficient observations exist)
         if (behaviorModel != null && behaviorModel.hasSufficientData) {
             // Category momentum bonus: award to top preferred category
             val topCategory = behaviorModel.preferredCategories.maxByOrNull { it.value }?.key
@@ -244,12 +273,31 @@ class DeterministicDecisionEngine(
                 factors.add(RecommendationFactor("Familiar Category", "Historical completion in ${task.category.name}", 0.05))
             }
 
+            // Category completion rate consistency
+            val catCompletionRate = behaviorModel.categoryCompletionRates[task.category]
+            if (catCompletionRate != null && catCompletionRate >= 0.70) {
+                score += 10.0
+                factors.add(RecommendationFactor("Category Consistency", "${(catCompletionRate * 100).toInt()}% historical completion in ${task.category.name}", 0.10))
+            }
+
             // High completion rate positive reinforcement
             val completionRate = behaviorModel.completionRate
             if (completionRate != null && completionRate >= 0.70) {
                 score += 5.0
                 factors.add(RecommendationFactor("High Completion Rate", "${(completionRate * 100).toInt()}% historical task completion", 0.05))
             }
+        }
+
+        // 7. Strategic Alignment
+        val strategicFocus = when (task.category) {
+            TaskCategory.WORK -> "Autonomous Productivity"
+            TaskCategory.HEALTH -> "Circadian & Pacing"
+            TaskCategory.LEARNING -> "Deep Habituation"
+            TaskCategory.PERSONAL, TaskCategory.GENERAL -> null
+        }
+        if (strategicFocus != null) {
+            score += 5.0
+            factors.add(RecommendationFactor("Strategic Alignment", "Supports $strategicFocus", 0.05))
         }
 
         return ScoredTask(task, score, factors)
