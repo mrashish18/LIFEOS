@@ -35,19 +35,23 @@ class DeterministicEvidenceRepository(
 
             // Score each evidence document by token overlap in title and snippet
             val matchesWithScores = corpus.mapNotNull { evidence ->
-                val titleTokens = evidence.title.lowercase().split(Regex("[\\s,;:.?!'\"()-]+")).toSet()
-                val snippetTokens = evidence.snippet.lowercase().split(Regex("[\\s,;:.?!'\"()-]+")).toSet()
+                val titleLower = evidence.title.lowercase()
+                val snippetLower = evidence.snippet.lowercase()
+                val titleTokens = titleLower.split(Regex("[\\s,;:.?!'\"()-]+")).toSet()
+                val snippetTokens = snippetLower.split(Regex("[\\s,;:.?!'\"()-]+")).toSet()
 
                 var matchScore = 0
                 for (token in tokens) {
                     if (titleTokens.contains(token)) {
-                        matchScore += 3 // Title match is weighted higher
+                        matchScore += 4 // Direct title keyword match
                     } else if (snippetTokens.contains(token)) {
-                        matchScore += 1
+                        matchScore += 2 // Direct snippet keyword match
+                    } else if (token.length >= 4 && (titleLower.contains(token) || snippetLower.contains(token))) {
+                        matchScore += 1 // Substring root match
                     }
                 }
 
-                if (matchScore > 0) {
+                if (matchScore >= 2) {
                     evidence to matchScore
                 } else {
                     null
@@ -248,9 +252,40 @@ class DeterministicEvidenceRepository(
                     name = "National Institute of Standards and Technology (NIST)",
                     url = "https://physics.nist.gov/cgi-bin/cuu/Value?c",
                     quality = SourceQuality.OFFICIAL,
-                    description = "National measurement science standards laboratory"
+                    description = "National measurement science standards laboratory",
+                    authorityRationale = "National metrology institute establishing fundamental physical constants"
                 ),
                 publicationDate = "2019-05-20"
+            ),
+
+            // 9. Hydration / Physiology: 8 Glasses of Water Myth
+            Evidence(
+                id = "health_water_harvard",
+                title = "How Much Water Should You Drink?",
+                snippet = "There is no single formula that fits everyone. The popular advice to drink eight glasses of water daily is a reasonable goal but has no firm scientific basis; fluid requirements vary by body weight, physical activity, climate, and water consumed in foods.",
+                source = EvidenceSource(
+                    name = "Harvard Health Publishing",
+                    url = "https://www.health.harvard.edu/staying-healthy/how-much-water-should-you-drink",
+                    quality = SourceQuality.PRIMARY,
+                    description = "Consumer health publishing division of Harvard Medical School",
+                    authorityRationale = "Academic medical school publication with peer-review oversight"
+                ),
+                publicationDate = "2023-05-15"
+            ),
+
+            // 10. Technology / Telecommunications: 5G and Health
+            Evidence(
+                id = "tech_5g_who",
+                title = "5G Mobile Networks and Public Health",
+                snippet = "To date, and after much research conducted, no adverse health effect has been causally linked with exposure to wireless technologies. Provided that the overall exposure remains below international guidelines, no consequences for public health are anticipated.",
+                source = EvidenceSource(
+                    name = "World Health Organization (WHO)",
+                    url = "https://www.who.int/news-room/questions-and-answers/item/radiation-5g-mobile-networks-and-health",
+                    quality = SourceQuality.OFFICIAL,
+                    description = "Specialized United Nations agency for international public health",
+                    authorityRationale = "International public health authority conducting global epidemiological reviews"
+                ),
+                publicationDate = "2020-02-27"
             )
         )
     }

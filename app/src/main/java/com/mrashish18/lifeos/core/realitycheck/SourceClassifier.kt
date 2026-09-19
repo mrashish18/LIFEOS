@@ -11,36 +11,40 @@ import com.mrashish18.lifeos.core.model.SourceQuality
  */
 class SourceClassifier {
 
-    fun classify(sourceName: String, url: String): SourceQuality {
+    fun classifyWithRationale(sourceName: String, url: String): Pair<SourceQuality, String> {
         val lowerUrl = url.lowercase().trim()
         val lowerName = sourceName.lowercase().trim()
 
         // 1. Check for OFFICIAL (Government, international public health bodies, national agencies)
         if (OFFICIAL_DOMAINS.any { lowerUrl.contains(it) } ||
             OFFICIAL_NAME_KEYWORDS.any { lowerName.contains(it) }) {
-            return SourceQuality.OFFICIAL
+            return SourceQuality.OFFICIAL to "Intergovernmental or national government agency with institutional public review standards"
         }
 
         // 2. Check for PRIMARY (Peer-reviewed journals, primary academic repositories, creator organizations)
         if (PRIMARY_DOMAINS.any { lowerUrl.contains(it) } ||
             PRIMARY_NAME_KEYWORDS.any { lowerName.contains(it) }) {
-            return SourceQuality.PRIMARY
+            return SourceQuality.PRIMARY to "Peer-reviewed scientific journal, primary academic repository, or official creator organization"
         }
 
         // 3. Check for REPUTABLE_NEWS (Established journalistic organizations with public editorial correction policies)
         if (NEWS_DOMAINS.any { lowerUrl.contains(it) } ||
             NEWS_NAME_KEYWORDS.any { lowerName.contains(it) }) {
-            return SourceQuality.REPUTABLE_NEWS
+            return SourceQuality.REPUTABLE_NEWS to "Established journalistic organization with editorial standards and public correction policies"
         }
 
         // 4. Check for REFERENCE (Encyclopedias, verified clinical reference portals, established dictionaries)
         if (REFERENCE_DOMAINS.any { lowerUrl.contains(it) } ||
             REFERENCE_NAME_KEYWORDS.any { lowerName.contains(it) }) {
-            return SourceQuality.REFERENCE
+            return SourceQuality.REFERENCE to "Established reference publication or encyclopedic resource with institutional editorial oversight"
         }
 
         // 5. Default to UNKNOWN
-        return SourceQuality.UNKNOWN
+        return SourceQuality.UNKNOWN to "General source without documented institutional peer-review or verification charter"
+    }
+
+    fun classify(sourceName: String, url: String): SourceQuality {
+        return classifyWithRationale(sourceName, url).first
     }
 
     companion object {

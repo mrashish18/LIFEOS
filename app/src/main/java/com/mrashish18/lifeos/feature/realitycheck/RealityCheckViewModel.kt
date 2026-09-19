@@ -3,13 +3,17 @@ package com.mrashish18.lifeos.feature.realitycheck
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.mrashish18.lifeos.core.model.InvestigationRecord
 import com.mrashish18.lifeos.core.model.RealityCheckInput
 import com.mrashish18.lifeos.core.model.RealityCheckResult
+import com.mrashish18.lifeos.domain.repository.InvestigationRepository
 import com.mrashish18.lifeos.domain.usecase.PerformRealityCheckUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -22,8 +26,17 @@ sealed interface RealityCheckUiState {
 }
 
 class RealityCheckViewModel(
-    private val performRealityCheckUseCase: PerformRealityCheckUseCase
+    private val performRealityCheckUseCase: PerformRealityCheckUseCase,
+    private val investigationRepository: InvestigationRepository? = null
 ) : ViewModel() {
+
+    val recentInvestigations: StateFlow<List<InvestigationRecord>> =
+        investigationRepository?.observeRecentInvestigations(10)
+            ?.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList<InvestigationRecord>()
+            ) ?: MutableStateFlow<List<InvestigationRecord>>(emptyList()).asStateFlow()
 
     private val _uiState = MutableStateFlow<RealityCheckUiState>(RealityCheckUiState.Empty)
     val uiState: StateFlow<RealityCheckUiState> = _uiState.asStateFlow()
@@ -93,6 +106,12 @@ class RealityCheckViewModel(
         }
     }
 
+    fun selectInvestigation(record: InvestigationRecord) {
+        currentClaimText = record.claimText
+        currentSourceUrl = ""
+        analyzeClaim()
+    }
+
     fun resetToInput() {
         _uiState.value = RealityCheckUiState.Input(
             claimText = currentClaimText,
@@ -101,11 +120,12 @@ class RealityCheckViewModel(
     }
 
     class Factory(
-        private val performRealityCheckUseCase: PerformRealityCheckUseCase
+        private val performRealityCheckUseCase: PerformRealityCheckUseCase,
+        private val investigationRepository: InvestigationRepository? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return RealityCheckViewModel(performRealityCheckUseCase) as T
+            return RealityCheckViewModel(performRealityCheckUseCase, investigationRepository) as T
         }
     }
 }

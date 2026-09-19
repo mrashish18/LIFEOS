@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mrashish18.lifeos.core.model.AnalyzedEvidence
+import com.mrashish18.lifeos.core.model.InvestigationRecord
 import com.mrashish18.lifeos.core.model.RealityCheckResult
 import com.mrashish18.lifeos.core.model.Verdict
 import com.mrashish18.lifeos.ui.theme.*
@@ -53,6 +54,7 @@ fun RealityCheckScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val recentInvestigations by viewModel.recentInvestigations.collectAsState()
 
     Box(
         modifier = modifier
@@ -71,22 +73,30 @@ fun RealityCheckScreen(
             is RealityCheckUiState.Empty -> {
                 TruthInputScreen(
                     claimText = "",
+                    recentInvestigations = recentInvestigations,
                     onClaimChanged = { viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
                         viewModel.onClaimTextChanged(claim)
                         viewModel.analyzeClaim()
+                    },
+                    onSelectInvestigation = { record ->
+                        viewModel.selectInvestigation(record)
                     }
                 )
             }
             is RealityCheckUiState.Input -> {
                 TruthInputScreen(
                     claimText = state.claimText,
+                    recentInvestigations = recentInvestigations,
                     onClaimChanged = { viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
                         viewModel.onClaimTextChanged(claim)
                         viewModel.analyzeClaim()
+                    },
+                    onSelectInvestigation = { record ->
+                        viewModel.selectInvestigation(record)
                     }
                 )
             }
@@ -120,11 +130,15 @@ fun RealityCheckScreen(
             is RealityCheckUiState.Error -> {
                 TruthInputScreen(
                     claimText = state.lastClaimText,
+                    recentInvestigations = recentInvestigations,
                     onClaimChanged = { viewModel.onClaimTextChanged(it) },
                     onAnalyze = { viewModel.analyzeClaim() },
                     onSelectQuick = { claim ->
                         viewModel.onClaimTextChanged(claim)
                         viewModel.analyzeClaim()
+                    },
+                    onSelectInvestigation = { record ->
+                        viewModel.selectInvestigation(record)
                     }
                 )
             }
@@ -138,9 +152,11 @@ fun RealityCheckScreen(
 @Composable
 private fun TruthInputScreen(
     claimText: String,
+    recentInvestigations: List<InvestigationRecord>,
     onClaimChanged: (String) -> Unit,
     onAnalyze: () -> Unit,
-    onSelectQuick: (String) -> Unit
+    onSelectQuick: (String) -> Unit,
+    onSelectInvestigation: (InvestigationRecord) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -317,7 +333,7 @@ private fun TruthInputScreen(
 
         Spacer(modifier = Modifier.height(22.dp))
 
-        // Recent Investigations Section matching Screen 6
+        // Recent Investigations Section matching Screen 6 with dynamic Room history
         Text(
             text = "Recent Investigations",
             fontSize = 13.sp,
@@ -326,69 +342,163 @@ private fun TruthInputScreen(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onSelectQuick("Earth orbits the Sun in approximately 365 days") },
-            shape = RoundedCornerShape(14.dp),
-            color = Color.White,
-            shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+        if (recentInvestigations.isEmpty()) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelectQuick("Earth orbits the Sun in approximately 365 days") },
+                shape = RoundedCornerShape(14.dp),
+                color = Color.White,
+                shadowElevation = 1.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
             ) {
-                // Left red icon badge
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFFEE2E2)),
-                    contentAlignment = Alignment.Center
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "🛡️", fontSize = 16.sp)
-                }
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFDCFCE7)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🛡️", fontSize = 16.sp)
+                    }
 
-                Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Earth orbits the Sun in 365 d...",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFFDCFCE7))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "SUPPORTED",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF16A34A)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "92% • 2 sources",
+                            fontSize = 10.sp,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
                     Text(
-                        text = "Earth orbits the Sun in 365 d...",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        text = "⋮",
+                        fontSize = 16.sp,
+                        color = Color(0xFF64748B),
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color(0xFFDCFCE7))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                recentInvestigations.forEach { record ->
+                    val (badgeBg, badgeTextColor, iconBg) = when (record.verdict) {
+                        Verdict.SUPPORTED -> Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), Color(0xFFDCFCE7))
+                        Verdict.CONTRADICTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), Color(0xFFFEE2E2))
+                        Verdict.MIXED -> Triple(Color(0xFFFFEDD5), Color(0xFFEA580C), Color(0xFFFFEDD5))
+                        Verdict.INSUFFICIENT_EVIDENCE -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), Color(0xFFFEF3C7))
+                    }
+                    val iconText = when (record.verdict) {
+                        Verdict.SUPPORTED -> "✓"
+                        Verdict.CONTRADICTED -> "✕"
+                        Verdict.MIXED -> "!"
+                        Verdict.INSUFFICIENT_EVIDENCE -> "?"
+                    }
+
+                    val displayClaim = if (record.claimText.length > 32) {
+                        record.claimText.take(30) + "..."
+                    } else {
+                        record.claimText
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectInvestigation(record) },
+                        shape = RoundedCornerShape(14.dp),
+                        color = Color.White,
+                        shadowElevation = 1.dp,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(iconBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = iconText,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = badgeTextColor
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = displayClaim,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF1E1B4B)
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(badgeBg)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = record.verdict.name,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = badgeTextColor
+                                        )
+                                    }
+                                }
+                                 Spacer(modifier = Modifier.height(2.dp))
+                                 Text(
+                                     text = "${record.confidencePercentage}% • ${record.sourcesCount} source${if (record.sourcesCount == 1) "" else "s"}",
+                                     fontSize = 10.sp,
+                                     color = Color(0xFF64748B)
+                                 )
+                            }
+
                             Text(
-                                text = "SUPPORTED",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF16A34A)
+                                text = "⋮",
+                                fontSize = 16.sp,
+                                color = Color(0xFF64748B),
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "86% • 2 sources",
-                        fontSize = 10.sp,
-                        color = Color(0xFF64748B)
-                    )
                 }
-
-                Text(
-                    text = "⋮",
-                    fontSize = 16.sp,
-                    color = Color(0xFF64748B),
-                    fontWeight = FontWeight.Bold
-                )
             }
         }
 
@@ -398,6 +508,7 @@ private fun TruthInputScreen(
 
 /**
  * Screen 7: Truth Result Screen matching 07_truth_result_ref.png exactly.
+ * Clearly separates AUTHORITATIVE EVIDENCE from LIFEOS INTERPRETATION.
  */
 @Composable
 private fun TruthResultScreen(
@@ -420,7 +531,7 @@ private fun TruthResultScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "INVESTIGATION REPORT",
+                text = "← INVESTIGATION REPORT",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF2563EB),
@@ -547,8 +658,38 @@ private fun TruthResultScreen(
                     }
                 }
 
-                // Details below scenic banner
+                // Details below scenic banner: LIFEOS INTERPRETATION
                 Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFEEF2FF))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "LIFEOS INTERPRETATION",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = Color(0xFF4338CA),
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+
+                        Text(
+                            text = result.claim.domainCategory.name,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
                         text = "\"${result.claim.rawText}\"",
                         fontSize = 14.sp,
@@ -562,11 +703,8 @@ private fun TruthResultScreen(
                     // Dynamic Claim & Domain Tags
                     val dynamicTags = buildList {
                         add(result.claim.claimType.name)
+                        add(result.claim.domainCategory.name)
                         if (result.claim.rawText.contains(Regex("\\b\\d+\\b"))) add("NUMERICAL")
-                        val lower = result.claim.rawText.lowercase()
-                        if (lower.contains("orbit") || lower.contains("sun") || lower.contains("earth") || lower.contains("moon") || lower.contains("apollo")) add("ASTRONOMY")
-                        if (lower.contains("antibiotic") || lower.contains("virus") || lower.contains("infection") || lower.contains("water") || lower.contains("brain") || lower.contains("disease") || lower.contains("coffee")) add("HEALTH & BIOLOGY")
-                        if (lower.contains("kotlin") || lower.contains("release") || lower.contains("code") || lower.contains("5g") || lower.contains("network")) add("TECHNOLOGY")
                     }.distinct()
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -591,17 +729,33 @@ private fun TruthResultScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Key Takeaway",
+                        text = "Deterministic Assessment",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = result.confidence.rationale,
+                        text = result.interpretation,
                         fontSize = 11.sp,
                         color = Color(0xFF475569),
                         lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Scoring Rationale",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF64748B)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = result.confidence.rationale,
+                        fontSize = 10.sp,
+                        color = Color(0xFF64748B),
+                        lineHeight = 15.sp
                     )
                 }
             }
@@ -609,13 +763,33 @@ private fun TruthResultScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Evidence Section matching Screen 7
-        Text(
-            text = "Evidence (${result.analyzedEvidence.size})",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF2563EB)
-        )
+        // Authoritative Evidence Section matching Screen 7
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "AUTHORITATIVE EVIDENCE (${result.analyzedEvidence.size})",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF2563EB)
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                .background(Color(0xFFF1F5F9))
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "GROUND TRUTH SOURCES",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF64748B)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(10.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -664,6 +838,15 @@ private fun TruthResultScreen(
                             color = Color(0xFF1E1B4B)
                         )
 
+                        if (analyzed.evidence.source.authorityRationale.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Institutional Criteria: ${analyzed.evidence.source.authorityRationale}",
+                                fontSize = 10.sp,
+                                color = Color(0xFF64748B)
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(6.dp))
 
                         Text(
@@ -676,9 +859,9 @@ private fun TruthResultScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Read source →",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                            text = "URL: ${analyzed.evidence.source.url ?: "Verified Institutional Database"}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
                             color = Color(0xFF2563EB)
                         )
                     }

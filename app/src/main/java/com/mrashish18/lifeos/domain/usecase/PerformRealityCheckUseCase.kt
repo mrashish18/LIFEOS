@@ -5,16 +5,19 @@ import com.mrashish18.lifeos.core.model.BehaviorEventType
 import com.mrashish18.lifeos.core.model.RealityCheckInput
 import com.mrashish18.lifeos.core.model.RealityCheckResult
 import com.mrashish18.lifeos.core.realitycheck.RealityCheckEngine
+import com.mrashish18.lifeos.core.model.toInvestigationRecord
 import com.mrashish18.lifeos.domain.repository.BehaviorEventRepository
+import com.mrashish18.lifeos.domain.repository.InvestigationRepository
 import java.util.UUID
 
 /**
  * Domain usecase executing the full RealityCheck pipeline and recording
- * learning loop behavior events.
+ * learning loop behavior events and persistent investigation history.
  */
 class PerformRealityCheckUseCase(
     private val realityCheckEngine: RealityCheckEngine,
-    private val behaviorEventRepository: BehaviorEventRepository
+    private val behaviorEventRepository: BehaviorEventRepository,
+    private val investigationRepository: InvestigationRepository? = null
 ) {
 
     suspend operator fun invoke(input: RealityCheckInput): Result<RealityCheckResult> {
@@ -55,6 +58,9 @@ class PerformRealityCheckUseCase(
                     )
                 )
             )
+
+            // 4. Persist investigation record
+            investigationRepository?.saveInvestigation(result.toInvestigationRecord())
 
             result
         }

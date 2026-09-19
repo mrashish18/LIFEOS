@@ -52,20 +52,26 @@ class RealityCheckEngine(
         val evidenceResult = evidenceRepository.search(searchQuery)
         val rawEvidence = evidenceResult.getOrElse { emptyList() }
 
-        // 3. Ensure source quality classification is grounded
+        // 3. Ensure source quality classification and authority rationale are grounded
         val calibratedEvidence = rawEvidence.map { item ->
-            val detectedQuality = sourceClassifier.classify(item.source.name, item.source.url)
-            if (item.source.quality != detectedQuality && detectedQuality != com.mrashish18.lifeos.core.model.SourceQuality.UNKNOWN) {
-                item.copy(source = item.source.copy(quality = detectedQuality))
+            val (detectedQuality, rationale) = sourceClassifier.classifyWithRationale(item.source.name, item.source.url)
+            val finalQuality = if (detectedQuality != com.mrashish18.lifeos.core.model.SourceQuality.UNKNOWN) {
+                detectedQuality
             } else {
-                item
+                item.source.quality
             }
+            item.copy(
+                source = item.source.copy(
+                    quality = finalQuality,
+                    authorityRationale = rationale
+                )
+            )
         }
 
         // 4. Compare evidence against claim
         val comparison = evidenceComparator.compare(claim, calibratedEvidence)
 
-        // 5. Construct investigation report
+        // 5. Construct investigation report with clear evidence vs interpretation boundary
         return RealityCheckResult(
             id = UUID.randomUUID().toString(),
             input = input,
@@ -73,7 +79,8 @@ class RealityCheckEngine(
             verdict = comparison.verdict,
             confidence = comparison.confidence,
             analyzedEvidence = comparison.analyzedEvidence,
-            reasoning = comparison.reasoning
+            reasoning = comparison.reasoning,
+            interpretation = comparison.reasoning
         )
     }
 }

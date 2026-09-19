@@ -240,46 +240,23 @@ interface EvidenceRepository {
 ```
 The active implementation, `DeterministicEvidenceRepository`, operates against a verified, offline-first corpus spanning medicine, physics, technology, astronomy, and common misconceptions. It performs multi-token keyword intersection and relevance scoring without fabricated web scraping.
 
-### 2. Deterministic Claim Classification
-Claims are classified into discrete semantic categories by `ClaimClassifier`:
-- `OPINION`: Subjective aesthetic, value, or preference judgments ("best", "worst", "ugly", "overrated").
-- `CAUSAL`: Assertions of cause-and-effect ("causes", "leads to", "triggers", "results in").
-- `TEMPORAL`: Statements with explicit calendar years, centuries, or historical chronologies.
-- `NUMERICAL`: Assertions featuring quantities, percentages, or measurement metrics.
-- `FACTUAL`: Declarative propositions of objective existence or properties.
-- `UNSUPPORTED`: Input that is too brief (< 4 characters) or lacks alphabetical proposition content.
+### 2. Complete 10-Stage Pipeline
+1. **Input**: Raw text or statement entered by user.
+2. **Normalization**: Standardizes inquiry formats (e.g., stripping trailing punctuation, converting interrogative prefixes like "Do/Does/Is" into canonical propositions) without fabricating or altering semantic intent.
+3. **Classification**: Identifies semantic `ClaimType` (`FACTUAL`, `CAUSAL`, `TEMPORAL`, `NUMERICAL`, `OPINION`, `UNSUPPORTED`) and `DomainCategory` (`MEDICINE`, `ASTRONOMY`, `TECHNOLOGY`, `NEUROSCIENCE`, `PHYSICS`, `GENERAL`).
+4. **Evidence Retrieval**: Deterministic retrieval from verified institutional corpus with weighted title and snippet token matching.
+5. **Source Quality Analysis**: Institutional credibility assessment (`PRIMARY`: 1.0, `OFFICIAL`: 0.9, `REPUTABLE_NEWS`: 0.75, `REFERENCE`: 0.70, `UNKNOWN`: 0.40) with explainable institutional rationale.
+6. **Evidence Comparison**: Multi-factor evaluation measuring individual evidence stance (`SUPPORTS`, `CONTRADICTS`, `MENTIONS`), relevance, and weight contribution.
+7. **Confidence Calculation**: Pure multi-factor mathematical derivation ($0.35 \times \text{quality} + 0.30 \times \text{relevance} + 0.20 \times \text{consensus} + 0.15 \times \text{coverage} - \text{conflict penalty}$) without artificial minimum floors.
+8. **Verdict**: Objective evidentiary balance (`SUPPORTED`, `CONTRADICTED`, `MIXED`, `INSUFFICIENT_EVIDENCE`).
+9. **Explanation & Separation**: Deterministic human-readable explanation explicitly separating **Authoritative Evidence** (external ground truth) from **LIFEOS Interpretation** (system assessment).
+10. **Auditable Persistence**: Immediate storage in Room database (`investigation_records` table, non-destructive `MIGRATION_2_3`) with reactive UI updates.
 
-### 3. Source Quality Classification & Weights
-Source categories represent institutional editorial review standards and historical reliability:
-- `PRIMARY` (Weight: $1.0$): Peer-reviewed academic journals, scientific societies, creator repositories (e.g., *The Lancet*, *Nature*, *Society for Neuroscience*, *JetBrains*).
-- `OFFICIAL` (Weight: $0.9$): Government public health agencies, international bodies (e.g., *CDC*, *WHO*, *NASA*, *NIST*).
-- `REPUTABLE_NEWS` (Weight: $0.75$): Journalistic organizations with public correction protocols (e.g., *Scientific American*, *Reuters*, *BBC*).
-- `REFERENCE` (Weight: $0.70$): General encyclopedias and clinical reference portals (e.g., *Encyclopaedia Britannica*, *Mayo Clinic*).
-- `UNKNOWN` (Weight: $0.40$): Unverified, personal, or arbitrary web endpoints.
-
-### 4. Deterministic Comparison & Verdict Rules
-Each evidence item is analyzed against the claim to determine its stance:
-- `SUPPORTS`: Corroborates the proposition or affirms a negated claim.
-- `CONTRADICTS`: Contains explicit refuting language ("do not work", "ineffective", "myth", "debunked", "no link").
-- `MENTIONS`: Contextual discussion without decisive validation or refutation.
-
-Weight contributions are calculated as:
-$$\text{WeightContribution} = \text{SourceQuality.weight} \times \text{RelevanceScore}$$
-
-Verdicts describe the objective evidentiary balance:
-- `INSUFFICIENT_EVIDENCE`: Total evidentiary signal $< 0.35$ or empty evidence list.
-- `SUPPORTED`: Corroborating signals dominate ($\text{supportWeight} \ge 1.3 \times \text{contradictWeight}$).
-- `CONTRADICTED`: Refuting signals dominate ($\text{contradictWeight} \ge 1.3 \times \text{supportWeight}$).
-- `MIXED`: Substantial evidence exists on both sides ($\text{conflictRatio} > 0.25$).
-
-### 5. Calibrated Confidence Calculation
-Empirical confidence is calculated transparently and never claims 100% certainty:
-- `INSUFFICIENT_EVIDENCE`: Clamped between $0.20$ and $0.40$.
-- `MIXED`: Derived from average source credibility and conflict degree; clamped between $0.45$ and $0.72$.
-- `SUPPORTED` / `CONTRADICTED`: Base score $0.60$, plus source credibility bonus, plus multi-source corroboration bonus, minus conflict penalty; clamped strictly between $0.65$ and $0.92$.
-
-### 6. Architectural Boundary: Deterministic Core vs. Future AI
-In Milestone 3, all classification, evidence scoring, and verdict synthesis are 100% deterministic and unit-tested. Future LLM/AI integration will be introduced as an optional assistive layer behind `ClaimClassifier` and `EvidenceComparator` for natural language summarization, but will never override deterministic evidentiary safety constraints.
+### 3. Room Database Migration & Persistence
+The investigation history is persisted in Room:
+- Table: `investigation_records`
+- Fields: `id`, `originalClaim`, `normalizedClaim`, `claimType`, `domainCategory`, `verdict`, `confidenceScore`, `confidencePercentage`, `reasoning`, `evidenceCount`, `topSourceNamesJson`, `timestampEpochMillis`
+- Non-destructive migration `MIGRATION_2_3` from database version 2 to 3.
 
 ---
 

@@ -12,6 +12,18 @@ data class RealityCheckInput(
 )
 
 /**
+ * Deterministic domain classification of a claim.
+ */
+enum class DomainCategory(val label: String) {
+    MEDICINE("Medicine & Health"),
+    ASTRONOMY("Astronomy & Space"),
+    TECHNOLOGY("Technology & Computing"),
+    NEUROSCIENCE("Neuroscience"),
+    PHYSICS("Physics & Nature"),
+    GENERAL("General Knowledge")
+}
+
+/**
  * Deterministic classification of a claim's semantic type.
  */
 enum class ClaimType {
@@ -30,7 +42,9 @@ data class Claim(
     val rawText: String,
     val claimType: ClaimType,
     val detectedKeywords: List<String> = emptyList(),
-    val extractedSubject: String = ""
+    val extractedSubject: String = "",
+    val normalizedText: String = rawText.trim(),
+    val domainCategory: DomainCategory = DomainCategory.GENERAL
 )
 
 /**
@@ -54,7 +68,8 @@ data class EvidenceSource(
     val name: String,
     val url: String,
     val quality: SourceQuality,
-    val description: String = ""
+    val description: String = "",
+    val authorityRationale: String = quality.label
 )
 
 /**
@@ -148,6 +163,43 @@ data class RealityCheckResult(
     val confidence: Confidence,
     val analyzedEvidence: List<AnalyzedEvidence>,
     val reasoning: String,
+    val interpretation: String = reasoning,
     val disclaimer: String = "Confidence reflects the available evidence and does not guarantee that the claim is true.",
     val createdAtEpochMillis: Long = System.currentTimeMillis()
+)
+
+/**
+ * Persistent historical record of a completed RealityCheck investigation.
+ */
+data class InvestigationRecord(
+    val id: String,
+    val originalClaim: String,
+    val normalizedClaim: String,
+    val claimType: ClaimType,
+    val domainCategory: DomainCategory,
+    val verdict: Verdict,
+    val confidenceScore: Double,
+    val confidencePercentage: Int,
+    val reasoning: String,
+    val evidenceCount: Int,
+    val topSourceNames: List<String>,
+    val timestampEpochMillis: Long
+) {
+    val claimText: String get() = originalClaim
+    val sourcesCount: Int get() = evidenceCount
+}
+
+fun RealityCheckResult.toInvestigationRecord(): InvestigationRecord = InvestigationRecord(
+    id = id,
+    originalClaim = input.text.trim(),
+    normalizedClaim = claim.normalizedText,
+    claimType = claim.claimType,
+    domainCategory = claim.domainCategory,
+    verdict = verdict,
+    confidenceScore = confidence.score,
+    confidencePercentage = confidence.percentage,
+    reasoning = reasoning,
+    evidenceCount = analyzedEvidence.size,
+    topSourceNames = analyzedEvidence.map { it.evidence.source.name }.distinct().take(3),
+    timestampEpochMillis = createdAtEpochMillis
 )

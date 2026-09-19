@@ -13,6 +13,7 @@ import com.mrashish18.lifeos.core.decision.DeterministicDecisionEngine
 import com.mrashish18.lifeos.data.local.LifeOsDatabase
 import com.mrashish18.lifeos.data.repository.InMemoryTaskRepository
 import com.mrashish18.lifeos.data.repository.RoomBehaviorEventRepository
+import com.mrashish18.lifeos.data.repository.RoomInvestigationRepository
 import com.mrashish18.lifeos.data.repository.RoomTaskRepository
 import com.mrashish18.lifeos.domain.usecase.CreateTaskUseCase
 import com.mrashish18.lifeos.domain.usecase.DeleteTaskUseCase
@@ -89,9 +90,12 @@ class MainActivity : ComponentActivity() {
         // 5. RealityCheck Pipeline
         val evidenceRepository = DeterministicEvidenceRepository()
         val realityCheckEngine = RealityCheckEngine(evidenceRepository)
+        val investigationDao = database.investigationDao()
+        val investigationRepository = RoomInvestigationRepository(investigationDao, dispatcherProvider)
         val performRealityCheckUseCase = PerformRealityCheckUseCase(
             realityCheckEngine = realityCheckEngine,
-            behaviorEventRepository = behaviorEventRepository
+            behaviorEventRepository = behaviorEventRepository,
+            investigationRepository = investigationRepository
         )
 
         // 6. RescueMesh Resilience Pipeline
@@ -149,7 +153,10 @@ class MainActivity : ComponentActivity() {
         )
         val tasksViewModel = ViewModelProvider(this, tasksFactory)[TasksViewModel::class.java]
 
-        val realityCheckFactory = RealityCheckViewModel.Factory(performRealityCheckUseCase)
+        val realityCheckFactory = RealityCheckViewModel.Factory(
+            performRealityCheckUseCase,
+            investigationRepository
+        )
         val realityCheckViewModel = ViewModelProvider(this, realityCheckFactory)[RealityCheckViewModel::class.java]
 
         val resilienceFactory = ResilienceViewModel.Factory(

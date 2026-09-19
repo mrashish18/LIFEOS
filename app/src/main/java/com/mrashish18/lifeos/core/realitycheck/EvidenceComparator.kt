@@ -166,45 +166,52 @@ class EvidenceComparator {
         conflictRatio: Double
     ): Confidence {
         val totalCount = analyzedItems.size
-        val avgSourceQuality = if (totalCount > 0) {
+        val qualityScore = if (totalCount > 0) {
             analyzedItems.map { it.evidence.source.quality.weight }.average()
-        } else 0.5
+        } else {
+            0.4
+        }
+        val relevanceScore = if (totalCount > 0) {
+            analyzedItems.map { it.relevanceScore }.average()
+        } else {
+            0.3
+        }
 
-        val baseScore: Double
+        val dominantCount = when (verdict) {
+            Verdict.SUPPORTED -> supporting.size
+            Verdict.CONTRADICTED -> contradicting.size
+            Verdict.MIXED -> maxOf(supporting.size, contradicting.size)
+            Verdict.INSUFFICIENT_EVIDENCE -> 0
+        }
+        val consensusScore = if (totalCount > 0) {
+            dominantCount.toDouble() / totalCount.toDouble()
+        } else {
+            0.0
+        }
+        val coverageScore = minOf(1.0, totalCount / 2.0)
+
         val finalScore: Double
         val rationale: String
 
         when (verdict) {
             Verdict.INSUFFICIENT_EVIDENCE -> {
-                finalScore = (0.20 + (totalCount * 0.05)).coerceIn(0.20, 0.40)
-                rationale = "Low confidence due to insufficient corroborating or refuting evidence."
+                finalScore = (0.15 + (coverageScore * 0.10) + (relevanceScore * 0.05)).coerceIn(0.10, 0.35)
+                rationale = "Low confidence: available repositories do not contain sufficient corroborating or refuting evidence."
             }
             Verdict.MIXED -> {
-                baseScore = 0.55 + (avgSourceQuality * 0.15) - (conflictRatio * 0.15)
-                finalScore = baseScore.coerceIn(0.45, 0.72)
-                rationale = "Moderate confidence: Reputable sources present divergent perspectives or significant caveats."
+                val raw = (0.35 * qualityScore) + (0.25 * relevanceScore) + (0.25 * coverageScore) - (conflictRatio * 0.15)
+                finalScore = raw.coerceIn(0.40, 0.72)
+                rationale = "Moderate confidence: verified sources present significant divergent data or critical caveats."
             }
             Verdict.SUPPORTED -> {
-                val corroborationBonus = when {
-                    supporting.size >= 3 -> 0.18
-                    supporting.size == 2 -> 0.12
-                    else -> 0.05
-                }
-                baseScore = 0.60 + (avgSourceQuality * 0.18) + corroborationBonus - (conflictRatio * 0.20)
-                // Never 1.0; maximum confidence capped at 0.92
-                finalScore = baseScore.coerceIn(0.65, 0.92)
-                rationale = "High confidence based on ${supporting.size} corroborating source(s) with average quality weight of ${(avgSourceQuality * 100).toInt()}%."
+                val raw = (0.35 * qualityScore) + (0.30 * relevanceScore) + (0.20 * consensusScore) + (0.15 * coverageScore) - (conflictRatio * 0.25)
+                finalScore = raw.coerceIn(0.20, 0.94)
+                rationale = "High confidence derived from ${supporting.size} corroborating source(s) with ${(qualityScore * 100).toInt()}% average quality rating and ${(consensusScore * 100).toInt()}% consensus."
             }
             Verdict.CONTRADICTED -> {
-                val contradictionBonus = when {
-                    contradicting.size >= 3 -> 0.18
-                    contradicting.size == 2 -> 0.12
-                    else -> 0.05
-                }
-                baseScore = 0.60 + (avgSourceQuality * 0.18) + contradictionBonus - (conflictRatio * 0.20)
-                // Never 1.0; maximum confidence capped at 0.92
-                finalScore = baseScore.coerceIn(0.65, 0.92)
-                rationale = "High confidence based on ${contradicting.size} refuting source(s) with average quality weight of ${(avgSourceQuality * 100).toInt()}%."
+                val raw = (0.35 * qualityScore) + (0.30 * relevanceScore) + (0.20 * consensusScore) + (0.15 * coverageScore) - (conflictRatio * 0.25)
+                finalScore = raw.coerceIn(0.20, 0.94)
+                rationale = "High confidence derived from ${contradicting.size} refuting source(s) with ${(qualityScore * 100).toInt()}% average quality rating and ${(consensusScore * 100).toInt()}% consensus."
             }
         }
 
@@ -227,41 +234,42 @@ class EvidenceComparator {
         return buildString {
             when (verdict) {
                 Verdict.SUPPORTED -> {
-                    append("Investigation indicates the claim is **supported** by ")
+                    append("Investigation indicates the claim is supported by ")
                     append("${supporting.size} verified source(s)")
                     val topSourceNames = supporting.map { it.evidence.source.name }.distinct().take(2)
                     if (topSourceNames.isNotEmpty()) {
-                        append(" including ${topSourceNames.joinToString(" and ")}")
+                        append(" (${topSourceNames.joinToString(", ")})")
                     }
-                    append(". ")
+                    append(". Independent records corroborate the core proposition. ")
                     if (contradicting.isNotEmpty()) {
-                        append("Note: ${contradicting.size} source(s) presented minor caveats or contradictory notes. ")
+                        append("Note: ${contradicting.size} source(s) noted caveats or counter-evidence. ")
                     }
-                    append("The calibrated confidence score is ${confidence.percentage}%.")
+                    append("Confidence is calibrated at ${confidence.percentage}%.")
                 }
                 Verdict.CONTRADICTED -> {
-                    append("Investigation indicates the claim is **contradicted** by ")
+                    append("Investigation indicates the claim is contradicted by ")
                     append("${contradicting.size} authoritative source(s)")
                     val topSourceNames = contradicting.map { it.evidence.source.name }.distinct().take(2)
                     if (topSourceNames.isNotEmpty()) {
-                        append(" including ${topSourceNames.joinToString(" and ")}")
+                        append(" (${topSourceNames.joinToString(", ")})")
                     }
-                    append(". Independent data directly refutes the premise of the statement.")
+                    append(". Authoritative scientific evidence directly refutes the premise. ")
+                    append("Confidence is calibrated at ${confidence.percentage}%.")
                 }
                 Verdict.MIXED -> {
-                    append("Investigation yields a **mixed** finding. ")
-                    append("${supporting.size} source(s) provide corroborating points, while ")
-                    append("${contradicting.size} source(s) highlight significant risks, counter-evidence, or opposing data. ")
-                    append("The issue contains inherent nuance or divided scientific/practical consensus.")
+                    append("Investigation yields a mixed evidentiary verdict. ")
+                    append("${supporting.size} source(s) offer supportive data, while ")
+                    append("${contradicting.size} source(s) document significant counter-evidence or health risks. ")
+                    append("Calibrated confidence is ${confidence.percentage}%.")
                 }
                 Verdict.INSUFFICIENT_EVIDENCE -> {
-                    append("The system concludes **insufficient evidence**. ")
+                    append("The system concludes insufficient evidence. ")
                     if (mentioning.isNotEmpty()) {
-                        append("Retrieved documents mention related topics but do not offer conclusive validation of this specific claim. ")
+                        append("Retrieved documents reference related subject terms but do not provide definitive validation. ")
                     } else {
-                        append("No reliable reference sources could be matched to the query terms. ")
+                        append("No authoritative or reference records matching the claim could be retrieved. ")
                     }
-                    append("LIFEOS refrains from asserting truth without verifiable evidence.")
+                    append("In accordance with LIFEOS safety principles, the system refrains from speculation.")
                 }
             }
         }
