@@ -130,3 +130,41 @@ object LifeOsGradients {
         listOf(Color(0xFFEEF2FF), Color(0xFFF8FAFC))
     )
 }
+
+// ==========================================
+// RescueMesh Dark Showcase Design Tokens (Reference Image 1)
+// ==========================================
+object RescueMeshColors {
+    val bgDark = Color(0xFF07152F)
+    val bgNavy = Color(0xFF0B1F45)
+    val bgCard = Color(0xFF0E1E3E)
+    val bgCardElevated = Color(0xFF13254B)
+    val cardBorder = Color(0xFF1E3A6E)
+    val cardBorderGlow = Color(0xFF2563EB).copy(alpha = 0.4f)
+    val cyan = Color(0xFF06B6D4)
+    val electricBlue = Color(0xFF38BDF8)
+    val emerald = Color(0xFF10B981)
+    val amber = Color(0xFFF59E0B)
+    val crimson = Color(0xFFEF4444)
+    val textPrimary = Color(0xFFFFFFFF)
+    val textSecondary = Color(0xFF94A3B8)
+    val textMuted = Color(0xFF64748B)
+}
+
+object RescueMeshGradients {
+    val background = androidx.compose.ui.graphics.Brush.verticalGradient(
+        listOf(Color(0xFF07152F), Color(0xFF0B1F45), Color(0xFF0A192F))
+    )
+    val emergencyDispatch = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFFEF4444), Color(0xFFF43F5E), Color(0xFFFB7185))
+    )
+    val continueReview = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFFEF4444), Color(0xFFF43F5E), Color(0xFF8B5CF6))
+    )
+    val peerRelay = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF2563EB), Color(0xFF3B82F6), Color(0xFF60A5FA))
+    )
+    val activeStep = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        listOf(Color(0xFF2563EB), Color(0xFF38BDF8))
+    )
+}

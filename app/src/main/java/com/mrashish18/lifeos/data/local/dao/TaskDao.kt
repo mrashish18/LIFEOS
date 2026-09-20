@@ -43,4 +43,7 @@ interface TaskDao {
 
     @Query("SELECT COUNT(*) FROM tasks")
     fun observeTotalTaskCount(): Flow<Int>
+
+    @Query("DELETE FROM tasks")
+    suspend fun clearAll(): Int
 }

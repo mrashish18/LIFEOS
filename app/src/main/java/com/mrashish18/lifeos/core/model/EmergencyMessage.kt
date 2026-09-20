@@ -75,55 +75,59 @@ data class EmergencyMessage(
 
         fun defaultSeedMessages(): List<EmergencyMessage> {
             val now = Instant.now()
-            val created1 = now.minusSeconds(1800)
-            val expires1 = now.plusSeconds(18000)
-            val created2 = now.minusSeconds(7200)
-            val expires2 = now.plusSeconds(28800)
-            val created3 = now.minusSeconds(10800)
-            val expires3 = now.plusSeconds(43200)
+            val created1 = now.minusSeconds(120) // 2 min ago
+            val expires1 = now.plusSeconds(86400)
+            val created2 = now.minusSeconds(900) // 15 min ago
+            val expires2 = now.plusSeconds(86400)
+            val created3 = now.minusSeconds(3600) // 1 hr ago
+            val expires3 = now.plusSeconds(86400)
+
+            val payload1 = "Need medical supplies for our community. Water and basic medications would help. Staying safe together. - LifeOs User"
+            val payload2 = "All safe here. Community is strong. Thank you."
+            val payload3 = "Status check-in: Base camp logistics intact."
 
             return listOf(
                 EmergencyMessage(
                     messageId = "msg_seed_01",
                     senderId = "NODE-7F4A",
                     type = MessageType.MEDICAL,
-                    priority = MessagePriority.CRITICAL,
-                    status = MessageStatus.QUEUED,
-                    payload = "Need medical assistance",
+                    priority = MessagePriority.HIGH,
+                    status = MessageStatus.RELAYING,
+                    payload = payload1,
                     createdAt = created1,
                     expiresAt = expires1,
-                    hopCount = 0,
+                    hopCount = 1,
                     maxHops = 5,
-                    transportType = TransportType.LOCAL_ONLY,
-                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Need medical assistance", created1, expires1, 5)
+                    transportType = TransportType.BLUETOOTH_LE,
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", payload1, created1, expires1, 5)
                 ),
                 EmergencyMessage(
                     messageId = "msg_seed_02",
                     senderId = "NODE-7F4A",
-                    type = MessageType.RESCUE_REQUEST,
-                    priority = MessagePriority.HIGH,
-                    status = MessageStatus.QUEUED,
-                    payload = "Require rescue supplies",
+                    type = MessageType.STATUS_UPDATE,
+                    priority = MessagePriority.NORMAL,
+                    status = MessageStatus.SENT,
+                    payload = payload2,
                     createdAt = created2,
                     expiresAt = expires2,
-                    hopCount = 0,
+                    hopCount = 3,
                     maxHops = 5,
                     transportType = TransportType.LOCAL_ONLY,
-                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Require rescue supplies", created2, expires2, 5)
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", payload2, created2, expires2, 5)
                 ),
                 EmergencyMessage(
                     messageId = "msg_seed_03",
                     senderId = "NODE-7F4A",
                     type = MessageType.STATUS_UPDATE,
                     priority = MessagePriority.NORMAL,
-                    status = MessageStatus.QUEUED,
-                    payload = "Status update from location",
+                    status = MessageStatus.DELIVERED,
+                    payload = payload3,
                     createdAt = created3,
                     expiresAt = expires3,
-                    hopCount = 0,
+                    hopCount = 2,
                     maxHops = 5,
                     transportType = TransportType.LOCAL_ONLY,
-                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", "Status update from location", created3, expires3, 5)
+                    fingerprintSha256 = calculateSeedFingerprint("NODE-7F4A", payload3, created3, expires3, 5)
                 )
             )
         }

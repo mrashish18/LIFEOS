@@ -30,4 +30,10 @@ interface InvestigationDao {
 
     @Query("DELETE FROM investigation_records WHERE id = :id")
     suspend fun delete(id: String): Int
+
+    @Query("SELECT COUNT(*) FROM investigation_records")
+    fun observeTotalCount(): Flow<Int>
+
+    @Query("DELETE FROM investigation_records")
+    suspend fun clearAll(): Int
 }

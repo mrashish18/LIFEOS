@@ -74,54 +74,175 @@ import com.mrashish18.lifeos.ui.theme.LifeOsSlate200
 import com.mrashish18.lifeos.ui.theme.LifeOsSlate700
 import com.mrashish18.lifeos.ui.theme.LifeOsSlate900
 
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.mrashish18.lifeos.feature.notifications.NotificationViewModel
+import com.mrashish18.lifeos.feature.settings.DataStorageCounts
+import com.mrashish18.lifeos.feature.settings.SettingsModalContainer
+import com.mrashish18.lifeos.feature.settings.SettingsViewModel
+import com.mrashish18.lifeos.ui.components.LifeOsDrawerContent
+import com.mrashish18.lifeos.ui.components.NotificationCenterBottomSheet
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LifeOsApp(
     dashboardViewModel: DashboardViewModel,
     tasksViewModel: TasksViewModel,
     realityCheckViewModel: RealityCheckViewModel,
     resilienceViewModel: ResilienceViewModel,
+    notificationViewModel: NotificationViewModel,
+    settingsViewModel: SettingsViewModel,
+    isDarkMode: Boolean = false,
+    versionName: String = "1.0",
+    versionCode: Int = 1,
     modifier: Modifier = Modifier
 ) {
     var currentDestination by remember { mutableStateOf(LifeOsDestination.DASHBOARD) }
     val dashboardUiState by dashboardViewModel.uiState.collectAsState()
+    val notificationUiState by notificationViewModel.uiState.collectAsState()
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            LifeOsBottomNavigationBar(
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val coroutineScope = rememberCoroutineScope()
+
+    val userSettings by settingsViewModel.settings.collectAsState()
+    val activeModal by settingsViewModel.activeModal.collectAsState()
+    val isResetConfirmationVisible by settingsViewModel.isResetConfirmationVisible.collectAsState()
+    val resetSuccessMessage by settingsViewModel.resetSuccessMessage.collectAsState()
+
+    val tasksCount by settingsViewModel.tasksCount.collectAsState()
+    val behaviorEventsCount by settingsViewModel.behaviorEventsCount.collectAsState()
+    val investigationsCount by settingsViewModel.investigationsCount.collectAsState()
+    val emergencyMessagesCount by settingsViewModel.emergencyMessagesCount.collectAsState()
+    val notificationsCount by settingsViewModel.notificationsCount.collectAsState()
+
+    val counts = DataStorageCounts(
+        tasksCount = tasksCount,
+        goalsCount = 5,
+        behaviorEventsCount = behaviorEventsCount,
+        investigationsCount = investigationsCount,
+        emergencyMessagesCount = emergencyMessagesCount,
+        notificationsCount = notificationsCount
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            LifeOsDrawerContent(
                 currentDestination = currentDestination,
-                onSelectDestination = { currentDestination = it }
+                isDarkMode = isDarkMode,
+                versionName = versionName,
+                versionCode = versionCode,
+                systemStatus = dashboardUiState.systemStatus,
+                onSelectDestination = { currentDestination = it },
+                onOpenModal = { settingsViewModel.openModal(it) },
+                onOpenNotifications = { notificationViewModel.openNotificationCenter() },
+                onCloseDrawer = { coroutineScope.launch { drawerState.close() } }
             )
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when (currentDestination) {
-                LifeOsDestination.DASHBOARD -> DashboardScreen(
-                    uiState = dashboardUiState,
-                    onAcceptRecommendation = { dashboardViewModel.acceptRecommendation(it) },
-                    onDismissRecommendation = { dashboardViewModel.dismissRecommendation(it) },
-                    onNavigateToTasks = { currentDestination = LifeOsDestination.TASKS },
-                    onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
-                    onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE }
+    ) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            bottomBar = {
+                LifeOsBottomNavigationBar(
+                    currentDestination = currentDestination,
+                    isDarkMode = isDarkMode,
+                    onSelectDestination = { currentDestination = it }
                 )
-                LifeOsDestination.TASKS -> TasksScreen(
-                    viewModel = tasksViewModel
-                )
-                LifeOsDestination.GOALS -> GoalsScreen()
-                LifeOsDestination.INTELLIGENCE -> IntelligenceScreen(
-                    onNavigateToPersonal = { currentDestination = LifeOsDestination.TASKS },
-                    onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
-                    onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE }
-                )
-                LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(
-                    viewModel = realityCheckViewModel
-                )
-                LifeOsDestination.RESILIENCE -> ResilienceScreen(
-                    viewModel = resilienceViewModel
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                when (currentDestination) {
+                    LifeOsDestination.DASHBOARD -> DashboardScreen(
+                        uiState = dashboardUiState,
+                        onAcceptRecommendation = { dashboardViewModel.acceptRecommendation(it) },
+                        onDismissRecommendation = { dashboardViewModel.dismissRecommendation(it) },
+                        onNavigateToTasks = { currentDestination = LifeOsDestination.TASKS },
+                        onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
+                        onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE },
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onOpenNotifications = { notificationViewModel.openNotificationCenter() },
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                    LifeOsDestination.TASKS -> TasksScreen(
+                        viewModel = tasksViewModel,
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onOpenNotifications = { notificationViewModel.openNotificationCenter() },
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                    LifeOsDestination.GOALS -> GoalsScreen(
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onOpenNotifications = { notificationViewModel.openNotificationCenter() },
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                    LifeOsDestination.INTELLIGENCE -> IntelligenceScreen(
+                        onNavigateToPersonal = { currentDestination = LifeOsDestination.TASKS },
+                        onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
+                        onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE },
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                    LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(
+                        viewModel = realityCheckViewModel,
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                    LifeOsDestination.RESILIENCE -> ResilienceScreen(
+                        viewModel = resilienceViewModel,
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onOpenNotifications = { notificationViewModel.openNotificationCenter() },
+                        onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
+                        isDarkMode = isDarkMode
+                    )
+                }
+
+                // Notification Center Modal Bottom Sheet
+                if (notificationUiState.isSheetVisible) {
+                    NotificationCenterBottomSheet(
+                        notifications = notificationUiState.filteredNotifications,
+                        unreadCount = notificationUiState.unreadCount,
+                        selectedCategory = notificationUiState.selectedCategory,
+                        isDarkMode = isDarkMode,
+                        onSelectCategory = { notificationViewModel.setCategoryFilter(it) },
+                        onMarkAsRead = { notificationViewModel.markAsRead(it) },
+                        onMarkAllAsRead = { notificationViewModel.markAllAsRead() },
+                        onNavigateTo = { destination ->
+                            currentDestination = destination
+                            notificationViewModel.closeNotificationCenter()
+                        },
+                        onDismiss = { notificationViewModel.closeNotificationCenter() }
+                    )
+                }
+
+                // Settings Modals Container
+                SettingsModalContainer(
+                    activeModal = activeModal,
+                    userSettings = userSettings,
+                    isDarkMode = isDarkMode,
+                    versionName = versionName,
+                    versionCode = versionCode,
+                    counts = counts,
+                    isResetConfirmationVisible = isResetConfirmationVisible,
+                    resetSuccessMessage = resetSuccessMessage,
+                    onClose = { settingsViewModel.closeModal() },
+                    onSetThemeMode = { settingsViewModel.setThemeMode(it) },
+                    onSetAutoDayNight = { settingsViewModel.setAutoDayNight(it) },
+                    onSetInAppNotifications = { settingsViewModel.setInAppNotifications(it) },
+                    onToggleCategory = { cat, enabled -> settingsViewModel.toggleNotificationCategory(cat, enabled) },
+                    onOpenNotificationCenter = { notificationViewModel.openNotificationCenter() },
+                    onShowResetConfirmation = { settingsViewModel.showResetConfirmation(it) },
+                    onConfirmReset = { settingsViewModel.performResetData() },
+                    onClearResetSuccessMessage = { settingsViewModel.clearResetSuccessMessage() }
                 )
             }
         }
@@ -135,13 +256,17 @@ fun LifeOsApp(
 @Composable
 private fun LifeOsBottomNavigationBar(
     currentDestination: LifeOsDestination,
+    isDarkMode: Boolean = false,
     onSelectDestination: (LifeOsDestination) -> Unit
 ) {
+    val navBarColor = if (isDarkMode) Color(0xFF111827).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.95f)
+    val borderColor = if (isDarkMode) Color(0xFF1F2937) else Color(0xFFE2E8F0)
+
     Surface(
-        color = Color.White,
+        color = navBarColor,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+        border = BorderStroke(1.dp, borderColor)
     ) {
         Column(
             modifier = Modifier
@@ -161,6 +286,7 @@ private fun LifeOsBottomNavigationBar(
                     LifeOsNavigationTab(
                         destination = destination,
                         isSelected = isSelected,
+                        isDarkMode = isDarkMode,
                         onClick = { onSelectDestination(destination) }
                     )
                 }
@@ -179,6 +305,7 @@ private data class NavDestinationSpec(
 private fun LifeOsNavigationTab(
     destination: LifeOsDestination,
     isSelected: Boolean,
+    isDarkMode: Boolean = false,
     onClick: () -> Unit
 ) {
     val spec = when (destination) {
@@ -190,8 +317,13 @@ private fun LifeOsNavigationTab(
         LifeOsDestination.RESILIENCE -> NavDestinationSpec(Icons.Filled.Hub, Icons.Outlined.Hub, "Mesh")
     }
 
-    val activeColor = Color(0xFF4338CA)
-    val inactiveColor = Color(0xFF64748B)
+    val activeColor = if (destination == LifeOsDestination.RESILIENCE) {
+        if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF2563EB)
+    } else {
+        if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
+    }
+    val inactiveColor = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+    val activeTextColor = if (isDarkMode) Color(0xFFE0E7FF) else (if (destination == LifeOsDestination.RESILIENCE) Color(0xFF2563EB) else Color(0xFF4338CA))
 
     val animatedBgColor by animateColorAsState(
         targetValue = if (isSelected) activeColor else Color.Transparent,
@@ -202,7 +334,7 @@ private fun LifeOsNavigationTab(
         label = "navTabIconTint"
     )
     val animatedTextColor by animateColorAsState(
-        targetValue = if (isSelected) activeColor else inactiveColor,
+        targetValue = if (isSelected) activeTextColor else inactiveColor,
         label = "navTabTextColor"
     )
     val animatedScale by animateFloatAsState(

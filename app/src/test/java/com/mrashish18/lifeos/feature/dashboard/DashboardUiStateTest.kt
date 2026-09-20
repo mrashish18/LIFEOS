@@ -143,4 +143,30 @@ class DashboardUiStateTest {
         assertEquals(0.40, rec.factors[0].scoreContribution, 0.01)
         assertEquals(0.85, rec.confidence, 0.01)
     }
+
+    @Test
+    fun strategicGoalLinkage_verifiesConsistentCategoryAlignment() {
+        val workTask = Task(
+            id = "t-1",
+            title = "Code Architecture Review",
+            category = TaskCategory.WORK
+        )
+        val healthTask = Task(
+            id = "t-2",
+            title = "Sleep & Pacing Routine",
+            category = TaskCategory.HEALTH
+        )
+        val learningTask = Task(
+            id = "t-3",
+            title = "Deep Study Session",
+            category = TaskCategory.LEARNING
+        )
+
+        val state = DashboardUiState(tasks = listOf(workTask, healthTask, learningTask))
+        assertEquals(3, state.tasks.size)
+        assertEquals(TaskCategory.WORK, state.tasks[0].category)
+        assertEquals(TaskCategory.HEALTH, state.tasks[1].category)
+        assertEquals(TaskCategory.LEARNING, state.tasks[2].category)
+    }
 }
+

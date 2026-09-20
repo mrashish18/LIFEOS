@@ -39,6 +39,8 @@ fun IntelligenceScreen(
     onNavigateToPersonal: () -> Unit = {},
     onNavigateToTruth: () -> Unit = {},
     onNavigateToResilience: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -51,28 +53,62 @@ fun IntelligenceScreen(
         Spacer(modifier = Modifier.height(6.dp))
 
         // Header matching Screen 5
-        Column {
-            Text(
-                text = "LIFEOS INTELLIGENCE",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF1E1B4B),
-                letterSpacing = (-0.3).sp
-            )
-            Text(
-                text = "COGNITIVE ARCHITECTURE",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4F46E5),
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = "Observe. Understand. Decide. Act. Measure. Adapt.",
-                fontSize = 12.sp,
-                color = Color(0xFF64748B)
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
+                    onClick = onOpenDrawer,
+                    isDarkMode = isDarkMode
+                )
+                Text(
+                    text = "Intelligence",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                    letterSpacing = (-0.3).sp
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.4f) else Color(0xFFDCFCE7),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF059669) else Color(0xFFBBF7D0)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(5.dp)
+                            .clip(CircleShape)
+                            .background(if (isDarkMode) Color(0xFF4ADE80) else Color(0xFF16A34A))
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "On-Device • Private",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFF4ADE80) else Color(0xFF16A34A)
+                    )
+                }
+            }
         }
+
+        Text(
+            text = "The 6-stage cognitive architecture that powers a more intentional life.",
+            fontSize = 11.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+        )
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -84,39 +120,39 @@ fun IntelligenceScreen(
                 stage = "OBSERVE",
                 subsystem = "Context Engine",
                 subsystemColor = Color(0xFF0284C7),
-                desc = "Monitors environment, real-time clock, connectivity, and workload state.",
-                icon = "🌐",
+                desc = "Sense your context with privacy-respecting signals",
+                icon = "👁️",
                 iconBg = Color(0xFFE0F2FE)
             ),
             StageData(
                 num = "02",
-                numColor = Color(0xFF10B981),
+                numColor = Color(0xFF6366F1),
                 stage = "UNDERSTAND",
                 subsystem = "Behavior Model",
-                subsystemColor = Color(0xFF059669),
-                desc = "Learns completion velocities, preferred task size, and circadian peak focus.",
-                icon = "🧠",
-                iconBg = Color(0xFFD1FAE5)
-            ),
-            StageData(
-                num = "03",
-                numColor = Color(0xFF6366F1),
-                stage = "DECIDE",
-                subsystem = "Decision Engine",
                 subsystemColor = Color(0xFF4F46E5),
-                desc = "Scores priority, urgency, and effort fit with deterministic heuristics.",
-                icon = "⚖️",
+                desc = "Build your behavioral model and understand patterns",
+                icon = "🧠",
                 iconBg = Color(0xFFEEF2FF)
             ),
             StageData(
-                num = "04",
+                num = "03",
                 numColor = Color(0xFF8B5CF6),
-                stage = "ACT",
-                subsystem = "User Execution",
+                stage = "DECIDE",
+                subsystem = "Decision Engine",
                 subsystemColor = Color(0xFF7C3AED),
-                desc = "User initiates focus sessions, completes tasks, or investigates claims.",
-                icon = "⚡",
+                desc = "Run heuristics and choose the next best action",
+                icon = "⚖️",
                 iconBg = Color(0xFFF3E8FF)
+            ),
+            StageData(
+                num = "04",
+                numColor = Color(0xFFF43F5E),
+                stage = "ACT",
+                subsystem = "Focused Action",
+                subsystemColor = Color(0xFFE11D48),
+                desc = "Help you take focused and meaningful action",
+                icon = "▶",
+                iconBg = Color(0xFFFFE4E6)
             ),
             StageData(
                 num = "05",
@@ -124,19 +160,19 @@ fun IntelligenceScreen(
                 stage = "MEASURE",
                 subsystem = "Outcome Telemetry",
                 subsystemColor = Color(0xFFD97706),
-                desc = "Tracks task completion, focus session duration, and verification outcomes.",
+                desc = "See outcomes and learn from real-world results",
                 icon = "📊",
                 iconBg = Color(0xFFFEF3C7)
             ),
             StageData(
                 num = "06",
-                numColor = Color(0xFF3B82F6),
+                numColor = Color(0xFF10B981),
                 stage = "ADAPT",
                 subsystem = "Learning Loop",
-                subsystemColor = Color(0xFF2563EB),
-                desc = "Calibrates on-device model weights to continuously improve future guidance.",
-                icon = "🔄",
-                iconBg = Color(0xFFEFF6FF)
+                subsystemColor = Color(0xFF059669),
+                desc = "Continuously improve with your personalized model",
+                icon = "🌿",
+                iconBg = Color(0xFFD1FAE5)
             )
         )
 
@@ -170,7 +206,7 @@ fun IntelligenceScreen(
                                 modifier = Modifier
                                     .width(2.5.dp)
                                     .height(30.dp)
-                                    .background(Color(0xFFCBD5E1))
+                                    .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1))
                             )
                         }
                     }
@@ -183,8 +219,11 @@ fun IntelligenceScreen(
                             .weight(1f)
                             .padding(vertical = 4.dp),
                         shape = RoundedCornerShape(14.dp),
-                        color = Color(0xFFF8FAFC),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                        )
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
@@ -194,7 +233,7 @@ fun IntelligenceScreen(
                                 modifier = Modifier
                                     .size(38.dp)
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(item.iconBg),
+                                    .background(if (isDarkMode) item.numColor.copy(alpha = 0.2f) else item.iconBg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(text = item.icon, fontSize = 17.sp)
@@ -205,20 +244,20 @@ fun IntelligenceScreen(
                                     text = item.stage,
                                     fontSize = 12.5.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Color(0xFF0F172A),
+                                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
                                     text = item.subsystem,
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = item.subsystemColor
+                                    color = if (isDarkMode) item.numColor else item.subsystemColor
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = item.desc,
                                     fontSize = 11.5.sp,
-                                    color = Color(0xFF475569),
+                                    color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                                     lineHeight = 16.sp
                                 )
                             }
@@ -235,7 +274,7 @@ fun IntelligenceScreen(
             text = "Core Principles",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF0F172A),
+            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
             letterSpacing = (-0.2).sp
         )
 
@@ -249,8 +288,11 @@ fun IntelligenceScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFF0F9FF),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBAE6FD))
+                color = if (isDarkMode) Color(0xFF111827) else Color(0xFFF0F9FF),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFBAE6FD)
+                )
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
@@ -270,7 +312,7 @@ fun IntelligenceScreen(
                         text = title,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                     )
                 }
             }
@@ -283,7 +325,7 @@ fun IntelligenceScreen(
             text = "Unified Intelligence Pillars",
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF0F172A),
+            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
             letterSpacing = (-0.2).sp
         )
 
@@ -329,9 +371,12 @@ fun IntelligenceScreen(
                     .fillMaxWidth()
                     .clickable(onClick = pillar.onClick),
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                shadowElevation = 1.dp
+                color = if (isDarkMode) Color(0xFF111827) else Color.White,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                ),
+                shadowElevation = if (isDarkMode) 0.dp else 1.dp
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -347,27 +392,27 @@ fun IntelligenceScreen(
                                     text = pillar.title,
                                     fontSize = 14.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
+                                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                                 )
                                 Text(
                                     text = pillar.subtitle,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF6366F1)
+                                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF6366F1)
                                 )
                             }
                         }
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(pillar.badgeBg)
+                                .background(if (isDarkMode) pillar.badgeColor.copy(alpha = 0.2f) else pillar.badgeBg)
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = pillar.badge,
                                 fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = pillar.badgeColor
+                                color = if (isDarkMode) pillar.badgeColor.copy(alpha = 0.95f) else pillar.badgeColor
                             )
                         }
                     }
@@ -375,7 +420,7 @@ fun IntelligenceScreen(
                     Text(
                         text = pillar.description,
                         fontSize = 12.sp,
-                        color = Color(0xFF475569),
+                        color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                         lineHeight = 16.5.sp
                     )
                     Spacer(modifier = Modifier.height(10.dp))
@@ -383,7 +428,7 @@ fun IntelligenceScreen(
                         text = pillar.ctaLabel,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4338CA)
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                     )
                 }
             }

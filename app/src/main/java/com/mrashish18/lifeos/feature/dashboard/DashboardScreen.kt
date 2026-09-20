@@ -35,7 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,6 +52,7 @@ import com.mrashish18.lifeos.core.model.UserBehaviorModel
 import com.mrashish18.lifeos.ui.components.*
 import com.mrashish18.lifeos.ui.theme.*
 import java.time.ZoneId
+import com.mrashish18.lifeos.ui.components.LifeOsNotificationBell
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -57,6 +63,10 @@ fun DashboardScreen(
     onNavigateToTasks: () -> Unit = {},
     onNavigateToTruth: () -> Unit = {},
     onNavigateToResilience: () -> Unit = {},
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     if (uiState.isLoading) {
@@ -72,106 +82,156 @@ fun DashboardScreen(
         return
     }
 
-    LazyColumn(
+    val backgroundBrush = if (isDarkMode) {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFF0B1020),
+                Color(0xFF0D1424),
+                Color(0xFF0F172A),
+                Color(0xFF0B1020)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFFF8FAFC),
+                Color(0xFFF5F3FF),
+                Color(0xFFEEF2FF),
+                Color(0xFFEDE9FE)
+            )
+        )
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .background(backgroundBrush)
     ) {
-        // 1. BRANDING & HERO SCENIC MOUNTAIN HEADER
-        item {
-            ScenicMountainHeader(systemStatus = uiState.systemStatus)
-        }
-
-        // Feedback Banner (if any)
-        uiState.lastFeedbackMessage?.let { feedback ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // 1. EDITORIAL TOP BAR & SCENIC SUNSET MOUNTAIN BANNER
             item {
-                FeedbackCallout(feedback = feedback)
-            }
-        }
-
-        // 2. TODAY MOMENTUM PROGRESS (Card matching reference design)
-        item {
-            TodayMomentumCluster(
-                pendingCount = uiState.pendingCount,
-                completedCount = uiState.completedCount,
-                totalCount = uiState.tasks.size,
-                onViewTasks = onNavigateToTasks
-            )
-        }
-
-        // Cross-Pillar Guardian Telemetry
-        item {
-            IntelligencePillarsStrip(
-                uiState = uiState,
-                onNavigateToTruth = onNavigateToTruth,
-                onNavigateToResilience = onNavigateToResilience
-            )
-        }
-
-        // 3. FLAGSHIP CENTERPIECE: WHAT MATTERS NOW
-        if (uiState.recommendations.isNotEmpty()) {
-            items(uiState.recommendations, key = { it.id }) { rec ->
-                WhatMattersNowCenterpiece(
-                    recommendation = rec,
-                    onAccept = { onAcceptRecommendation(rec) },
-                    onDismiss = { onDismissRecommendation(rec) }
+                DashboardTopBar(
+                    systemStatus = uiState.systemStatus,
+                    unreadCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
+                    onOpenDrawer = onOpenDrawer,
+                    isDarkMode = isDarkMode
                 )
             }
-        } else {
             item {
-                NominalFocusState()
+                DashboardScenicBanner(
+                    title = "A little focus today\nA much better tomorrow",
+                    pillText = "Your life. More possible. →"
+                )
             }
-        }
 
-        // 4. CURRENT SITUATION (2x2 Telemetry Grid matching reference Screen 1)
-        uiState.contextSnapshot?.let { snapshot ->
-            item {
-                CurrentStateTelemetry(snapshot = snapshot)
-            }
-        }
-
-        // 5. BEHAVIOR MODEL: LIFEOS IS LEARNING
-        item {
-            uiState.behaviorModel?.let { model ->
-                LifeOsIsLearningSection(model = model)
-            }
-        }
-
-        // 6. RECENT QUEUE (Open list rows with hairline dividers)
-        if (uiState.tasks.isNotEmpty()) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    LifeOsEyebrow(text = "RECENT QUEUE")
-                    TextButton(onClick = onNavigateToTasks) {
-                        Text(
-                            text = "All Tasks →",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+            // Feedback Banner (if any)
+            uiState.lastFeedbackMessage?.let { feedback ->
+                item {
+                    FeedbackCallout(feedback = feedback, isDarkMode = isDarkMode)
                 }
             }
 
-            items(uiState.tasks.take(4), key = { it.id }) { task ->
-                LifeOsTaskRow(
-                    title = task.title,
-                    description = task.description,
-                    status = task.status,
-                    priority = task.priority,
-                    category = task.category,
-                    durationMinutes = task.estimatedMinutes
+            // 2. INTELLIGENCE PILLARS (Reference Screen 1)
+            item {
+                IntelligencePillarsStrip(
+                    uiState = uiState,
+                    onNavigateToTasks = onNavigateToTasks,
+                    onNavigateToTruth = onNavigateToTruth,
+                    onNavigateToResilience = onNavigateToResilience,
+                    isDarkMode = isDarkMode
                 )
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(48.dp))
+            // 3. FLAGSHIP CENTERPIECE: WHAT MATTERS NOW
+            if (uiState.recommendations.isNotEmpty()) {
+                items(uiState.recommendations, key = { it.id }) { rec ->
+                    WhatMattersNowCenterpiece(
+                        recommendation = rec,
+                        onAccept = { onAcceptRecommendation(rec) },
+                        onDismiss = { onDismissRecommendation(rec) },
+                        isDarkMode = isDarkMode
+                    )
+                }
+            } else {
+                item {
+                    NominalFocusState(isDarkMode = isDarkMode)
+                }
+            }
+
+            // 4. LEARNING LOOP (Reference Screen 1)
+            item {
+                DashboardLearningLoopCard(onNavigateToIntel = onNavigateToTruth, isDarkMode = isDarkMode)
+            }
+
+            // 5. TODAY MOMENTUM PROGRESS (Card matching reference design)
+            item {
+                TodayMomentumCluster(
+                    pendingCount = uiState.pendingCount,
+                    completedCount = uiState.completedCount,
+                    totalCount = uiState.tasks.size,
+                    onViewTasks = onNavigateToTasks,
+                    isDarkMode = isDarkMode
+                )
+            }
+
+            // 4. CURRENT SITUATION (2x2 Telemetry Grid matching reference Screen 1)
+            uiState.contextSnapshot?.let { snapshot ->
+                item {
+                    CurrentStateTelemetry(snapshot = snapshot, isDarkMode = isDarkMode)
+                }
+            }
+
+            // 5. BEHAVIOR MODEL: LIFEOS IS LEARNING
+            item {
+                uiState.behaviorModel?.let { model ->
+                    LifeOsIsLearningSection(model = model, isDarkMode = isDarkMode)
+                }
+            }
+
+            // 6. RECENT QUEUE (Open list rows with hairline dividers)
+            if (uiState.tasks.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        LifeOsEyebrow(
+                            text = "RECENT QUEUE",
+                            color = if (isDarkMode) Color(0xFF818CF8) else LifeOsIndigo700
+                        )
+                        TextButton(onClick = onNavigateToTasks) {
+                            Text(
+                                text = "All Tasks →",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isDarkMode) Color(0xFF818CF8) else MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                items(uiState.tasks.take(4), key = { it.id }) { task ->
+                    LifeOsTaskRow(
+                        title = task.title,
+                        description = task.description,
+                        status = task.status,
+                        priority = task.priority,
+                        category = task.category,
+                        durationMinutes = task.estimatedMinutes
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(48.dp))
+            }
         }
     }
 }
@@ -253,7 +313,8 @@ private fun TodayMomentumCluster(
     pendingCount: Int,
     completedCount: Int,
     totalCount: Int,
-    onViewTasks: () -> Unit
+    onViewTasks: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     val completionRatio = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
     val animatedProgress by animateFloatAsState(
@@ -267,8 +328,11 @@ private fun TodayMomentumCluster(
             .fillMaxWidth()
             .clickable(onClick = onViewTasks),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9)
+        ),
         shadowElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -277,7 +341,7 @@ private fun TodayMomentumCluster(
                 text = "Today's Momentum",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF0F172A)
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -294,12 +358,12 @@ private fun TodayMomentumCluster(
                             text = "$pendingCount",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                         )
                         Text(
                             text = "Pending",
                             fontSize = 11.sp,
-                            color = Color(0xFF64748B)
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
 
@@ -308,12 +372,12 @@ private fun TodayMomentumCluster(
                             text = "$completedCount",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                         )
                         Text(
                             text = "Completed",
                             fontSize = 11.sp,
-                            color = Color(0xFF64748B)
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
                 }
@@ -322,7 +386,7 @@ private fun TodayMomentumCluster(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFEEF2FF))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -330,7 +394,7 @@ private fun TodayMomentumCluster(
                         text = "$completionPct%",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4338CA)
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                     )
                 }
             }
@@ -349,7 +413,7 @@ private fun TodayMomentumCluster(
                         .fillMaxWidth()
                         .height(5.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFF1F5F9))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
                 )
                 if (animatedProgress > 0f) {
                     Box(
@@ -369,7 +433,7 @@ private fun TodayMomentumCluster(
                         .align(Alignment.CenterEnd)
                         .size(5.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF4338CA))
+                        .background(if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA))
                 )
             }
         }
@@ -377,163 +441,265 @@ private fun TodayMomentumCluster(
 }
 
 @Composable
-private fun IntelligencePillarsStrip(
-    uiState: DashboardUiState,
-    onNavigateToTruth: () -> Unit,
-    onNavigateToResilience: () -> Unit
+private fun DashboardTopBar(
+    systemStatus: String,
+    unreadCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        val truthStatusText = if (uiState.investigationCount > 0) {
-            "${uiState.investigationCount} Verified"
-        } else {
-            "Standby • Ready"
-        }
-        val truthSubText = uiState.latestInvestigation?.let {
-            "${it.verdict.name} (${it.confidencePercentage}%)"
-        } ?: "Tap to verify claims →"
+        LifeOsMenuButton(
+            onClick = onOpenDrawer,
+            isDarkMode = isDarkMode
+        )
 
-        Surface(
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onNavigateToTruth),
-            shape = RoundedCornerShape(14.dp),
-            color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-            shadowElevation = 1.dp
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "LifeOS",
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                letterSpacing = (-0.3).sp
+            )
+            Text(
+                text = "Understand • Decide • Adapt",
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                letterSpacing = 0.3.sp
+            )
+        }
+
+        LifeOsNotificationBell(
+            unreadCount = unreadCount,
+            onClick = onOpenNotifications,
+            isDarkMode = isDarkMode
+        )
+    }
+}
+
+@Composable
+private fun IntelligencePillarsStrip(
+    uiState: DashboardUiState,
+    onNavigateToTasks: () -> Unit,
+    onNavigateToTruth: () -> Unit,
+    onNavigateToResilience: () -> Unit,
+    isDarkMode: Boolean = false
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "🛡️", fontSize = 18.sp)
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "TRUTH ENGINE",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF64748B),
-                            letterSpacing = 0.6.sp
-                        )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFEEF2FF))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = if (uiState.investigationCount > 0) "CACHED" else "READY",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4338CA)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = truthStatusText,
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
-                    )
-                    Spacer(modifier = Modifier.height(1.dp))
-                    Text(
-                        text = truthSubText,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF4F46E5),
-                        maxLines = 1
-                    )
-                }
+            Text(
+                text = "Intelligence Pillars",
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+            )
+            Text(
+                text = "All Systems Ready >",
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5),
+                modifier = Modifier.clickable(onClick = onNavigateToTruth)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // 1. PERSONAL PILLAR
+            PillarCard(
+                modifier = Modifier.weight(1f),
+                icon = "⚡",
+                pillarName = "PERSONAL",
+                status = "Ready",
+                statusColor = Color(0xFF10B981),
+                onClick = onNavigateToTasks,
+                isDarkMode = isDarkMode
+            )
+
+            // 2. TRUTH PILLAR
+            val truthStatus = if (uiState.investigationCount > 0) "Cached" else "Ready"
+            PillarCard(
+                modifier = Modifier.weight(1f),
+                icon = "🛡️",
+                pillarName = "TRUTH",
+                status = truthStatus,
+                statusColor = Color(0xFF4F46E5),
+                onClick = onNavigateToTruth,
+                isDarkMode = isDarkMode
+            )
+
+            // 3. MESH PILLAR
+            val meshStatus = if (uiState.hasCriticalEmergency) "Alert" else "Armed"
+            val meshColor = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF06B6D4)
+            PillarCard(
+                modifier = Modifier.weight(1f),
+                icon = "📡",
+                pillarName = "MESH",
+                status = meshStatus,
+                statusColor = meshColor,
+                onClick = onNavigateToResilience,
+                isDarkMode = isDarkMode
+            )
+        }
+    }
+}
+
+@Composable
+private fun PillarCard(
+    icon: String,
+    pillarName: String,
+    status: String,
+    statusColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
+) {
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
+        shadowElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = icon, fontSize = 12.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = pillarName,
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                    letterSpacing = 0.5.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(statusColor)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = status,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+                )
             }
         }
+    }
+}
 
-        val meshStatusText = if (uiState.emergencyQueuedCount > 0) {
-            "${uiState.emergencyQueuedCount} Queued"
-        } else {
-            "Armed • Ready"
-        }
-        val meshSubText = if (uiState.hasCriticalEmergency) {
-            "CRITICAL ALERT"
-        } else if (uiState.emergencyQueuedCount > 0) {
-            "Waiting for peer relay"
-        } else {
-            "Local Mesh Active →"
-        }
-
-        Surface(
-            modifier = Modifier
-                .weight(1f)
-                .clickable(onClick = onNavigateToResilience),
-            shape = RoundedCornerShape(14.dp),
-            color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (uiState.hasCriticalEmergency) Color(0xFFFECACA) else Color(0xFFE2E8F0)
-            ),
-            shadowElevation = 1.dp
-        ) {
+@Composable
+private fun DashboardLearningLoopCard(
+    onNavigateToIntel: () -> Unit = {},
+    isDarkMode: Boolean = false
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onNavigateToIntel),
+        shape = RoundedCornerShape(16.dp),
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
+        shadowElevation = 1.dp
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "📡", fontSize = 18.sp)
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "RESCUEMESH",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF64748B),
-                            letterSpacing = 0.6.sp
-                        )
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    if (uiState.hasCriticalEmergency) Color(0xFFFEE2E2) else Color(0xFFFEF3C7)
-                                )
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = if (uiState.hasCriticalEmergency) "ALERT" else "OFFLINE",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFFB45309)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Text(
-                        text = meshStatusText,
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
-                    )
-                    Spacer(modifier = Modifier.height(1.dp))
-                    Text(
-                        text = meshSubText,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF0D9488),
-                        maxLines = 1
-                    )
-                }
+                Text(
+                    text = "Learning Loop",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+                )
+                Text(
+                    text = "See Details >",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                DashboardLoopStep(icon = "⚡", step = "ACTION", sub = "Do", color = Color(0xFF6366F1), isDarkMode = isDarkMode)
+                Text("→", fontSize = 11.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                DashboardLoopStep(icon = "👁️", step = "EVENT", sub = "See", color = Color(0xFFF97316), isDarkMode = isDarkMode)
+                Text("→", fontSize = 11.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                DashboardLoopStep(icon = "🧠", step = "MODEL", sub = "Learn", color = Color(0xFF8B5CF6), isDarkMode = isDarkMode)
+                Text("→", fontSize = 11.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                DashboardLoopStep(icon = "🎯", step = "DECISION", sub = "Better", color = Color(0xFF0D9488), isDarkMode = isDarkMode)
             }
         }
+    }
+}
+
+@Composable
+private fun DashboardLoopStep(
+    icon: String,
+    step: String,
+    sub: String,
+    color: Color,
+    isDarkMode: Boolean = false
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(color.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = icon, fontSize = 14.sp)
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = step,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Black,
+            color = color,
+            letterSpacing = 0.5.sp
+        )
+        Text(
+            text = sub,
+            fontSize = 8.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -546,7 +712,8 @@ private fun IntelligencePillarsStrip(
 private fun WhatMattersNowCenterpiece(
     recommendation: Recommendation,
     onAccept: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     var isExplanationExpanded by remember { mutableStateOf(false) }
     val confidencePct = (recommendation.confidence * 100).toInt()
@@ -554,17 +721,27 @@ private fun WhatMattersNowCenterpiece(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .border(
-                width = 1.5.dp,
-                brush = LifeOsFocusBorderGradient,
-                shape = RoundedCornerShape(16.dp)
+            .then(
+                if (isDarkMode) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = Color(0xFF334155),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                } else {
+                    Modifier.border(
+                        width = 1.5.dp,
+                        brush = LifeOsFocusBorderGradient,
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                }
             ),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
         shadowElevation = 2.dp
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            // Header Row: ✦ WHAT MATTERS NOW | [ 85% confidence ]
+            // Header Row: ✦ WHAT MATTERS NOW | [ HIGH IMPACT ]
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -573,7 +750,7 @@ private fun WhatMattersNowCenterpiece(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "✦",
-                        color = Color(0xFF4F46E5),
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5),
                         fontSize = 12.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
@@ -581,21 +758,24 @@ private fun WhatMattersNowCenterpiece(
                         text = "WHAT MATTERS NOW",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4F46E5),
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5),
                         letterSpacing = 0.8.sp
                     )
                 }
 
-                Surface(
-                    color = Color(0xFF4338CA),
-                    shape = RoundedCornerShape(12.dp)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFF7ED))
+                        .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFFED7AA), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "$confidencePct% confidence",
-                        color = Color.White,
+                        text = "HIGH IMPACT",
+                        color = if (isDarkMode) Color(0xFFFDBA74) else Color(0xFFEA580C),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        fontSize = 9.sp,
+                        letterSpacing = 0.5.sp
                     )
                 }
             }
@@ -607,7 +787,7 @@ private fun WhatMattersNowCenterpiece(
                 text = recommendation.title,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFF0F172A),
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                 letterSpacing = (-0.3).sp
             )
 
@@ -617,30 +797,31 @@ private fun WhatMattersNowCenterpiece(
             Text(
                 text = recommendation.reason,
                 fontSize = 12.5.sp,
-                color = Color(0xFF475569),
+                color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                 lineHeight = 17.sp,
                 maxLines = 2
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Action Buttons Row: [ ▶ Start Focus ]  [ Dismiss ]
+            // Action Buttons Row: [ Start Focus ]  [ See Why ]
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LifeOsGradientButton(
-                    text = "▶  Start Focus",
-                    gradient = LifeOsGradients.focus,
+                    text = "Start Focus",
+                    gradient = LifeOsGradients.primary,
                     onClick = onAccept,
-                    modifier = Modifier.weight(1.4f)
+                    modifier = Modifier.weight(1.3f)
                 )
 
                 LifeOsSecondaryButton(
-                    text = "Dismiss",
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(0.9f)
+                    text = "See Why",
+                    onClick = { isExplanationExpanded = !isExplanationExpanded },
+                    modifier = Modifier.weight(0.9f),
+                    isDarkMode = isDarkMode
                 )
             }
 
@@ -651,11 +832,15 @@ private fun WhatMattersNowCenterpiece(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { isExplanationExpanded = !isExplanationExpanded },
-                color = if (isExplanationExpanded) Color(0xFFEEF2FF) else Color(0xFFF8FAFC),
+                color = if (isDarkMode) {
+                    if (isExplanationExpanded) Color(0xFF1E293B) else Color(0xFF172033)
+                } else {
+                    if (isExplanationExpanded) Color(0xFFEEF2FF) else Color(0xFFF8FAFC)
+                },
                 shape = RoundedCornerShape(8.dp),
                 border = androidx.compose.foundation.BorderStroke(
                     1.dp,
-                    if (isExplanationExpanded) Color(0xFFC7D2FE) else Color(0xFFE2E8F0)
+                    if (isDarkMode) Color(0xFF334155) else if (isExplanationExpanded) Color(0xFFC7D2FE) else Color(0xFFE2E8F0)
                 )
             ) {
                 Row(
@@ -671,7 +856,7 @@ private fun WhatMattersNowCenterpiece(
                         text = if (isExplanationExpanded) "Hide Decision Engine Explainability ▲" else "Why this recommendation? ▼",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF4338CA)
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                     )
                 }
             }
@@ -682,8 +867,8 @@ private fun WhatMattersNowCenterpiece(
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                        .background(if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC))
+                        .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
@@ -696,14 +881,14 @@ private fun WhatMattersNowCenterpiece(
                             text = "DECISION ENGINE EXPLAINABILITY",
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Black,
-                            color = Color(0xFF4338CA),
+                            color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
                             letterSpacing = 0.6.sp
                         )
                         Text(
                             text = "Deterministic",
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF64748B)
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
                     Spacer(modifier = Modifier.height(2.dp))
@@ -716,14 +901,14 @@ private fun WhatMattersNowCenterpiece(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFFEEF2FF))
+                                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
                                     .padding(horizontal = 5.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = if (pts > 0) "+$pts" else "$pts",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4338CA)
+                                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                                 )
                             }
                             Spacer(modifier = Modifier.width(8.dp))
@@ -732,12 +917,12 @@ private fun WhatMattersNowCenterpiece(
                                     text = factor.name,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF0F172A)
+                                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
                                 )
                                 Text(
                                     text = factor.description,
                                     fontSize = 10.sp,
-                                    color = Color(0xFF64748B)
+                                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                                 )
                             }
                         }
@@ -746,7 +931,7 @@ private fun WhatMattersNowCenterpiece(
                     Text(
                         text = "Scored transparently across urgency, effort fit, circadian alignment, and behavioral momentum.",
                         fontSize = 9.sp,
-                        color = Color(0xFF94A3B8),
+                        color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8),
                         lineHeight = 13.sp
                     )
                 }
@@ -759,12 +944,16 @@ private fun WhatMattersNowCenterpiece(
  * Calm state when no urgent recommendation is pending.
  */
 @Composable
-private fun NominalFocusState() {
+private fun NominalFocusState(isDarkMode: Boolean = false) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .background(if (isDarkMode) Color(0xFF172033) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .then(
+                if (isDarkMode) Modifier.border(1.dp, Color(0xFF334155), RoundedCornerShape(14.dp))
+                else Modifier
+            )
             .padding(16.dp)
     ) {
         Row(
@@ -783,13 +972,16 @@ private fun NominalFocusState() {
         Text(
             text = "Queue is balanced and context is stable. Pick your next task from the queue below.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = if (isDarkMode) Color(0xFFCBD5E1) else MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
+private fun CurrentStateTelemetry(
+    snapshot: ContextSnapshot,
+    isDarkMode: Boolean = false
+) {
     val formatter = DateTimeFormatter.ofPattern("hh:mm a").withZone(ZoneId.systemDefault())
     val formattedTime = formatter.format(snapshot.currentTime).uppercase()
     val networkLabel = when (snapshot.networkState.name) {
@@ -810,13 +1002,16 @@ private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
                 text = "Current Situation",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A)
             )
 
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFDCFCE7),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBBF7D0))
+                color = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFDCFCE7),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFBBF7D0)
+                )
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -826,14 +1021,14 @@ private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF16A34A))
+                            .background(if (isDarkMode) Color(0xFF10B981) else Color(0xFF16A34A))
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Live",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF15803D)
+                        color = if (isDarkMode) Color(0xFF34D399) else Color(0xFF15803D)
                     )
                 }
             }
@@ -848,17 +1043,19 @@ private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
         ) {
             TelemetryGridCard(
                 icon = "🕒",
-                iconBg = Color(0xFFEEF2FF),
+                iconBg = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF),
                 label = "Time",
                 value = formattedTime,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isDarkMode = isDarkMode
             )
             TelemetryGridCard(
                 icon = "📶",
-                iconBg = Color(0xFFECFDF5),
+                iconBg = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFECFDF5),
                 label = "Network",
                 value = networkLabel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isDarkMode = isDarkMode
             )
         }
 
@@ -870,17 +1067,19 @@ private fun CurrentStateTelemetry(snapshot: ContextSnapshot) {
         ) {
             TelemetryGridCard(
                 icon = "📅",
-                iconBg = Color(0xFFEFF6FF),
+                iconBg = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEFF6FF),
                 label = "Day",
                 value = dayLabel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isDarkMode = isDarkMode
             )
             TelemetryGridCard(
                 icon = "⚡",
-                iconBg = Color(0xFFF5F3FF),
+                iconBg = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF5F3FF),
                 label = "Workload",
                 value = workloadLabel,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                isDarkMode = isDarkMode
             )
         }
     }
@@ -892,13 +1091,17 @@ private fun TelemetryGridCard(
     iconBg: Color,
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
         shadowElevation = 1.dp
     ) {
         Row(
@@ -919,13 +1122,13 @@ private fun TelemetryGridCard(
                 Text(
                     text = label,
                     fontSize = 10.sp,
-                    color = Color(0xFF64748B),
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = value,
                     fontSize = 12.5.sp,
-                    color = Color(0xFF0F172A),
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
@@ -970,7 +1173,10 @@ private fun TelemetryGridCell(
  * Real behavioral signals, cognitive profile, and calibration progress.
  */
 @Composable
-private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
+private fun LifeOsIsLearningSection(
+    model: UserBehaviorModel,
+    isDarkMode: Boolean = false
+) {
     val totalSignals = model.totalTasksCompleted + model.totalTasksAbandoned
     val calibrationRatio = (totalSignals / 3f).coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
@@ -983,8 +1189,11 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9)
+        ),
         shadowElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -993,19 +1202,49 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LifeOsEyebrow(text = "LIFEOS ADAPTATION")
+                LifeOsEyebrow(
+                    text = "LIFEOS ADAPTATION",
+                    color = if (isDarkMode) Color(0xFF818CF8) else LifeOsIndigo700
+                )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFEEF2FF))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = if (model.hasSufficientData) "CALIBRATED" else "LEARNING",
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4338CA)
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Closed-Loop Learning Cycle: ACTION -> EVENT -> MODEL -> DECISION ENGINE
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "ACTION", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA))
+                    Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    Text(text = "EVENT", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
+                    Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    Text(text = "MODEL", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D9488))
+                    Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    Text(text = "DECISION ENGINE", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
                 }
             }
 
@@ -1020,13 +1259,13 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                     text = "Behavior Calibration",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "$totalSignals / 3 signals ($calibrationPct%)",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = if (isDarkMode) Color(0xFF818CF8) else MaterialTheme.colorScheme.primary,
                     fontFamily = FontFamily.Monospace
                 )
             }
@@ -1039,8 +1278,8 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(CircleShape),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                color = if (isDarkMode) Color(0xFF6366F1) else MaterialTheme.colorScheme.primary,
+                trackColor = if (isDarkMode) Color(0xFF1E293B) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -1058,19 +1297,22 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                     icon = "⏱️",
                     label = "DURATION",
                     value = durationLabel,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    isDarkMode = isDarkMode
                 )
                 CognitiveProfileMiniCard(
                     icon = "☀️",
                     label = "PEAK WINDOW",
                     value = peakLabel,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    isDarkMode = isDarkMode
                 )
                 CognitiveProfileMiniCard(
                     icon = "🚀",
                     label = "MOMENTUM",
                     value = topCat,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    isDarkMode = isDarkMode
                 )
             }
 
@@ -1081,19 +1323,42 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .background(if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC))
+                        .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
                         .padding(12.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "💡", fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Calibrating your baseline. Complete or postpone 3 tasks to train circadian energy and focus duration scoring.",
-                            fontSize = 11.5.sp,
-                            color = Color(0xFF475569),
-                            lineHeight = 16.sp
-                        )
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "💡", fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Calibrating your baseline. Complete or postpone 3 tasks to train circadian energy and focus duration scoring.",
+                                fontSize = 11.5.sp,
+                                color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
+                                lineHeight = 16.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            listOf("✓ Complete", "⏳ Postpone", "▶ Focus", "⚡ Feedback").forEach { action ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = action,
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             } else {
@@ -1104,26 +1369,30 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                     model.completionRate?.let { rate ->
                         TelemetryColumn(
                             label = "COMPLETION",
-                            value = "${(rate * 100).toInt()}%"
+                            value = "${(rate * 100).toInt()}%",
+                            isDarkMode = isDarkMode
                         )
                     }
                     model.postponementRate?.let { rate ->
                         TelemetryColumn(
                             label = "POSTPONE",
-                            value = "${(rate * 100).toInt()}%"
+                            value = "${(rate * 100).toInt()}%",
+                            isDarkMode = isDarkMode
                         )
                     }
                     model.averageCompletedDurationMinutes?.let { dur ->
                         TelemetryColumn(
                             label = "AVG TIME",
-                            value = "${dur.toInt()}m"
+                            value = "${dur.toInt()}m",
+                            isDarkMode = isDarkMode
                         )
                     }
                     val topCat = model.preferredCategories.maxByOrNull { it.value }?.key
                     topCat?.let { cat ->
                         TelemetryColumn(
                             label = "MOMENTUM",
-                            value = cat.name
+                            value = cat.name,
+                            isDarkMode = isDarkMode
                         )
                     }
                 }
@@ -1133,7 +1402,7 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                 Text(
                     text = "Observed patterns directly bias recommendation heuristics: favoring your peak energy window and preferred duration without cloud profiling.",
                     fontSize = 11.sp,
-                    color = Color(0xFF64748B),
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                     lineHeight = 15.sp
                 )
             }
@@ -1146,13 +1415,17 @@ private fun CognitiveProfileMiniCard(
     icon: String,
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkMode: Boolean = false
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFFF8FAFC),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+        color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        )
     ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1162,7 +1435,7 @@ private fun CognitiveProfileMiniCard(
                     text = label,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFF64748B),
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                     letterSpacing = 0.5.sp
                 )
             }
@@ -1171,7 +1444,7 @@ private fun CognitiveProfileMiniCard(
                 text = value,
                 fontSize = 11.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A),
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
                 maxLines = 1
             )
         }
@@ -1179,12 +1452,16 @@ private fun CognitiveProfileMiniCard(
 }
 
 @Composable
-private fun TelemetryColumn(label: String, value: String) {
+private fun TelemetryColumn(
+    label: String,
+    value: String,
+    isDarkMode: Boolean = false
+) {
     Column {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.outline,
+            color = if (isDarkMode) Color(0xFF94A3B8) else MaterialTheme.colorScheme.outline,
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.8.sp
@@ -1194,19 +1471,25 @@ private fun TelemetryColumn(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (isDarkMode) Color(0xFFF8FAFC) else MaterialTheme.colorScheme.onSurface,
             fontFamily = FontFamily.Monospace
         )
     }
 }
 
 @Composable
-private fun FeedbackCallout(feedback: String) {
+private fun FeedbackCallout(
+    feedback: String,
+    isDarkMode: Boolean = false
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-        color = LifeOsIndigo50,
-        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsIndigo700.copy(alpha = 0.25f))
+        color = if (isDarkMode) Color(0xFF172033) else LifeOsIndigo50,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else LifeOsIndigo700.copy(alpha = 0.25f)
+        )
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -1217,7 +1500,7 @@ private fun FeedbackCallout(feedback: String) {
             Text(
                 text = feedback,
                 style = MaterialTheme.typography.bodySmall,
-                color = LifeOsIndigo700,
+                color = if (isDarkMode) Color(0xFF818CF8) else LifeOsIndigo700,
                 fontWeight = FontWeight.Medium
             )
         }

@@ -51,6 +51,8 @@ import com.mrashish18.lifeos.ui.theme.*
 @Composable
 fun RealityCheckScreen(
     viewModel: RealityCheckViewModel,
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -60,13 +62,23 @@ fun RealityCheckScreen(
         modifier = modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFAFCFF),
-                        Color(0xFFF8FAFC),
-                        Color(0xFFF1F5F9)
+                if (isDarkMode) {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF0B1020),
+                            Color(0xFF111827),
+                            Color(0xFF0B1020)
+                        )
                     )
-                )
+                } else {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFFFAFCFF),
+                            Color(0xFFF8FAFC),
+                            Color(0xFFF1F5F9)
+                        )
+                    )
+                }
             )
     ) {
         when (val state = uiState) {
@@ -82,7 +94,9 @@ fun RealityCheckScreen(
                     },
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
-                    }
+                    },
+                    onOpenDrawer = onOpenDrawer,
+                    isDarkMode = isDarkMode
                 )
             }
             is RealityCheckUiState.Input -> {
@@ -97,7 +111,9 @@ fun RealityCheckScreen(
                     },
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
-                    }
+                    },
+                    onOpenDrawer = onOpenDrawer,
+                    isDarkMode = isDarkMode
                 )
             }
             is RealityCheckUiState.Loading -> {
@@ -107,7 +123,7 @@ fun RealityCheckScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CircularProgressIndicator(
-                            color = Color(0xFF4338CA),
+                            color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
                             strokeWidth = 3.dp,
                             modifier = Modifier.size(40.dp)
                         )
@@ -116,7 +132,7 @@ fun RealityCheckScreen(
                             text = state.currentStep,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF64748B)
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
                 }
@@ -124,7 +140,8 @@ fun RealityCheckScreen(
             is RealityCheckUiState.Success -> {
                 TruthResultScreen(
                     result = state.result,
-                    onBack = { viewModel.resetToInput() }
+                    onBack = { viewModel.resetToInput() },
+                    isDarkMode = isDarkMode
                 )
             }
             is RealityCheckUiState.Error -> {
@@ -140,7 +157,9 @@ fun RealityCheckScreen(
                     },
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
-                    }
+                    },
+                    onOpenDrawer = onOpenDrawer,
+                    isDarkMode = isDarkMode
                 )
             }
         }
@@ -158,7 +177,9 @@ private fun TruthInputScreen(
     onClaimChanged: (String) -> Unit,
     onAnalyze: () -> Unit,
     onSelectQuick: (String) -> Unit,
-    onSelectInvestigation: (InvestigationRecord) -> Unit
+    onSelectInvestigation: (InvestigationRecord) -> Unit,
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -168,64 +189,154 @@ private fun TruthInputScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Screen Header matching Screen 6
-        Column {
-            Text(
-                text = "TRUTH INTELLIGENCE",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF4338CA),
-                letterSpacing = 1.sp
+        // ── RealityCheck Header Card (ABOVE scenic image) ──
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "RealityCheck",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF1E1B4B),
-                letterSpacing = (-0.3).sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = "Examine claims. Find the truth.",
-                fontSize = 12.sp,
-                color = Color(0xFF64748B)
-            )
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Top row: hamburger + title
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
+                        onClick = onOpenDrawer,
+                        isDarkMode = isDarkMode
+                    )
+                    Column {
+                        Text(
+                            text = "RealityCheck",
+                            fontSize = 23.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                            letterSpacing = (-0.3).sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Good questions. Better information.\nA clearer view of reality.",
+                            fontSize = 11.5.sp,
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Supporting text
+                Text(
+                    text = "Verify claims. Compare evidence.\nMake a clearer decision.",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
+                    lineHeight = 19.sp
+                )
+            }
         }
 
-        errorMessage?.let { errorMsg ->
-            Spacer(modifier = Modifier.height(10.dp))
-            Surface(
-                color = Color(0xFFFEF2F2),
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFECACA)),
-                modifier = Modifier.fillMaxWidth()
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── Scenic Mountain Visual (BELOW header) ──
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .clip(RoundedCornerShape(18.dp))
+        ) {
+            com.mrashish18.lifeos.ui.components.RealityCheckScenicHeader(
+                isDarkMode = isDarkMode,
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Overlay text on scenic image
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "⚠️", fontSize = 13.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
+                Column {
                     Text(
-                        text = errorMsg,
-                        fontSize = 11.sp,
-                        color = Color(0xFFDC2626),
-                        fontWeight = FontWeight.Medium
+                        text = "\u201CBetter information\nleads to a brighter\ntomorrow.\u201D",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDarkMode) Color.White.copy(alpha = 0.92f) else Color(0xFF4C1D95),
+                        lineHeight = 16.sp
                     )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        listOf("QUESTION", "EXPLORE", "VERIFY", "UNDERSTAND").forEach { word ->
+                            Text(
+                                text = word,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black,
+                                color = if (isDarkMode) Color.White.copy(alpha = 0.75f) else Color(0xFF6D28D9).copy(alpha = 0.7f),
+                                letterSpacing = 1.5.sp,
+                                lineHeight = 11.sp
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ── Error message (if any) ──
+        errorMessage?.let { errorMsg ->
+            Surface(
+                color = if (isDarkMode) Color(0xFF7F1D1D).copy(alpha = 0.3f) else Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF991B1B) else Color(0xFFFECACA)
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "\u26A0\uFE0F", fontSize = 13.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = errorMsg,
+                            fontSize = 11.5.sp,
+                            color = if (isDarkMode) Color(0xFFFCA5A5) else Color(0xFFDC2626),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "Recovery: Select one of the verified quick examples below or enter a specific proposition.",
+                        fontSize = 10.5.sp,
+                        color = if (isDarkMode) Color(0xFFF87171) else Color(0xFF991B1B)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+        }
 
         // Main Input Card matching Screen 6
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+            )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 // Inner input box with link icon
@@ -233,8 +344,12 @@ private fun TruthInputScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF8FAFC))
+                        .border(
+                            1.dp,
+                            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0),
+                            RoundedCornerShape(12.dp)
+                        )
                         .padding(horizontal = 14.dp, vertical = 12.dp)
                 ) {
                     Row(
@@ -254,7 +369,7 @@ private fun TruthInputScreen(
                                 onValueChange = onClaimChanged,
                                 textStyle = TextStyle(
                                     fontSize = 13.sp,
-                                    color = Color(0xFF1E1B4B),
+                                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
                                     fontWeight = FontWeight.Medium
                                 ),
                                 modifier = Modifier.fillMaxWidth()
@@ -326,7 +441,7 @@ private fun TruthInputScreen(
             text = "Quick examples",
             fontSize = 14.5.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B),
+            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
             letterSpacing = (-0.2).sp
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -343,15 +458,19 @@ private fun TruthInputScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
+                        .background(if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC))
+                        .border(
+                            1.dp,
+                            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0),
+                            RoundedCornerShape(20.dp)
+                        )
                         .clickable { onSelectQuick(example) }
                         .padding(horizontal = 16.dp, vertical = 9.dp)
                 ) {
                     Text(
                         text = example,
                         fontSize = 12.sp,
-                        color = Color(0xFF1E293B),
+                        color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF1E293B),
                         fontWeight = FontWeight.Normal
                     )
                 }
@@ -365,7 +484,7 @@ private fun TruthInputScreen(
             text = "Recent Investigations",
             fontSize = 14.5.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B),
+            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
             letterSpacing = (-0.2).sp
         )
         Spacer(modifier = Modifier.height(10.dp))
@@ -374,9 +493,12 @@ private fun TruthInputScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                color = if (isDarkMode) Color(0xFF172033) else Color.White,
+                shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -390,13 +512,13 @@ private fun TruthInputScreen(
                         text = "No investigations yet",
                         fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Investigate a claim to build your trusted evidence history.",
                         fontSize = 11.5.sp,
-                        color = Color(0xFF64748B),
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
@@ -405,10 +527,22 @@ private fun TruthInputScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 recentInvestigations.forEach { record ->
                     val (badgeBg, badgeTextColor, iconBg) = when (record.verdict) {
-                        Verdict.SUPPORTED -> Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), Color(0xFFDCFCE7))
-                        Verdict.CONTRADICTED -> Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), Color(0xFFFEE2E2))
-                        Verdict.MIXED -> Triple(Color(0xFFFFEDD5), Color(0xFFEA580C), Color(0xFFFFEDD5))
-                        Verdict.INSUFFICIENT_EVIDENCE -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), Color(0xFFFEF3C7))
+                        Verdict.SUPPORTED -> {
+                            if (isDarkMode) Triple(Color(0xFF064E3B).copy(alpha = 0.5f), Color(0xFF4ADE80), Color(0xFF064E3B).copy(alpha = 0.5f))
+                            else Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), Color(0xFFDCFCE7))
+                        }
+                        Verdict.CONTRADICTED -> {
+                            if (isDarkMode) Triple(Color(0xFF7F1D1D).copy(alpha = 0.5f), Color(0xFFFCA5A5), Color(0xFF7F1D1D).copy(alpha = 0.5f))
+                            else Triple(Color(0xFFFEE2E2), Color(0xFFDC2626), Color(0xFFFEE2E2))
+                        }
+                        Verdict.MIXED -> {
+                            if (isDarkMode) Triple(Color(0xFF78350F).copy(alpha = 0.5f), Color(0xFFFDBA74), Color(0xFF78350F).copy(alpha = 0.5f))
+                            else Triple(Color(0xFFFFEDD5), Color(0xFFEA580C), Color(0xFFFFEDD5))
+                        }
+                        Verdict.INSUFFICIENT_EVIDENCE -> {
+                            if (isDarkMode) Triple(Color(0xFF78350F).copy(alpha = 0.5f), Color(0xFFFCD34D), Color(0xFF78350F).copy(alpha = 0.5f))
+                            else Triple(Color(0xFFFEF3C7), Color(0xFFD97706), Color(0xFFFEF3C7))
+                        }
                     }
                     val iconText = when (record.verdict) {
                         Verdict.SUPPORTED -> "✓"
@@ -428,9 +562,12 @@ private fun TruthInputScreen(
                             .fillMaxWidth()
                             .clickable { onSelectInvestigation(record) },
                         shape = RoundedCornerShape(16.dp),
-                        color = Color.White,
-                        shadowElevation = 1.dp,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+                        shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                        )
                     ) {
                         Row(
                             modifier = Modifier.padding(14.dp),
@@ -458,7 +595,7 @@ private fun TruthInputScreen(
                                     text = displayClaim,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E1B4B)
+                                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                                 )
                                 Spacer(modifier = Modifier.height(3.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -476,18 +613,18 @@ private fun TruthInputScreen(
                                         )
                                     }
                                 }
-                                 Spacer(modifier = Modifier.height(3.dp))
-                                 Text(
-                                     text = "${record.confidencePercentage}% • ${record.sourcesCount} source${if (record.sourcesCount == 1) "" else "s"}",
-                                     fontSize = 10.5.sp,
-                                     color = Color(0xFF64748B)
-                                 )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = "${record.confidencePercentage}% • ${record.sourcesCount} source${if (record.sourcesCount == 1) "" else "s"}",
+                                    fontSize = 10.5.sp,
+                                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                                )
                             }
 
                             Text(
                                 text = "⋮",
                                 fontSize = 16.sp,
-                                color = Color(0xFF64748B),
+                                color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -507,7 +644,8 @@ private fun TruthInputScreen(
 @Composable
 private fun TruthResultScreen(
     result: RealityCheckResult,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isDarkMode: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -517,7 +655,7 @@ private fun TruthResultScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Header: INVESTIGATION REPORT matching Screen 7
+        // Header: Investigation Result matching Screen 7
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -525,22 +663,27 @@ private fun TruthResultScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "← INVESTIGATION REPORT",
-                fontSize = 11.sp,
+                text = "← Investigation Result",
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF2563EB),
-                letterSpacing = 1.sp
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
             )
         }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = "A clearer view of reality.",
+            fontSize = 11.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // Dynamic styling based on Verdict
         val bannerGradients = when (result.verdict) {
-            Verdict.SUPPORTED -> listOf(Color(0xFF047857), Color(0xFF065F46), Color(0xFF064E3B))
-            Verdict.CONTRADICTED -> listOf(Color(0xFFB91C1C), Color(0xFF991B1B), Color(0xFF7F1D1D))
-            Verdict.MIXED -> listOf(Color(0xFFC2410C), Color(0xFF9A3412), Color(0xFF7C2D12))
-            Verdict.INSUFFICIENT_EVIDENCE -> listOf(Color(0xFFB45309), Color(0xFF92400E), Color(0xFF78350F))
+            Verdict.SUPPORTED -> listOf(Color(0xFF059669), Color(0xFF047857), Color(0xFF064E3B))
+            Verdict.CONTRADICTED -> listOf(Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B))
+            Verdict.MIXED -> listOf(Color(0xFFF97316), Color(0xFFEA580C), Color(0xFF9A3412))
+            Verdict.INSUFFICIENT_EVIDENCE -> listOf(Color(0xFFF59E0B), Color(0xFFD97706), Color(0xFF78350F))
         }
         val iconSymbol = when (result.verdict) {
             Verdict.SUPPORTED -> "✓"
@@ -554,105 +697,138 @@ private fun TruthResultScreen(
             Verdict.MIXED -> Color(0xFFF97316)
             Verdict.INSUFFICIENT_EVIDENCE -> Color(0xFFF59E0B)
         }
-        val subColor = when (result.verdict) {
-            Verdict.SUPPORTED -> Color(0xFFA7F3D0)
-            Verdict.CONTRADICTED -> Color(0xFFFECACA)
-            Verdict.MIXED -> Color(0xFFFED7AA)
-            Verdict.INSUFFICIENT_EVIDENCE -> Color(0xFFFDE68A)
-        }
 
-        // Unified Hero Card with Scenic Mountain Banner matching Screen 7
+        // 3D Glossy Verdict Banner matching Reference Image 2 Screen 7
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            shadowElevation = 2.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            shape = RoundedCornerShape(22.dp),
+            shadowElevation = 4.dp
         ) {
-            Column {
-                // Top Scenic Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(bannerGradients))
+            ) {
+                // Top Gloss Reflection for 3D effect
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(100.dp)
-                        .background(Brush.linearGradient(bannerGradients))
+                        .height(55.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.White.copy(alpha = 0.28f), Color.Transparent)
+                            )
+                        )
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Stylized layered mountain ridges
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val w = size.width
-                        val h = size.height
-
-                        // Back ridge
-                        val backRidge = Path().apply {
-                            moveTo(w * 0.4f, h)
-                            lineTo(w * 0.65f, h * 0.35f)
-                            lineTo(w * 0.85f, h * 0.65f)
-                            lineTo(w * 0.95f, h * 0.25f)
-                            lineTo(w, h * 0.4f)
-                            lineTo(w, h)
-                            close()
-                        }
-                        drawPath(backRidge, color = iconColor.copy(alpha = 0.22f))
-
-                        // Front ridge
-                        val frontRidge = Path().apply {
-                            moveTo(w * 0.5f, h)
-                            lineTo(w * 0.72f, h * 0.45f)
-                            lineTo(w * 0.82f, h * 0.55f)
-                            lineTo(w * 0.92f, h * 0.15f)
-                            lineTo(w * 0.96f, h * 0.4f)
-                            lineTo(w, h * 0.3f)
-                            lineTo(w, h)
-                            close()
-                        }
-                        drawPath(frontRidge, color = iconColor.copy(alpha = 0.38f))
-                    }
-
-                    // Content over banner
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .size(54.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.22f)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // White badge with verdict icon
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = iconSymbol,
-                                fontSize = 21.sp,
+                                fontSize = 22.sp,
                                 fontWeight = FontWeight.Black,
                                 color = iconColor
                             )
                         }
+                    }
 
-                        Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                        Column {
-                            Text(
-                                text = result.verdict.name,
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                letterSpacing = 0.5.sp
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${result.confidence.percentage}% confidence",
-                                fontSize = 12.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = subColor
-                            )
+                    Column {
+                        Text(
+                            text = result.verdict.name,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color.White,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.25f))
+                                    .padding(horizontal = 8.dp, vertical = 2.5.dp)
+                            ) {
+                                Text(
+                                    text = "${result.confidence.percentage}% Confidence",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = when (result.verdict) {
+                                Verdict.CONTRADICTED -> "Strong evidence against this claim"
+                                Verdict.SUPPORTED -> "Strong evidence supporting this claim"
+                                Verdict.MIXED -> "Evidence presents mixed conclusions"
+                                Verdict.INSUFFICIENT_EVIDENCE -> "Inconclusive evidence found"
+                            },
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
                     }
                 }
+            }
+        }
 
-                // Details below scenic banner: LIFEOS INTERPRETATION
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 10-Stage Deterministic Verification Pipeline Strip
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "CLAIM", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA))
+                Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                Text(text = "ANALYSIS", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB))
+                Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                Text(text = "EVIDENCE", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFF2DD4BF) else Color(0xFF0D9488))
+                Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                Text(text = "CONFIDENCE", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFD97706))
+                Text(text = "→", fontSize = 9.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                Text(text = "VERDICT", fontSize = 8.5.sp, fontWeight = FontWeight.Bold, color = if (isDarkMode) Color(0xFF4ADE80) else Color(0xFF16A34A))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Unified Content Card with The Claim & Evidence
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9))
+        ) {
+            Column {// Details below scenic banner: LIFEOS INTERPRETATION
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -662,14 +838,14 @@ private fun TruthResultScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFFEEF2FF))
+                                .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = "LIFEOS INTERPRETATION",
                                 fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Black,
-                                color = Color(0xFF4338CA),
+                                color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
                                 letterSpacing = 0.5.sp
                             )
                         }
@@ -678,7 +854,7 @@ private fun TruthResultScreen(
                             text = result.claim.domainCategory.name,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF64748B)
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                         )
                     }
 
@@ -688,7 +864,7 @@ private fun TruthResultScreen(
                         text = "\"${result.claim.rawText}\"",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B),
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
                         lineHeight = 22.sp
                     )
 
@@ -706,15 +882,15 @@ private fun TruthResultScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFFEFF6FF))
-                                    .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
+                                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEFF6FF))
+                                    .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
                                     .padding(horizontal = 8.dp, vertical = 3.5.dp)
                             ) {
                                 Text(
                                     text = tag,
                                     fontSize = 9.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF2563EB)
+                                    color = if (isDarkMode) Color(0xFF93C5FD) else Color(0xFF2563EB)
                                 )
                             }
                         }
@@ -726,13 +902,13 @@ private fun TruthResultScreen(
                         text = "Deterministic Assessment",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = result.interpretation,
                         fontSize = 12.sp,
-                        color = Color(0xFF475569),
+                        color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                         lineHeight = 17.5.sp
                     )
 
@@ -742,13 +918,13 @@ private fun TruthResultScreen(
                         text = "Scoring Rationale",
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF64748B)
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = result.confidence.rationale,
                         fontSize = 11.sp,
-                        color = Color(0xFF64748B),
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                         lineHeight = 16.sp
                     )
                 }
@@ -767,19 +943,19 @@ private fun TruthResultScreen(
                 text = "AUTHORITATIVE EVIDENCE (${result.analyzedEvidence.size})",
                 fontSize = 13.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF2563EB)
+                color = if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB)
             )
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                .background(Color(0xFFF1F5F9))
-                .padding(horizontal = 7.dp, vertical = 2.5.dp)
+                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
+                    .padding(horizontal = 7.dp, vertical = 2.5.dp)
             ) {
                 Text(
                     text = "GROUND TRUTH SOURCES",
                     fontSize = 9.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF64748B)
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                 )
             }
         }
@@ -791,9 +967,9 @@ private fun TruthResultScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
-                    shadowElevation = 1.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    color = if (isDarkMode) Color(0xFF111827) else Color.White,
+                    shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -805,20 +981,20 @@ private fun TruthResultScreen(
                                 text = "Source 0${index + 1}",
                                 fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2563EB)
+                                color = if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB)
                             )
 
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFFF1F5F9))
+                                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
                                     .padding(horizontal = 8.dp, vertical = 2.5.dp)
                             ) {
                                 Text(
                                     text = analyzed.evidence.source.quality.label,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF475569)
+                                    color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569)
                                 )
                             }
                         }
@@ -829,7 +1005,7 @@ private fun TruthResultScreen(
                             text = analyzed.evidence.source.name,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E1B4B)
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                         )
 
                         if (analyzed.evidence.source.authorityRationale.isNotBlank()) {
@@ -837,7 +1013,7 @@ private fun TruthResultScreen(
                             Text(
                                 text = "Institutional Criteria: ${analyzed.evidence.source.authorityRationale}",
                                 fontSize = 10.5.sp,
-                                color = Color(0xFF64748B)
+                                color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                             )
                         }
 
@@ -846,7 +1022,7 @@ private fun TruthResultScreen(
                         Text(
                             text = "\"${analyzed.evidence.snippet}\"",
                             fontSize = 12.sp,
-                            color = Color(0xFF334155),
+                            color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF334155),
                             lineHeight = 17.sp
                         )
 
@@ -856,7 +1032,7 @@ private fun TruthResultScreen(
                             text = "URL: ${analyzed.evidence.source.url ?: "Verified Institutional Database"}",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFF2563EB)
+                            color = if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB)
                         )
                     }
                 }

@@ -216,6 +216,7 @@ fun LifeOsSecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isDarkMode: Boolean = false,
     leadingIcon: @Composable (() -> Unit)? = null
 ) {
     Button(
@@ -224,12 +225,12 @@ fun LifeOsSecondaryButton(
         modifier = modifier.height(46.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = LifeOsSlate100,
-            contentColor = LifeOsSlate800,
-            disabledContainerColor = LifeOsSlate100.copy(alpha = 0.5f),
-            disabledContentColor = LifeOsSlate400
+            containerColor = if (isDarkMode) Color(0xFF1E293B) else LifeOsSlate100,
+            contentColor = if (isDarkMode) Color(0xFFF8FAFC) else LifeOsSlate800,
+            disabledContainerColor = if (isDarkMode) Color(0xFF1E293B).copy(alpha = 0.5f) else LifeOsSlate100.copy(alpha = 0.5f),
+            disabledContentColor = if (isDarkMode) Color(0xFF64748B) else LifeOsSlate400
         ),
-        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsSlate200),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else LifeOsSlate200),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp)
     ) {
         Row(
@@ -246,7 +247,7 @@ fun LifeOsSecondaryButton(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = if (enabled) LifeOsSlate800 else LifeOsSlate400
+                color = if (enabled) (if (isDarkMode) Color(0xFFF8FAFC) else LifeOsSlate800) else (if (isDarkMode) Color(0xFF64748B) else LifeOsSlate400)
             )
         }
     }

@@ -1,7 +1,6 @@
 package com.mrashish18.lifeos.feature.resilience
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +20,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,12 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,17 +50,27 @@ import com.mrashish18.lifeos.core.model.EmergencyMessage
 import com.mrashish18.lifeos.core.model.MessagePriority
 import com.mrashish18.lifeos.core.model.MessageStatus
 import com.mrashish18.lifeos.core.model.MessageType
-import com.mrashish18.lifeos.ui.theme.*
+import com.mrashish18.lifeos.core.model.NetworkState
+import com.mrashish18.lifeos.ui.components.RescueMeshNetworkTopologyVisual
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+import com.mrashish18.lifeos.ui.components.LifeOsMenuButton
+import com.mrashish18.lifeos.ui.components.LifeOsNotificationBell
 
 enum class ResilienceScreenMode {
     CENTER,      // Screen 8: RescueMesh Center
-    EMERGENCY,   // Screen 9: Emergency Message
+    EMERGENCY,   // Screen 9: Create Emergency Message
     QUEUE        // Screen 10: Message Queue
 }
 
 @Composable
 fun ResilienceScreen(
     viewModel: ResilienceViewModel,
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -69,23 +81,40 @@ fun ResilienceScreen(
         screenMode = ResilienceScreenMode.EMERGENCY
     }
 
+    val backgroundBrush = if (isDarkMode) {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFF0B1020),
+                Color(0xFF0D1424),
+                Color(0xFF0F172A),
+                Color(0xFF0B1020)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFFF8FAFC),
+                Color(0xFFF5F3FF),
+                Color(0xFFEEF2FF),
+                Color(0xFFEDE9FE)
+            )
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFAFCFF),
-                        Color(0xFFF8FAFC),
-                        Color(0xFFF1F5F9)
-                    )
-                )
-            )
+            .background(backgroundBrush)
     ) {
         when (screenMode) {
             ResilienceScreenMode.CENTER -> {
                 RescueMeshCenterScreen(
                     uiState = uiState,
+                    unreadNotificationCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
+                    onOpenDrawer = onOpenDrawer,
+                    isDarkMode = isDarkMode,
+                    onDismissFeedback = { viewModel.clearFeedback() },
                     onOpenEmergency = {
                         screenMode = ResilienceScreenMode.EMERGENCY
                     },
@@ -96,6 +125,7 @@ fun ResilienceScreen(
             }
             ResilienceScreenMode.EMERGENCY -> {
                 EmergencyMessageScreen(
+                    isDarkMode = isDarkMode,
                     onCancel = {
                         viewModel.closeEmergencyModal()
                         screenMode = ResilienceScreenMode.CENTER
@@ -114,6 +144,18 @@ fun ResilienceScreen(
             ResilienceScreenMode.QUEUE -> {
                 MessageQueueScreen(
                     messages = uiState.messages,
+                    queuedCount = uiState.queuedCount,
+                    relayingCount = uiState.relayingCount,
+                    deliveredCount = uiState.deliveredCount,
+                    feedbackMessage = uiState.feedbackMessage,
+                    unreadNotificationCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
+                    isDarkMode = isDarkMode,
+                    onDismissFeedback = { viewModel.clearFeedback() },
+                    onRelayMessage = { msgId -> viewModel.relayMessage(msgId) },
+                    onOpenEmergency = {
+                        screenMode = ResilienceScreenMode.EMERGENCY
+                    },
                     onBackToCenter = {
                         screenMode = ResilienceScreenMode.CENTER
                     }
@@ -124,400 +166,255 @@ fun ResilienceScreen(
 }
 
 /**
- * Screen 8: RescueMesh Center matching 08_rescuemesh_ref.png exactly.
+ * Screen 8: RescueMesh Center (Reference Image 2, Screen 8).
+ * Unified light theme with bold dark typography, green status pill,
+ * hero twilight topology visual, white 3-metrics card, and prominent emergency dispatch CTA.
  */
 @Composable
 private fun RescueMeshCenterScreen(
     uiState: ResilienceUiState,
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    onDismissFeedback: () -> Unit,
     onOpenEmergency: () -> Unit,
     onOpenQueue: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Screen Header matching Screen 8
-        Column {
-            Text(
-                text = "RESILIENCE INTELLIGENCE",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF4338CA),
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "RescueMesh",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF1E1B4B),
-                letterSpacing = (-0.5).sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = "Stay connected when normal networks fail.",
-                fontSize = 12.sp,
-                color = Color(0xFF64748B)
-            )
+        // Top Header: ☰ RescueMesh | [ Armed • Ready › ] + 🔔
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LifeOsMenuButton(
+                    onClick = onOpenDrawer,
+                    isDarkMode = isDarkMode
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "RescueMesh",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                    letterSpacing = (-0.5).sp
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.5f) else Color(0xFFDCFCE7))
+                        .border(1.dp, if (isDarkMode) Color(0xFF059669) else Color(0xFF86EFAC), RoundedCornerShape(20.dp))
+                        .clickable(onClick = onOpenQueue)
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF10B981))
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = "Armed • Ready ›",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDarkMode) Color(0xFF34D399) else Color(0xFF047857)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                LifeOsNotificationBell(
+                    unreadCount = unreadNotificationCount,
+                    onClick = onOpenNotifications,
+                    isDarkMode = isDarkMode
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(3.dp))
+        Text(
+            text = "A resilient mesh network for people and communities when it matters most.",
+            fontSize = 11.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            lineHeight = 16.sp
+        )
+
+        // Feedback Banner (if active)
+        uiState.feedbackMessage?.let { feedback ->
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = if (isDarkMode) Color(0xFF172033) else Color.White,
+                border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF0284C7) else Color(0xFF38BDF8)),
+                shadowElevation = if (isDarkMode) 0.dp else 2.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sync,
+                            contentDescription = null,
+                            tint = Color(0xFF0284C7),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = feedback,
+                            fontSize = 11.5.sp,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss",
+                        tint = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable(onClick = onDismissFeedback)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Green LOCAL NETWORK READY Banner
-        Box(
+        // Hero Twilight Network Topology Visual (Reference Image 2, Screen 8)
+        RescueMeshNetworkTopologyVisual(
+            localNodeId = uiState.localNodeId,
+            isOnline = uiState.networkState == NetworkState.CONNECTED,
+            relayingCount = uiState.relayingCount
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Clean White 3-Metrics Surface Card (Reference Image 2, Screen 8)
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFDCFCE7))
-                .border(1.dp, Color(0xFF86EFAC), RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .clickable(onClick = onOpenQueue),
+            shape = RoundedCornerShape(18.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "🔔", fontSize = 13.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+            Column(
+                modifier = Modifier.padding(vertical = 14.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "3",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isDarkMode) Color(0xFF34D399) else Color(0xFF059669)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Nodes Online",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${uiState.queuedCount}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Queued",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0))
+                    )
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${uiState.relayingCount}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Black,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Relaying",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
                 Text(
-                    text = "LOCAL NETWORK READY",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF15803D),
-                    letterSpacing = 0.6.sp
+                    text = "Tap to inspect message queue ›",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Visual Mesh Topology Diagram Card matching Screen 8
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            color = Color.White,
-            shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0F2FE))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                Color(0xFFF0FDF4),
-                                Color(0xFFE0F2FE),
-                                Color(0xFFF8FAFC)
-                            )
-                        )
-                    )
-            ) {
-                // Background curved dotted lines in Canvas
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val w = size.width
-                    val h = size.height
-
-                    // Soft radial glow aura
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            listOf(Color(0xFF38BDF8).copy(alpha = 0.2f), Color.Transparent),
-                            center = Offset(w * 0.35f, h * 0.2f),
-                            radius = 90.dp.toPx()
-                        ),
-                        radius = 90.dp.toPx(),
-                        center = Offset(w * 0.35f, h * 0.2f)
-                    )
-
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            listOf(Color(0xFF22D3EE).copy(alpha = 0.2f), Color.Transparent),
-                            center = Offset(w * 0.5f, h * 0.5f),
-                            radius = 90.dp.toPx()
-                        ),
-                        radius = 90.dp.toPx(),
-                        center = Offset(w * 0.5f, h * 0.5f)
-                    )
-
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            listOf(Color(0xFF38BDF8).copy(alpha = 0.2f), Color.Transparent),
-                            center = Offset(w * 0.35f, h * 0.8f),
-                            radius = 90.dp.toPx()
-                        ),
-                        radius = 90.dp.toPx(),
-                        center = Offset(w * 0.35f, h * 0.8f)
-                    )
-
-                    // Dotted curved connection: Node 1 -> Node 2
-                    val path1 = Path().apply {
-                        moveTo(w * 0.36f, h * 0.24f)
-                        cubicTo(
-                            w * 0.45f, h * 0.32f,
-                            w * 0.42f, h * 0.42f,
-                            w * 0.5f, h * 0.5f
-                        )
-                    }
-                    drawPath(
-                        path1,
-                        color = Color(0xFF38BDF8),
-                        style = Stroke(
-                            width = 2.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-                        )
-                    )
-
-                    // Dotted curved connection: Node 2 -> Node 3
-                    val path2 = Path().apply {
-                        moveTo(w * 0.5f, h * 0.5f)
-                        cubicTo(
-                            w * 0.52f, h * 0.62f,
-                            w * 0.42f, h * 0.72f,
-                            w * 0.36f, h * 0.78f
-                        )
-                    }
-                    drawPath(
-                        path2,
-                        color = Color(0xFF38BDF8),
-                        style = Stroke(
-                            width = 2.dp.toPx(),
-                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-                        )
-                    )
-                }
-
-                // Node 1: Your Device (Origin)
-                Row(
-                    modifier = Modifier
-                        .padding(start = 28.dp, top = 22.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .shadow(6.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF3B82F6), Color(0xFF2563EB))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "📱", fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Your Device",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Text(
-                            text = "(Origin)",
-                            fontSize = 11.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-                }
-
-                // Node 2: Nearby Devices (Relay)
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(start = 50.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .shadow(6.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF06B6D4), Color(0xFF0891B2))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🔄", fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Nearby Devices",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Text(
-                            text = "(Relay)",
-                            fontSize = 11.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-                }
-
-                // Node 3: Destination (Internet / Control Center)
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 28.dp, bottom = 22.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .shadow(6.dp, CircleShape)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF2563EB), Color(0xFF1D4ED8))
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "👤", fontSize = 18.sp)
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            text = "Destination",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Text(
-                            text = "(Internet / Control Center)",
-                            fontSize = 11.sp,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Metrics Card: 0 Queued | 0 Relaying | 0 Delivered matching Screen 8
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onOpenQueue),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
-        ) {
-            Column(modifier = Modifier.padding(vertical = 12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "${uiState.queuedCount}",
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Queued",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(28.dp)
-                            .background(Color(0xFFE2E8F0))
-                    )
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "${uiState.relayingCount}",
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Relaying",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .height(28.dp)
-                            .background(Color(0xFFE2E8F0))
-                    )
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "${uiState.deliveredCount}",
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color(0xFF1E1B4B)
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Delivered",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF64748B)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Tap to inspect message queue →",
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF4338CA)
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Send Emergency Message Button matching Screen 8
+        // Dominant Primary Action CTA: Dispatch Emergency Message
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .height(52.dp)
+                .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFFEF4444))
+                .clip(RoundedCornerShape(16.dp))
                 .background(
                     Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFF3B82F6),
-                            Color(0xFF6366F1),
-                            Color(0xFF8B5CF6)
-                        )
+                        listOf(Color(0xFFF43F5E), Color(0xFFE11D48))
                     )
                 )
                 .clickable(onClick = onOpenEmergency),
@@ -527,13 +424,91 @@ private fun RescueMeshCenterScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = "🔔", fontSize = 16.sp)
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Send Emergency Message",
+                    text = "Dispatch Emergency Message",
                     color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.5.sp,
+                    letterSpacing = 0.2.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Secondary Text Link: View Message Queue ›
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onOpenQueue)
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "View Message Queue ›",
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Reassurance Card: "You Are Not Alone" (Reference Image 2, Screen 8)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+            shadowElevation = if (isDarkMode) 0.dp else 1.dp
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(if (isDarkMode) Color(0xFF3B1D25) else Color(0xFFFEE2E2)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = "Care",
+                            tint = Color(0xFFEF4444),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "You Are Not Alone",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Even in low connectivity, messages can reach others through peer-to-peer relay.",
+                    fontSize = 11.5.sp,
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                    lineHeight = 16.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "\"Stronger communities build safer tomorrows.\"",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4F46E5),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -543,342 +518,339 @@ private fun RescueMeshCenterScreen(
 }
 
 /**
- * Screen 9: Emergency Message Screen matching 09_emergency_message_ref.png exactly.
+ * Screen 9: Create Emergency Message (Reference Image 2, Screen 9).
+ * Unified light theme with white message card, 3 priority pills,
+ * safety advice callout, and Send to Mesh gradient action.
  */
 @Composable
 private fun EmergencyMessageScreen(
     onCancel: () -> Unit,
-    onSend: (payload: String, priority: MessagePriority, destination: String) -> Unit
+    onSend: (payload: String, priority: MessagePriority, destination: String) -> Unit,
+    isDarkMode: Boolean = false
 ) {
-    var messageText by remember { mutableStateOf("") }
-    var selectedPriority by remember { mutableStateOf(MessagePriority.CRITICAL) }
+    var messageText by remember {
+        mutableStateOf("Need medical supplies for our community. Water and basic medications would help. Staying safe together. - LifeOs User")
+    }
+    var selectedPriority by remember { mutableStateOf(MessagePriority.HIGH) }
     var destinationText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Header matching Screen 9
-        Column {
-            Text(
-                text = "EMERGENCY MESSAGE",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF4338CA),
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "Send Help. Stay Safe.",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF1E1B4B)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Red Warning Banner
-        Box(
+        // Header with Back Button
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFEF2F2))
-                .border(1.dp, Color(0xFFFECACA), RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(top = 4.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "❗", fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (isDarkMode) Color(0xFF1E293B) else Color.White)
+                    .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                    .clickable(onClick = onCancel),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
                 Text(
-                    text = "Use this only for real emergencies.",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFDC2626)
+                    text = "Emergency Message",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                    letterSpacing = (-0.4).sp
+                )
+                Text(
+                    text = "A small message today. A safer tomorrow.",
+                    fontSize = 11.5.sp,
+                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Message * Field
-        Text(
-            text = "Message *",
-            fontSize = 12.5.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(90.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF8FAFC))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(12.dp)
+        // White Message Card matching Reference Image 2, Screen 9
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp
         ) {
-            if (messageText.isEmpty()) {
-                Text(
-                    text = "Describe your situation...",
-                    fontSize = 13.sp,
-                    color = Color(0xFF94A3B8)
-                )
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "MESSAGE (256 bytes max)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF475569)
+                    )
+                    Text(
+                        text = "${messageText.length}/256",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(115.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF8FAFC))
+                        .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    if (messageText.isEmpty()) {
+                        Text(
+                            text = "Describe situation, location, and immediate needs...",
+                            fontSize = 12.5.sp,
+                            color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8),
+                            lineHeight = 17.sp
+                        )
+                    }
+                    BasicTextField(
+                        value = messageText,
+                        onValueChange = { if (it.length <= 256) messageText = it },
+                        textStyle = TextStyle(
+                            fontSize = 12.5.sp,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 17.sp
+                        ),
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "⚠️", fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Be clear, specific, and include location if safe.",
+                        fontSize = 11.sp,
+                        color = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFFD97706),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
-            BasicTextField(
-                value = messageText,
-                onValueChange = { if (it.length <= 256) messageText = it },
-                textStyle = TextStyle(
-                    fontSize = 13.sp,
-                    color = Color(0xFF1E1B4B),
-                    fontWeight = FontWeight.Medium
-                ),
-                modifier = Modifier.fillMaxSize()
-            )
         }
 
-        // Character count and mesh packet limit indicator
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Mesh packet limit: 256 chars",
-                fontSize = 10.5.sp,
-                color = Color(0xFF64748B)
-            )
-            Text(
-                text = "${messageText.length}/256",
-                fontSize = 10.5.sp,
-                color = if (messageText.length >= 240) Color(0xFFDC2626) else Color(0xFF94A3B8),
-                fontWeight = FontWeight.SemiBold
-            )
-        }
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Priority Field
+        // PRIORITY Section Header
         Text(
-            text = "Priority",
-            fontSize = 12.5.sp,
+            text = "PRIORITY",
+            fontSize = 11.5.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B)
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF475569),
+            letterSpacing = 0.5.sp
         )
-        Spacer(modifier = Modifier.height(6.dp))
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 3 Priority Pills matching Reference Image 2, Screen 9
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Normal
             val isNormal = selectedPriority == MessagePriority.NORMAL
-            Box(
+            Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (isNormal) Color(0xFF4338CA) else Color(0xFFF8FAFC))
-                    .border(1.dp, if (isNormal) Color(0xFF4338CA) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { selectedPriority = MessagePriority.NORMAL },
-                contentAlignment = Alignment.Center
+                shape = RoundedCornerShape(12.dp),
+                color = if (isNormal) {
+                    if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.6f) else Color(0xFFDCFCE7)
+                } else {
+                    if (isDarkMode) Color(0xFF1E293B) else Color.White
+                },
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isNormal) Color(0xFF10B981) else if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🕒", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
+                Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = "Normal",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isNormal) Color.White else Color(0xFF334155)
+                        color = if (isNormal) {
+                            if (isDarkMode) Color(0xFF34D399) else Color(0xFF047857)
+                        } else {
+                            if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF475569)
+                        }
                     )
                 }
             }
 
-            // High
-            val isHigh = selectedPriority == MessagePriority.HIGH
-            Box(
+            // Urgent
+            val isUrgent = selectedPriority == MessagePriority.HIGH
+            Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (isHigh) Color(0xFFF59E0B) else Color(0xFFF8FAFC))
-                    .border(1.dp, if (isHigh) Color(0xFFF59E0B) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { selectedPriority = MessagePriority.HIGH },
-                contentAlignment = Alignment.Center
+                shape = RoundedCornerShape(12.dp),
+                color = if (isUrgent) Color(0xFFF59E0B) else if (isDarkMode) Color(0xFF1E293B) else Color.White,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isUrgent) Color(0xFFD97706) else if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🚨", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
+                Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "High",
+                        text = "Urgent",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isHigh) Color.White else Color(0xFF334155)
+                        color = if (isUrgent) Color.White else if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                 }
             }
 
-            // Critical (Glowing red capsule matching Screen 9)
+            // Critical
             val isCritical = selectedPriority == MessagePriority.CRITICAL
-            Box(
+            Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .height(40.dp)
-                    .shadow(if (isCritical) 6.dp else 0.dp, RoundedCornerShape(10.dp), spotColor = Color(0xFFEF4444))
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (isCritical) Color(0xFFEF4444) else Color(0xFFF8FAFC))
-                    .border(1.dp, if (isCritical) Color(0xFFDC2626) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable { selectedPriority = MessagePriority.CRITICAL },
-                contentAlignment = Alignment.Center
+                shape = RoundedCornerShape(12.dp),
+                color = if (isCritical) {
+                    if (isDarkMode) Color(0xFF450A0A) else Color(0xFFFEF2F2)
+                } else {
+                    if (isDarkMode) Color(0xFF1E293B) else Color.White
+                },
+                border = androidx.compose.foundation.BorderStroke(
+                    1.5.dp,
+                    if (isCritical) Color(0xFFEF4444) else if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "🚨", fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
+                Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = "Critical",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isCritical) Color.White else Color(0xFF334155)
+                        color = if (isCritical) Color(0xFFEF4444) else if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF475569)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Destination (Optional) Field
-        Text(
-            text = "Destination (Optional)",
-            fontSize = 12.5.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B)
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(46.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF8FAFC))
-                .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 11.dp)
+        // Info Callout: Messages stored locally and relayed to nearby peers
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            color = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF),
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFC7D2FE))
         ) {
-            if (destinationText.isEmpty()) {
-                Text(
-                    text = "Phone, email or ID...",
-                    fontSize = 13.sp,
-                    color = Color(0xFF94A3B8)
-                )
-            }
-            BasicTextField(
-                value = destinationText,
-                onValueChange = { destinationText = it },
-                textStyle = TextStyle(
-                    fontSize = 13.sp,
-                    color = Color(0xFF1E1B4B),
-                    fontWeight = FontWeight.Medium
-                ),
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Offline storage info box
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFEEF2FF))
-                .border(1.dp, Color(0xFFE0E7FF), RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(text = "ℹ️", fontSize = 14.sp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Your message will be stored locally and sent when connectivity is available.",
-                    fontSize = 11.5.sp,
-                    color = Color(0xFF334155),
-                    lineHeight = 16.sp
+                    text = "Messages are stored locally and relayed to nearby peers when connectivity is available.",
+                    fontSize = 11.sp,
+                    color = if (isDarkMode) Color(0xFF93C5FD) else Color(0xFF4338CA),
+                    lineHeight = 15.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        // Action Buttons Row: Cancel and Send Message
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        // Primary Action Button: 🚀 Send to Mesh
+        val effectivePayload = if (messageText.isBlank()) {
+            "Need medical supplies for our community. Water and basic medications would help. Staying safe together. - LifeOs User"
+        } else {
+            messageText
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFF4F46E5))
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
+                    )
+                )
+                .clickable {
+                    onSend(effectivePayload, selectedPriority, destinationText)
+                },
+            contentAlignment = Alignment.Center
         ) {
-            // Cancel button
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White)
-                    .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
-                    .clickable(onClick = onCancel),
-                contentAlignment = Alignment.Center
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "🚀", fontSize = 14.sp)
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Cancel",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E1B4B)
+                    text = "Send to Mesh",
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.5.sp
                 )
             }
+        }
 
-            // Send Message button (rich red gradient)
-            val isSendEnabled = messageText.isNotBlank()
-            Box(
-                modifier = Modifier
-                    .weight(1.6f)
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (isSendEnabled) {
-                            Brush.horizontalGradient(
-                                listOf(
-                                    Color(0xFFEF4444),
-                                    Color(0xFFF43F5E)
-                                )
-                            )
-                        } else {
-                            androidx.compose.ui.graphics.SolidColor(Color(0xFFCBD5E1))
-                        }
-                    )
-                    .clickable(enabled = isSendEnabled) {
-                        onSend(
-                            messageText.trim(),
-                            selectedPriority,
-                            destinationText.trim()
-                        )
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(text = "🔔", fontSize = 15.sp)
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Secondary Action Button: 💾 Save Draft
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .clickable(onClick = onCancel),
+            shape = RoundedCornerShape(14.dp),
+            color = if (isDarkMode) Color(0xFF1E293B) else Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "💾", fontSize = 13.sp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Send Message",
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = "Save Draft",
+                        fontSize = 13.sp,
+                        color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -889,133 +861,235 @@ private fun EmergencyMessageScreen(
 }
 
 /**
- * Screen 10: Message Queue Screen matching 10_message_queue_ref.png exactly.
+ * Screen 10: Message Queue (Reference Image 2, Screen 10).
+ * Unified light theme with filter pills (All, Queued, Relaying, Sent),
+ * white Store-and-Forward Active card, and message items with hop badges and Relay action.
  */
 @Composable
 private fun MessageQueueScreen(
     messages: List<EmergencyMessage>,
+    queuedCount: Int,
+    relayingCount: Int,
+    deliveredCount: Int,
+    feedbackMessage: String? = null,
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    onDismissFeedback: () -> Unit = {},
+    onRelayMessage: (String) -> Unit = {},
+    onOpenEmergency: () -> Unit = {},
     onBackToCenter: () -> Unit
 ) {
-    var selectedFilter by remember { mutableStateOf("Queued") }
+    var selectedFilter by remember { mutableStateOf("All") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Header matching Screen 10
+        // Top Header: ← Message Queue | 🔔
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onBackToCenter),
+                .padding(top = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "MESSAGE QUEUE",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF4338CA),
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Offline Storage & Sync",
-                    fontSize = 14.sp,
-                    color = Color(0xFF64748B)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Filter Pills: All, Queued, Sent, Failed matching Screen 10
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            listOf("All", "Queued", "Sent", "Failed").forEach { filter ->
-                val isSelected = selectedFilter == filter
-                val pillBg by animateColorAsState(
-                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF8FAFC),
-                    label = "queueFilterBg"
-                )
-                val pillTextColor by animateColorAsState(
-                    targetValue = if (isSelected) Color.White else if (filter == "All") Color(0xFF4338CA) else Color(0xFF64748B),
-                    label = "queueFilterText"
-                )
+            Row(
+                modifier = Modifier.clickable(onClick = onBackToCenter),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(pillBg)
-                        .then(
-                            if (!isSelected) Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
-                            else Modifier
-                        )
-                        .clickable { selectedFilter = filter }
-                        .padding(horizontal = 16.dp, vertical = 7.dp),
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color.White)
+                        .border(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
                     Text(
-                        text = filter,
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = pillTextColor
+                        text = "Message Queue",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                        letterSpacing = (-0.4).sp
+                    )
+                    Text(
+                        text = "Store locally. Relay when possible. Together we stay connected.",
+                        fontSize = 11.sp,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                    )
+                }
+            }
+
+            LifeOsNotificationBell(
+                unreadCount = unreadNotificationCount,
+                onClick = onOpenNotifications,
+                isDarkMode = isDarkMode
+            )
+        }
+
+        // Feedback Banner (if active)
+        feedbackMessage?.let { feedback ->
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = if (isDarkMode) Color(0xFF172033) else Color.White,
+                border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF0284C7) else Color(0xFF38BDF8)),
+                shadowElevation = if (isDarkMode) 0.dp else 2.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sync,
+                            contentDescription = null,
+                            tint = Color(0xFF0284C7),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = feedback,
+                            fontSize = 11.5.sp,
+                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Dismiss",
+                        tint = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable(onClick = onDismissFeedback)
                     )
                 }
             }
         }
 
-        val filteredList = when (selectedFilter) {
-            "All" -> messages
-            "Queued" -> messages.filter { it.status == MessageStatus.QUEUED }
-            "Sent" -> messages.filter { it.status == MessageStatus.SENT || it.status == MessageStatus.DELIVERED }
-            "Failed" -> messages.filter { it.status == MessageStatus.FAILED }
-            else -> messages
-        }
-
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Store-and-Forward Lifecycle Pipeline Strip
-        Surface(
+        // Filter Pills matching Reference Image 2, Screen 10
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            color = Color(0xFFF8FAFC),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "LIFECYCLE:",
-                    fontSize = 8.5.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF64748B),
-                    letterSpacing = 0.5.sp
-                )
-                Text(
-                    text = "QUEUED (Local) → RELAYING (Mesh) → DELIVERED (Sync)",
-                    fontSize = 9.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4338CA)
-                )
+            listOf(
+                "All" to messages.size,
+                "Queued" to queuedCount,
+                "Relaying" to relayingCount,
+                "Sent" to deliveredCount
+            ).forEach { (filter, count) ->
+                val isSelected = selectedFilter == filter
+                val label = if (filter == "All") "All" else "$filter ($count)"
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (isSelected) Brush.horizontalGradient(listOf(Color(0xFF2563EB), Color(0xFF4F46E5)))
+                            else Brush.linearGradient(listOf(
+                                if (isDarkMode) Color(0xFF1E293B) else Color.White,
+                                if (isDarkMode) Color(0xFF1E293B) else Color.White
+                            ))
+                        )
+                        .border(
+                            1.dp,
+                            if (isSelected) Color(0xFF2563EB) else (if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+                            RoundedCornerShape(20.dp)
+                        )
+                        .clickable { selectedFilter = filter }
+                        .padding(vertical = 7.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontSize = 10.5.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) Color.White else (if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B))
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Status Card: Store-and-Forward Active
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            color = if (isDarkMode) Color(0xFF111827) else Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = "🌐", fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Store-and-Forward Active",
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Messages move hop-by-hop across the mesh until they reach people.",
+                        fontSize = 11.sp,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        val filteredList = when (selectedFilter) {
+            "All" -> messages
+            "Queued" -> messages.filter { it.status == MessageStatus.QUEUED }
+            "Relaying" -> messages.filter { it.status == MessageStatus.RELAYING }
+            "Sent" -> messages.filter { it.status == MessageStatus.DELIVERED || it.status == MessageStatus.SENT }
+            else -> messages
+        }
+
         if (filteredList.isEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                color = if (isDarkMode) Color(0xFF111827) else Color.White,
+                border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+                shadowElevation = if (isDarkMode) 0.dp else 1.dp
             ) {
                 Column(
                     modifier = Modifier.padding(26.dp),
@@ -1023,23 +1097,17 @@ private fun MessageQueueScreen(
                 ) {
                     Text(text = "📭", fontSize = 28.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    val emptyTitle = if (messages.isEmpty()) "Queue clear" else "No messages in $selectedFilter queue"
-                    val emptyDesc = if (messages.isEmpty()) {
-                        "No emergency messages are waiting for relay."
-                    } else {
-                        "No emergency messages currently match the '$selectedFilter' filter."
-                    }
                     Text(
-                        text = emptyTitle,
+                        text = "Queue clear",
                         fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = emptyDesc,
+                        text = "No messages currently in this filter state.",
                         fontSize = 11.5.sp,
-                        color = Color(0xFF64748B),
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -1047,139 +1115,148 @@ private fun MessageQueueScreen(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 filteredList.forEach { msg ->
-                    val priorityColor = when (msg.priority) {
-                        MessagePriority.CRITICAL -> Color(0xFFDC2626)
-                        MessagePriority.HIGH -> Color(0xFFD97706)
-                        MessagePriority.NORMAL -> Color(0xFF4338CA)
+                    val isRelaying = msg.status == MessageStatus.RELAYING
+                    val isSent = msg.status == MessageStatus.SENT || msg.status == MessageStatus.DELIVERED
+
+                    val iconBg = if (isRelaying) {
+                        if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEFF6FF)
+                    } else if (isSent) {
+                        if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.5f) else Color(0xFFECFDF5)
+                    } else {
+                        if (isDarkMode) Color(0xFF450A0A).copy(alpha = 0.5f) else Color(0xFFFEF2F2)
                     }
-                    val priorityBg = when (msg.priority) {
-                        MessagePriority.CRITICAL -> Color(0xFFFEE2E2)
-                        MessagePriority.HIGH -> Color(0xFFFEF3C7)
-                        MessagePriority.NORMAL -> Color(0xFFEEF2FF)
+
+                    val iconText = if (isRelaying) "📨" else if (isSent) "✓" else "⚠️"
+
+                    val pillBg = if (isRelaying) {
+                        if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEFF6FF)
+                    } else if (isSent) {
+                        if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.5f) else Color(0xFFECFDF5)
+                    } else {
+                        if (isDarkMode) Color(0xFF450A0A).copy(alpha = 0.5f) else Color(0xFFFEF2F2)
                     }
-                    val iconBg = when (msg.priority) {
-                        MessagePriority.CRITICAL -> Color(0xFFEF4444)
-                        MessagePriority.HIGH -> Color(0xFFF59E0B)
-                        MessagePriority.NORMAL -> Color(0xFF8B5CF6)
+
+                    val pillTextColor = if (isRelaying) {
+                        if (isDarkMode) Color(0xFF60A5FA) else Color(0xFF2563EB)
+                    } else if (isSent) {
+                        if (isDarkMode) Color(0xFF34D399) else Color(0xFF059669)
+                    } else {
+                        if (isDarkMode) Color(0xFFF87171) else Color(0xFFDC2626)
                     }
-                    val iconEmoji = when (msg.priority) {
-                        MessagePriority.CRITICAL -> "🚨"
-                        MessagePriority.HIGH -> "📦"
-                        MessagePriority.NORMAL -> "📝"
-                    }
+
+                    val pillLabel = if (isRelaying) "RELAYING • Hop ${msg.hopCount}/${msg.maxHops}"
+                        else if (isSent) "SENT • ${msg.hopCount} Hops"
+                        else "QUEUED"
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color.White,
-                        shadowElevation = 1.dp,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)),
+                        shadowElevation = if (isDarkMode) 0.dp else 2.dp
                     ) {
-                        Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(iconBg),
-                                contentAlignment = Alignment.Center
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = iconEmoji, fontSize = 17.sp)
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = msg.payload.take(30) + if (msg.payload.length > 30) "..." else "",
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1E1B4B)
-                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(5.dp))
-                                            .background(priorityBg)
-                                            .padding(horizontal = 7.dp, vertical = 2.5.dp)
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(iconBg),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = iconText, fontSize = 14.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(pillBg)
+                                            .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
                                         Text(
-                                            text = msg.priority.name,
+                                            text = pillLabel,
                                             fontSize = 9.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = priorityColor
+                                            color = pillTextColor
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(3.dp))
-                                val timeStr = try {
-                                    msg.createdAt.atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"))
-                                } catch (e: Exception) {
-                                    "Recently"
-                                }
-                                val ttlHours = maxOf(1L, (msg.expiresAt.epochSecond - msg.createdAt.epochSecond) / 3600)
-                                val statusDetail = when (msg.status) {
-                                    MessageStatus.QUEUED -> "Stored locally • Waiting for peer relay"
-                                    MessageStatus.RELAYING -> "Relaying via peer • Hop ${msg.hopCount}/${msg.maxHops}"
-                                    MessageStatus.SENT -> "Transmitted via network gateway"
-                                    MessageStatus.DELIVERED -> "Delivered to destination node"
-                                    MessageStatus.FAILED -> "Relay failed"
-                                    MessageStatus.EXPIRED -> "TTL Expired"
-                                    else -> "Recorded on-device"
-                                }
+
                                 Text(
-                                    text = "${msg.status.name}  •  $timeStr  •  TTL: ${ttlHours}h",
-                                    fontSize = 10.5.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                                Spacer(modifier = Modifier.height(1.dp))
-                                Text(
-                                    text = statusDetail,
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = if (msg.status == MessageStatus.QUEUED) Color(0xFF4338CA) else Color(0xFF059669)
+                                    text = "···",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             Text(
-                                text = "⋮",
-                                fontSize = 16.sp,
-                                color = Color(0xFF64748B),
-                                fontWeight = FontWeight.Bold
+                                text = msg.payload,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                                lineHeight = 17.sp,
+                                maxLines = 2
                             )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val timeStr = try {
+                                msg.createdAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm a"))
+                            } catch (e: Exception) {
+                                "Recently"
+                            }
+                            val subInfo = if (isSent) "Delivered" else "PEER-HOP-A3F2"
+
+                            Text(
+                                text = "$timeStr • $subInfo",
+                                fontSize = 10.5.sp,
+                                color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                            )
+
+                            // Interactive Relay Button (Simulate Hop) matching Reference Image 2, Screen 10
+                            if (msg.status == MessageStatus.QUEUED || (msg.status == MessageStatus.RELAYING && msg.hopCount < msg.maxHops)) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(38.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            Brush.horizontalGradient(
+                                                listOf(Color(0xFF2563EB), Color(0xFF4F46E5))
+                                            )
+                                        )
+                                        .clickable { onRelayMessage(msg.messageId) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Sync,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Relay to Peer Node (Simulate Hop) ›",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Bottom Callout Banner matching Screen 10
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFE0F2FE))
-                .border(1.dp, Color(0xFFBAE6FD), RoundedCornerShape(12.dp))
-                .padding(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "⚡", fontSize = 14.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Messages are stored locally and will be automatically sent when connectivity returns.",
-                    fontSize = 11.sp,
-                    color = Color(0xFF0C4A6E),
-                    lineHeight = 15.sp
-                )
             }
         }
 

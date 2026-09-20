@@ -92,16 +92,53 @@ LIFEOS is an on-device personal intelligence system designed to observe situatio
 
 ---
 
-## Design System
+## End-to-End Cognitive Lifecycle
 
-- **Surfaces & Canvas**: Clean, soft white / very light slate background (`#F8FAFC`) with pure white elevated cards (`#FFFFFF`) featuring 14–18dp rounded corners and `#F1F5F9` boundary strokes.
-- **Atmospheric Scenic Art**: Stylized vector mountain ridges on the Dashboard Command Center, winding trail art on the Goals banner, and verdict-adaptive status headers on Truth Intelligence.
-- **Accent Palette**: Royal Indigo (`#4338CA`) and Electric Violet (`#6366F1`) primary accents with semantic accents for Success Mint (`#10B981`), Warning Amber (`#F59E0B`), and Emergency Crimson (`#EF4444`).
-- **Typography & Components**: High-contrast typography hierarchy, compact segmented control pills, tactile action buttons, and a custom translucent bottom navigation bar with active rounded pill indicators.
+LIFEOS implements a continuous, closed-loop on-device cognitive architecture:
+
+1. **OBSERVE (Context Engine)**: Real-time environmental sensing (time of day, network state, workload demands) with zero cloud dependency.
+2. **UNDERSTAND (Behavior Model)**: Longitudinal calibration of individual completion velocity, preferred task sizing, and circadian focus peaks.
+3. **DECIDE (Decision Engine)**: Deterministic heuristic scoring of urgency, context fit, and fatigue mitigation with full factor explainability.
+4. **ACT (User Execution)**: Tactile execution of focus sessions, task postponements, claim investigations, and emergency transmissions.
+5. **MEASURE (Outcome Telemetry)**: Non-invasive instrumentation recording behavioral outcomes without leaking user data.
+6. **ADAPT (Learning Loop)**: Dynamic weight adjustment to continuously tune future recommendations and pacing.
 
 ---
 
-## Build & Test
+## Strategic Alignment Hierarchy
+
+Every granular execution is tied to compounding long-term growth:
+$$\text{GOAL (Direction)} \longrightarrow \text{MILESTONE (Target)} \longrightarrow \text{TASK (Execution)} \longrightarrow \text{OUTCOME (Growth)}$$
+
+- **Work Tasks** $\leftrightarrow$ **Autonomous Productivity Goal**
+- **Health Tasks** $\leftrightarrow$ **Circadian Rhythm & Workload Pacing Goal**
+- **Learning Tasks** $\leftrightarrow$ **Deep Cognitive Work Goal**
+
+---
+
+## Dual-Theme Adaptive Design System
+
+LIFEOS employs an intentional dual-theme architecture designed for context-appropriate psychological focus:
+
+1. **Productivity & Ground Truth (Screens 1–7 — Light Lavender & Scenic Pastels)**:
+   - **Background**: Soft lavender-tinted slate (`#F8FAFC` to `#EDE9FE`) evoking clarity and cognitive focus.
+   - **Surfaces**: Large rounded cards (16–24dp radius), crisp `#F1F5F9` borders, and soft diffusion shadows.
+   - **Gradients**: Royal Indigo (`#4F46E5`), Deep Purple (`#7C3AED`), and Electric Blue (`#2563EB`) gradients for flagship actions and banners.
+   - **Art & Atmosphere**: Pure Jetpack Compose canvas-rendered mountain sunrise ridges, winding trail illustrations, and glossy 3D verdict cards.
+
+2. **Emergency Resilience (Screens 8–10 — RescueMesh Futuristic Midnight Navy)**:
+   - **Background**: Deep midnight navy (`#07152F` / `#0B1F45` / `#101A4A`) designed for high-stress, low-light emergency field operations.
+   - **Accents**: High-visibility glowing cyan (`#06B6D4`), electric blue (`#3B82F6`), status emerald (`#10B981`), and emergency crimson (`#EF4444`).
+   - **Visualization**: Multi-node mesh topology with dynamic signal beacons, packet relay hop trackers, and sunset ridge hiker hero artwork.
+   - **Adaptive Navigation**: Floating bottom bar dynamically shifts from crisp light frosted glass to dark navy midnight whenever transitioning to the Resilience pillar.
+
+---
+
+## Verification & Test Suite
+
+- **102 / 102 Unit Tests PASS** across domain, core engine, persistence, UI state, and use case layers.
+- **Strictly Room SQLite backed** with zero synthetic mock data.
+- **10/10 Pixel 6 (API 34) Canonical Screenshots** refreshed and verified.
 
 ### Run Unit Tests
 ```bash
@@ -118,3 +155,4 @@ LIFEOS is an on-device personal intelligence system designed to observe situatio
 .\gradlew.bat installDebug
 adb shell am start -n com.mrashish18.lifeos/.MainActivity
 ```
+

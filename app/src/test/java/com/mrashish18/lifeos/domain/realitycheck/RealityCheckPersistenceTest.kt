@@ -124,5 +124,13 @@ class RealityCheckPersistenceTest {
             state.value = state.value.filterNot { it.id == id }
             return before - state.value.size
         }
+
+        override fun observeTotalCount(): Flow<Int> = state.map { it.size }
+
+        override suspend fun clearAll(): Int {
+            val count = state.value.size
+            state.value = emptyList()
+            return count
+        }
     }
 }

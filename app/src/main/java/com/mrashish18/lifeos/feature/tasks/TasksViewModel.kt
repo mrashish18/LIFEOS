@@ -126,7 +126,7 @@ class TasksViewModel(
                     estimatedMinutes = estimatedMinutes,
                     dueAt = dueAt
                 )
-                _uiState.update { it.copy(isCreateDialogOpen = false, userMessage = "Task created") }
+                _uiState.update { it.copy(isCreateDialogOpen = false, userMessage = "Task created • Candidate queued for Decision Engine") }
             } catch (e: Exception) {
                 _uiState.update { it.copy(userMessage = "Failed to create task: ${e.message}") }
             }
@@ -147,28 +147,28 @@ class TasksViewModel(
     fun startTask(taskId: String) {
         viewModelScope.launch {
             transitionTaskStatusUseCase(taskId, TaskStatus.IN_PROGRESS)
-            _uiState.update { it.copy(userMessage = "Task marked in progress") }
+            _uiState.update { it.copy(userMessage = "Focus initiated • Tracking circadian & duration signals") }
         }
     }
 
     fun completeTask(taskId: String) {
         viewModelScope.launch {
             transitionTaskStatusUseCase(taskId, TaskStatus.COMPLETED)
-            _uiState.update { it.copy(userMessage = "Task completed") }
+            _uiState.update { it.copy(userMessage = "Task completed • Behavior recorded for learning loop") }
         }
     }
 
     fun postponeTask(taskId: String) {
         viewModelScope.launch {
             transitionTaskStatusUseCase(taskId, TaskStatus.POSTPONED)
-            _uiState.update { it.copy(userMessage = "Task postponed") }
+            _uiState.update { it.copy(userMessage = "Task postponed • Learning loop recorded postponement") }
         }
     }
 
     fun abandonTask(taskId: String) {
         viewModelScope.launch {
             transitionTaskStatusUseCase(taskId, TaskStatus.ABANDONED)
-            _uiState.update { it.copy(userMessage = "Task marked abandoned") }
+            _uiState.update { it.copy(userMessage = "Task abandoned • Terminal outcome recorded") }
         }
     }
 

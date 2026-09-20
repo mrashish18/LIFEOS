@@ -14,6 +14,7 @@ import com.mrashish18.lifeos.data.local.LifeOsDatabase
 import com.mrashish18.lifeos.data.repository.InMemoryTaskRepository
 import com.mrashish18.lifeos.data.repository.RoomBehaviorEventRepository
 import com.mrashish18.lifeos.data.repository.RoomInvestigationRepository
+import com.mrashish18.lifeos.data.repository.RoomNotificationRepository
 import com.mrashish18.lifeos.data.repository.RoomTaskRepository
 import com.mrashish18.lifeos.domain.usecase.CreateTaskUseCase
 import com.mrashish18.lifeos.domain.usecase.DeleteTaskUseCase
@@ -35,6 +36,10 @@ import com.mrashish18.lifeos.domain.usecase.SyncEmergencyQueueUseCase
 import com.mrashish18.lifeos.feature.realitycheck.RealityCheckViewModel
 import com.mrashish18.lifeos.feature.resilience.ResilienceViewModel
 import com.mrashish18.lifeos.feature.tasks.TasksViewModel
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import com.mrashish18.lifeos.ui.navigation.LifeOsApp
 import com.mrashish18.lifeos.ui.theme.LIFEOSTheme
 import kotlinx.coroutines.launch
@@ -51,20 +56,27 @@ class MainActivity : ComponentActivity() {
         val database = LifeOsDatabase.getInstance(applicationContext)
         val taskDao = database.taskDao()
         val behaviorEventDao = database.behaviorEventDao()
+        val notificationDao = database.notificationDao()
 
         val taskRepository = RoomTaskRepository(taskDao)
-        val behaviorEventRepository = RoomBehaviorEventRepository(
-            behaviorEventDao = behaviorEventDao,
+        val notificationRepository = RoomNotificationRepository(
+            notificationDao = notificationDao,
             dispatcherProvider = dispatcherProvider
         )
+        val behaviorEventRepository = RoomBehaviorEventRepository(
+            behaviorEventDao = behaviorEventDao,
+            dispatcherProvider = dispatcherProvider,
+            notificationDao = notificationDao
+        )
 
-        // Seed initial tasks if database is brand new (off-main-thread IO)
+        // Seed initial tasks if database is brand new (off-main-thread IO) & sync historical events
         lifecycleScope.launch(dispatcherProvider.io) {
             if (taskDao.getAllTasks().isEmpty()) {
                 InMemoryTaskRepository.defaultSeedTasks().forEach { task ->
                     taskRepository.insertTask(task)
                 }
             }
+            behaviorEventRepository.syncHistoricalEvents(notificationDao)
         }
 
         // 2. Task Use Cases
@@ -170,13 +182,52 @@ class MainActivity : ComponentActivity() {
         )
         val resilienceViewModel = ViewModelProvider(this, resilienceFactory)[ResilienceViewModel::class.java]
 
+        val notificationFactory = com.mrashish18.lifeos.feature.notifications.NotificationViewModel.Factory(
+            notificationRepository = notificationRepository
+        )
+        val notificationViewModel = ViewModelProvider(this, notificationFactory)[com.mrashish18.lifeos.feature.notifications.NotificationViewModel::class.java]
+
+        val userSettingsRepository = com.mrashish18.lifeos.data.repository.DataStoreUserSettingsRepository(applicationContext)
+        val settingsFactory = com.mrashish18.lifeos.feature.settings.SettingsViewModel.Factory(
+            userSettingsRepository = userSettingsRepository,
+            database = database,
+            dispatcherProvider = dispatcherProvider
+        )
+        val settingsViewModel = ViewModelProvider(this, settingsFactory)[com.mrashish18.lifeos.feature.settings.SettingsViewModel::class.java]
+
+        val packageInfo = try {
+            packageManager.getPackageInfo(packageName, 0)
+        } catch (_: Exception) {
+            null
+        }
+        val versionName = packageInfo?.versionName ?: "1.0"
+        val versionCode = packageInfo?.let {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                it.longVersionCode.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                it.versionCode
+            }
+        } ?: 1
+
         setContent {
-            LIFEOSTheme {
+            val userSettings by settingsViewModel.settings.collectAsState()
+            val systemInDark = androidx.compose.foundation.isSystemInDarkTheme()
+            val isDark = remember(userSettings, systemInDark) {
+                userSettings.shouldUseDarkTheme(systemInDark)
+            }
+
+            LIFEOSTheme(darkTheme = isDark) {
                 LifeOsApp(
                     dashboardViewModel = dashboardViewModel,
                     tasksViewModel = tasksViewModel,
                     realityCheckViewModel = realityCheckViewModel,
-                    resilienceViewModel = resilienceViewModel
+                    resilienceViewModel = resilienceViewModel,
+                    notificationViewModel = notificationViewModel,
+                    settingsViewModel = settingsViewModel,
+                    isDarkMode = isDark,
+                    versionName = versionName,
+                    versionCode = versionCode
                 )
             }
         }

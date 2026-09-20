@@ -12,7 +12,9 @@ import com.mrashish18.lifeos.data.local.dao.InvestigationDao
 import com.mrashish18.lifeos.data.local.dao.TaskDao
 import com.mrashish18.lifeos.data.local.entity.BehaviorEventEntity
 import com.mrashish18.lifeos.data.local.entity.EmergencyMessageEntity
+import com.mrashish18.lifeos.data.local.dao.NotificationDao
 import com.mrashish18.lifeos.data.local.entity.InvestigationEntity
+import com.mrashish18.lifeos.data.local.entity.NotificationEntity
 import com.mrashish18.lifeos.data.local.entity.TaskEntity
 
 /**
@@ -23,9 +25,10 @@ import com.mrashish18.lifeos.data.local.entity.TaskEntity
         TaskEntity::class,
         BehaviorEventEntity::class,
         EmergencyMessageEntity::class,
-        InvestigationEntity::class
+        InvestigationEntity::class,
+        NotificationEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class LifeOsDatabase : RoomDatabase() {
@@ -34,6 +37,7 @@ abstract class LifeOsDatabase : RoomDatabase() {
     abstract fun behaviorEventDao(): BehaviorEventDao
     abstract fun emergencyMessageDao(): EmergencyMessageDao
     abstract fun investigationDao(): InvestigationDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         private const val DATABASE_NAME = "lifeos_database.db"
@@ -62,6 +66,28 @@ abstract class LifeOsDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `notifications` (
+                        `id` TEXT NOT NULL,
+                        `category` TEXT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `message` TEXT NOT NULL,
+                        `timestampEpochMillis` INTEGER NOT NULL,
+                        `isRead` INTEGER NOT NULL,
+                        `destination` TEXT,
+                        `entityId` TEXT,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_timestampEpochMillis` ON `notifications` (`timestampEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_notifications_isRead` ON `notifications` (`isRead`)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: LifeOsDatabase? = null
 
@@ -72,7 +98,7 @@ abstract class LifeOsDatabase : RoomDatabase() {
                     LifeOsDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

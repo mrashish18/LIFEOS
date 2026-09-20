@@ -30,4 +30,10 @@ interface BehaviorEventDao {
 
     @Query("SELECT COUNT(*) FROM behavior_events WHERE type = :type")
     suspend fun countEventsByType(type: String): Int
+
+    @Query("SELECT COUNT(*) FROM behavior_events")
+    fun observeTotalCount(): Flow<Int>
+
+    @Query("DELETE FROM behavior_events")
+    suspend fun clearAll(): Int
 }

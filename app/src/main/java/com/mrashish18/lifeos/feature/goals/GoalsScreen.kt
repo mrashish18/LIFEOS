@@ -40,10 +40,17 @@ import androidx.compose.runtime.setValue
 import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
 import com.mrashish18.lifeos.ui.components.LifeOsFilterPill
 import com.mrashish18.lifeos.ui.components.ScenicGoalBanner
+import com.mrashish18.lifeos.ui.components.LifeOsNotificationBell
 import com.mrashish18.lifeos.ui.theme.*
 
 @Composable
-fun GoalsScreen(modifier: Modifier = Modifier) {
+fun GoalsScreen(
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onOpenDrawer: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    modifier: Modifier = Modifier
+) {
     var selectedFilter by remember { mutableStateOf("All") }
 
     Column(
@@ -56,45 +63,93 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(6.dp))
 
         // Section Header matching Screen 4
-        Column {
-            Text(
-                text = "GOALS",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-                color = Color(0xFF1E1B4B),
-                letterSpacing = (-0.3).sp
-            )
-            Text(
-                text = "LONG-TERM DIRECTION",
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF4F46E5),
-                letterSpacing = 1.sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = "Small steps. A bigger you.",
-                fontSize = 12.sp,
-                color = Color(0xFF64748B)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
+                    onClick = onOpenDrawer,
+                    isDarkMode = isDarkMode
+                )
+                Column {
+                    Text(
+                        text = "Goals",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                        letterSpacing = (-0.3).sp
+                    )
+                    Text(
+                        text = "Big goals. Intentional actions. Real outcomes.",
+                        fontSize = 11.5.sp,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                    )
+                }
+            }
+
+            LifeOsNotificationBell(
+                unreadCount = unreadNotificationCount,
+                onClick = onOpenNotifications,
+                isDarkMode = isDarkMode
             )
         }
 
         // 1. Scenic Mountain Banner with quote matching Screen 4
         ScenicGoalBanner()
 
-        // 2. Filter Pills: All, Active, Completed
+        // Strategic Alignment Hierarchy Strip (Goal -> Milestone -> Task -> Outcome)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+            )
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                Text(
+                    text = "STRATEGIC ALIGNMENT HIERARCHY",
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
+                    letterSpacing = 0.7.sp
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HierarchyPill(step = "⭐ GOAL", label = "Direction", color = Color(0xFF4338CA), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    HierarchyPill(step = "🏁 MILESTONE", label = "Target", color = Color(0xFF2563EB), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    HierarchyPill(step = "📋 TASK", label = "Execution", color = Color(0xFF0D9488), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    HierarchyPill(step = "🎯 OUTCOME", label = "Growth", color = Color(0xFF16A34A), isDarkMode = isDarkMode)
+                }
+            }
+        }
+
+        // 2. Filter Pills: All, Active, Milestone, Completed
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf("All", "Active", "Completed").forEach { filter ->
+            listOf("All", "Active", "Milestone", "Completed").forEach { filter ->
                 val isSelected = selectedFilter == filter
                 val pillBg by animateColorAsState(
-                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF8FAFC),
+                    targetValue = if (isSelected) Color(0xFF4338CA) else if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
                     label = "goalFilterBg"
                 )
                 val pillTextColor by animateColorAsState(
-                    targetValue = if (isSelected) Color.White else Color(0xFF475569),
+                    targetValue = if (isSelected) Color.White else if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                     label = "goalFilterText"
                 )
                 Box(
@@ -102,7 +157,8 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                         .clip(RoundedCornerShape(20.dp))
                         .background(pillBg)
                         .then(
-                            if (!isSelected) Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
+                            if (isDarkMode && !isSelected) Modifier.border(1.dp, Color(0xFF334155), RoundedCornerShape(20.dp))
+                            else if (!isSelected) Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
                             else Modifier
                         )
                         .clickable { selectedFilter = filter }
@@ -131,7 +187,9 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     description = "Turn daily execution into long-term compounding growth.",
                     progress = 0.30f,
                     isCompleted = false,
-                    milestones = "2 / 6 milestones"
+                    milestones = "2 / 6 milestones",
+                    activeMilestone = "Active: M2 Behavior Model Calibration",
+                    linkedCategory = "Linked: WORK Tasks"
                 ),
                 GoalItem(
                     id = "goal_2",
@@ -142,7 +200,9 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     description = "Maintain healthy balance and prevent burnout.",
                     progress = 0.60f,
                     isCompleted = false,
-                    milestones = "3 / 5 milestones"
+                    milestones = "3 / 5 milestones",
+                    activeMilestone = "Active: M3 Fatigue & Energy Pacing",
+                    linkedCategory = "Linked: HEALTH Tasks"
                 ),
                 GoalItem(
                     id = "goal_3",
@@ -153,7 +213,9 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     description = "Build consistent, distraction-free focus sessions.",
                     progress = 0.20f,
                     isCompleted = false,
-                    milestones = "1 / 5 milestones"
+                    milestones = "1 / 5 milestones",
+                    activeMilestone = "Active: M2 25m Focus Interval Pacing",
+                    linkedCategory = "Linked: LEARNING Tasks"
                 ),
                 GoalItem(
                     id = "goal_4",
@@ -164,7 +226,9 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     description = "Room persistence, Context Engine, and Decision Engine baseline established.",
                     progress = 1.0f,
                     isCompleted = true,
-                    milestones = "5 / 5 milestones"
+                    milestones = "5 / 5 milestones",
+                    activeMilestone = "Completed: Room SQLite & Clean Arch",
+                    linkedCategory = "All Pillars Supported"
                 ),
                 GoalItem(
                     id = "goal_5",
@@ -175,7 +239,9 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     description = "Hop-limited emergency mesh routing with deterministic deduplication.",
                     progress = 1.0f,
                     isCompleted = true,
-                    milestones = "4 / 4 milestones"
+                    milestones = "4 / 4 milestones",
+                    activeMilestone = "Completed: Hop-Limited Deduplication",
+                    linkedCategory = "RescueMesh Verified"
                 )
             )
         }
@@ -190,9 +256,12 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
-                shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+                color = if (isDarkMode) Color(0xFF172033) else Color.White,
+                shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -206,13 +275,13 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                         text = "No goals in this view.",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Switch filters to view active and completed strategic objectives.",
                         fontSize = 12.sp,
-                        color = Color(0xFF64748B),
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
@@ -226,7 +295,10 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
                     tagColor = goal.tagColor,
                     description = goal.description,
                     progress = goal.progress,
-                    milestones = goal.milestones
+                    milestones = goal.milestones,
+                    activeMilestone = goal.activeMilestone,
+                    linkedCategory = goal.linkedCategory,
+                    isDarkMode = isDarkMode
                 )
             }
         }
@@ -244,8 +316,40 @@ private data class GoalItem(
     val description: String,
     val progress: Float,
     val isCompleted: Boolean,
-    val milestones: String
+    val milestones: String,
+    val activeMilestone: String? = null,
+    val linkedCategory: String? = null
 )
+
+@Composable
+private fun HierarchyPill(
+    step: String,
+    label: String,
+    color: Color,
+    isDarkMode: Boolean = false
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (isDarkMode) color.copy(alpha = 0.25f) else color.copy(alpha = 0.12f))
+                .padding(horizontal = 5.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = step,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isDarkMode) color.copy(alpha = 0.95f) else color
+            )
+        }
+        Text(
+            text = label,
+            fontSize = 7.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
 
 @Composable
 private fun ReferenceGoalCard(
@@ -255,7 +359,10 @@ private fun ReferenceGoalCard(
     tagColor: Color,
     description: String,
     progress: Float,
-    milestones: String? = null
+    milestones: String? = null,
+    activeMilestone: String? = null,
+    linkedCategory: String? = null,
+    isDarkMode: Boolean = false
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
@@ -265,23 +372,15 @@ private fun ReferenceGoalCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-        shadowElevation = 1.dp
+        color = if (isDarkMode) Color(0xFF111827) else Color.White,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+        ),
+        shadowElevation = if (isDarkMode) 0.dp else 1.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Title
-            Text(
-                text = title,
-                fontSize = 15.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A),
-                letterSpacing = (-0.2).sp
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Tag Pill & Milestone Row
+            // Top Row: Category/Tag Pill + Active Status Pill
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -290,34 +389,60 @@ private fun ReferenceGoalCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(tagBg)
+                        .background(if (isDarkMode) tagColor.copy(alpha = 0.2f) else tagBg)
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = tag,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = tagColor
+                        color = if (isDarkMode) tagColor.copy(alpha = 0.95f) else tagColor
                     )
                 }
 
-                milestones?.let { ms ->
-                    Text(
-                        text = ms,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF64748B)
-                    )
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = if (isDarkMode) Color(0xFF064E3B).copy(alpha = 0.4f) else Color(0xFFDCFCE7)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(if (isDarkMode) Color(0xFF4ADE80) else Color(0xFF16A34A))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Active",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDarkMode) Color(0xFF4ADE80) else Color(0xFF16A34A)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Title
+            Text(
+                text = title,
+                fontSize = 15.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF0F172A),
+                letterSpacing = (-0.2).sp
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             // Description
             Text(
                 text = description,
                 fontSize = 12.sp,
-                color = Color(0xFF475569),
+                color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
                 lineHeight = 16.5.sp
             )
 
@@ -334,7 +459,7 @@ private fun ReferenceGoalCard(
                         .weight(1f)
                         .height(7.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFF1F5F9))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF1F5F9))
                 ) {
                     if (animatedProgress > 0f) {
                         Box(
@@ -355,8 +480,43 @@ private fun ReferenceGoalCard(
                     text = "${(progress * 100).toInt()}%",
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF4338CA)
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
                 )
+            }
+
+            if (activeMilestone != null || linkedCategory != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF8FAFC))
+                        .border(
+                            1.dp,
+                            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    activeMilestone?.let { am ->
+                        Text(
+                            text = am,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
+                        )
+                    }
+                    linkedCategory?.let { lc ->
+                        Text(
+                            text = lc,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        )
+                    }
+                }
             }
         }
     }

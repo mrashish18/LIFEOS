@@ -23,6 +23,9 @@ interface EmergencyMessageDao {
     @Query("SELECT * FROM emergency_messages ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
     suspend fun getAllMessages(): List<EmergencyMessageEntity>
 
+    @Query("SELECT COUNT(*) FROM emergency_messages")
+    fun observeTotalCount(): Flow<Int>
+
     @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC")
     suspend fun getQueuedMessages(): List<EmergencyMessageEntity>
 

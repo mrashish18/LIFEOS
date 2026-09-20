@@ -111,4 +111,14 @@ class ResilienceUiStateTest {
         val state4 = ResilienceUiState(messages = listOf(criticalRelaying))
         assertTrue(state4.hasCriticalEmergency)
     }
+
+    @Test
+    fun testFeedbackMessageAndRelayStatusUpdates() {
+        val stateWithFeedback = ResilienceUiState(
+            feedbackMessage = "Relayed to PEER-HOP-1234 (Hop 1/3)"
+        )
+        assertEquals("Relayed to PEER-HOP-1234 (Hop 1/3)", stateWithFeedback.feedbackMessage)
+        assertFalse(stateWithFeedback.hasCriticalEmergency)
+    }
 }
+

@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.ZoneId
 
+import com.mrashish18.lifeos.core.model.BehaviorEventNotificationMapper
+import com.mrashish18.lifeos.data.local.dao.NotificationDao
+import com.mrashish18.lifeos.data.local.entity.NotificationEntity
+
 /**
  * Room-backed implementation of [BehaviorEventRepository] and [UserBehaviorRepository].
  * Derives [UserBehaviorModel] deterministically from observed event history.
@@ -23,11 +27,30 @@ import java.time.ZoneId
 class RoomBehaviorEventRepository(
     private val behaviorEventDao: BehaviorEventDao,
     private val zoneId: ZoneId = ZoneId.systemDefault(),
-    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
+    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
+    private val notificationDao: NotificationDao? = null
 ) : BehaviorEventRepository, UserBehaviorRepository {
 
     override suspend fun recordEvent(event: BehaviorEvent) {
         behaviorEventDao.insert(BehaviorEventEntity.fromDomain(event))
+        // Surface genuine user-facing notifications for meaningful lifecycle events
+        notificationDao?.let { dao ->
+            BehaviorEventNotificationMapper.map(event)?.let { notification ->
+                dao.insert(NotificationEntity.fromDomain(notification))
+            }
+        }
+    }
+
+    /**
+     * Synchronizes historical events to notifications deterministically.
+     * Uses OnConflictStrategy.IGNORE so existing read/unread states are never overwritten.
+     */
+    suspend fun syncHistoricalEvents(dao: NotificationDao) {
+        val events = behaviorEventDao.getAllEvents()
+        val notifications = events.mapNotNull { BehaviorEventNotificationMapper.map(it.toDomain()) }
+        if (notifications.isNotEmpty()) {
+            dao.insertAll(notifications.map { NotificationEntity.fromDomain(it) })
+        }
     }
 
     override fun observeRecentEvents(limit: Int): Flow<List<BehaviorEvent>> {

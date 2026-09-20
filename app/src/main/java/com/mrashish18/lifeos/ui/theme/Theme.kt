@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -43,30 +44,30 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = LifeOsBlue400,
-    onPrimary = LifeOsSlate950,
-    primaryContainer = LifeOsBlue800,
-    onPrimaryContainer = LifeOsBlue100,
-    secondary = LifeOsIndigo500,
-    onSecondary = LifeOsWhite,
-    secondaryContainer = LifeOsIndigo700,
-    onSecondaryContainer = LifeOsIndigo100,
-    tertiary = LifeOsTeal500,
-    onTertiary = LifeOsSlate950,
-    tertiaryContainer = LifeOsTeal700,
-    onTertiaryContainer = LifeOsTeal100,
-    background = LifeOsSlate950,
-    onBackground = LifeOsSlate50,
-    surface = LifeOsSlate900,
-    onSurface = LifeOsSlate50,
-    surfaceVariant = LifeOsSlate800,
-    onSurfaceVariant = LifeOsSlate400,
-    outline = LifeOsSlate700,
-    outlineVariant = LifeOsSlate800,
-    error = LifeOsRed500,
-    onError = LifeOsSlate950,
-    errorContainer = LifeOsRed700,
-    onErrorContainer = LifeOsRed100
+    primary = Color(0xFF6366F1),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF312E81),
+    onPrimaryContainer = Color(0xFFE0E7FF),
+    secondary = Color(0xFF8B5CF6),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFF4C1D95),
+    onSecondaryContainer = Color(0xFFEDE9FE),
+    tertiary = Color(0xFF06B6D4),
+    onTertiary = Color(0xFF0B1020),
+    tertiaryContainer = Color(0xFF164E63),
+    onTertiaryContainer = Color(0xFFCFFAFE),
+    background = Color(0xFF0B1020),
+    onBackground = Color(0xFFF8FAFC),
+    surface = Color(0xFF111827),
+    onSurface = Color(0xFFF8FAFC),
+    surfaceVariant = Color(0xFF172033),
+    onSurfaceVariant = Color(0xFF94A3B8),
+    outline = Color(0xFF1F2937),
+    outlineVariant = Color(0xFF374151),
+    error = Color(0xFFEF4444),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFF7F1D1D),
+    onErrorContainer = Color(0xFFFEE2E2)
 )
 
 @Composable
