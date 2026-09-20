@@ -104,13 +104,19 @@ fun LifeOsApp(
                     uiState = dashboardUiState,
                     onAcceptRecommendation = { dashboardViewModel.acceptRecommendation(it) },
                     onDismissRecommendation = { dashboardViewModel.dismissRecommendation(it) },
-                    onNavigateToTasks = { currentDestination = LifeOsDestination.TASKS }
+                    onNavigateToTasks = { currentDestination = LifeOsDestination.TASKS },
+                    onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
+                    onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE }
                 )
                 LifeOsDestination.TASKS -> TasksScreen(
                     viewModel = tasksViewModel
                 )
                 LifeOsDestination.GOALS -> GoalsScreen()
-                LifeOsDestination.INTELLIGENCE -> IntelligenceScreen()
+                LifeOsDestination.INTELLIGENCE -> IntelligenceScreen(
+                    onNavigateToPersonal = { currentDestination = LifeOsDestination.TASKS },
+                    onNavigateToTruth = { currentDestination = LifeOsDestination.REALITY_CHECK },
+                    onNavigateToResilience = { currentDestination = LifeOsDestination.RESILIENCE }
+                )
                 LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(
                     viewModel = realityCheckViewModel
                 )

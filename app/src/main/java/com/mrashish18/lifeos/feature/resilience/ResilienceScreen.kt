@@ -957,7 +957,37 @@ private fun MessageQueueScreen(
             else -> messages
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // Store-and-Forward Lifecycle Pipeline Strip
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            color = Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "LIFECYCLE:",
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF64748B),
+                    letterSpacing = 0.5.sp
+                )
+                Text(
+                    text = "QUEUED (Local) → RELAYING (Mesh) → DELIVERED (Sync)",
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF4338CA)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (filteredList.isEmpty()) {
             Surface(
@@ -1074,15 +1104,25 @@ private fun MessageQueueScreen(
                                     "Recently"
                                 }
                                 val ttlHours = maxOf(1L, (msg.expiresAt.epochSecond - msg.createdAt.epochSecond) / 3600)
+                                val statusDetail = when (msg.status) {
+                                    MessageStatus.QUEUED -> "Stored locally • Waiting for peer relay"
+                                    MessageStatus.RELAYING -> "Relaying via peer • Hop ${msg.hopCount}/${msg.maxHops}"
+                                    MessageStatus.SENT -> "Transmitted via network gateway"
+                                    MessageStatus.DELIVERED -> "Delivered to destination node"
+                                    MessageStatus.FAILED -> "Relay failed"
+                                    MessageStatus.EXPIRED -> "TTL Expired"
+                                    else -> "Recorded on-device"
+                                }
                                 Text(
-                                    text = "${msg.status.name}  •  $timeStr",
+                                    text = "${msg.status.name}  •  $timeStr  •  TTL: ${ttlHours}h",
                                     fontSize = 10.sp,
                                     color = Color(0xFF64748B)
                                 )
                                 Text(
-                                    text = "TTL: ${ttlHours}h  •  ${msg.hopCount} hops",
+                                    text = statusDetail,
                                     fontSize = 10.sp,
-                                    color = Color(0xFF64748B)
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (msg.status == MessageStatus.QUEUED) Color(0xFF4338CA) else Color(0xFF059669)
                                 )
                             }
 

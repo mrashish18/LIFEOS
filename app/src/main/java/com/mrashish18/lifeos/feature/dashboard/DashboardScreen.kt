@@ -55,6 +55,8 @@ fun DashboardScreen(
     onAcceptRecommendation: (Recommendation) -> Unit,
     onDismissRecommendation: (Recommendation) -> Unit,
     onNavigateToTasks: () -> Unit = {},
+    onNavigateToTruth: () -> Unit = {},
+    onNavigateToResilience: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (uiState.isLoading) {
@@ -100,7 +102,11 @@ fun DashboardScreen(
 
         // Cross-Pillar Guardian Telemetry
         item {
-            IntelligencePillarsStrip()
+            IntelligencePillarsStrip(
+                uiState = uiState,
+                onNavigateToTruth = onNavigateToTruth,
+                onNavigateToResilience = onNavigateToResilience
+            )
         }
 
         // 3. FLAGSHIP CENTERPIECE: WHAT MATTERS NOW
@@ -371,66 +377,161 @@ private fun TodayMomentumCluster(
 }
 
 @Composable
-private fun IntelligencePillarsStrip() {
+private fun IntelligencePillarsStrip(
+    uiState: DashboardUiState,
+    onNavigateToTruth: () -> Unit,
+    onNavigateToResilience: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        val truthStatusText = if (uiState.investigationCount > 0) {
+            "${uiState.investigationCount} Verified"
+        } else {
+            "Standby • Ready"
+        }
+        val truthSubText = uiState.latestInvestigation?.let {
+            "${it.verdict.name} (${it.confidencePercentage}%)"
+        } ?: "Tap to verify claims →"
+
         Surface(
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onNavigateToTruth),
+            shape = RoundedCornerShape(12.dp),
             color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+            shadowElevation = 1.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "🛡️", fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Column {
+                Text(text = "🛡️", fontSize = 15.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "TRUTH ENGINE",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B),
+                            letterSpacing = 0.5.sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Color(0xFFEEF2FF))
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = if (uiState.investigationCount > 0) "CACHED" else "ARMED",
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4338CA)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "TRUTH ENGINE",
-                        fontSize = 8.sp,
+                        text = truthStatusText,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
-                        letterSpacing = 0.5.sp
+                        color = Color(0xFF1E1B4B)
                     )
                     Text(
-                        text = "Standby • Armed",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF4338CA)
+                        text = truthSubText,
+                        fontSize = 9.sp,
+                        color = Color(0xFF6366F1),
+                        maxLines = 1
                     )
                 }
             }
         }
 
+        val meshStatusText = if (uiState.emergencyQueuedCount > 0) {
+            "${uiState.emergencyQueuedCount} Queued"
+        } else {
+            "Armed • Ready"
+        }
+        val meshSubText = if (uiState.hasCriticalEmergency) {
+            "CRITICAL ALERT"
+        } else if (uiState.emergencyQueuedCount > 0) {
+            "Waiting for peer relay"
+        } else {
+            "Local Mesh Active →"
+        }
+
         Surface(
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onNavigateToResilience),
+            shape = RoundedCornerShape(12.dp),
             color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (uiState.hasCriticalEmergency) Color(0xFFFECACA) else Color(0xFFF1F5F9)
+            ),
+            shadowElevation = 1.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "📡", fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Column {
+                Text(text = "📡", fontSize = 15.sp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "RESCUEMESH",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B),
+                            letterSpacing = 0.5.sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (uiState.hasCriticalEmergency) Color(0xFFFEE2E2)
+                                    else if (uiState.emergencyQueuedCount > 0) Color(0xFFFEF3C7)
+                                    else Color(0xFFDCFCE7)
+                                )
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        ) {
+                            Text(
+                                text = if (uiState.hasCriticalEmergency) "ALERT"
+                                else if (uiState.emergencyQueuedCount > 0) "OFFLINE"
+                                else "READY",
+                                fontSize = 7.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626)
+                                else if (uiState.emergencyQueuedCount > 0) Color(0xFFD97706)
+                                else Color(0xFF16A34A)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "RESCUEMESH",
-                        fontSize = 8.sp,
+                        text = meshStatusText,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF64748B),
-                        letterSpacing = 0.5.sp
+                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF1E1B4B)
                     )
                     Text(
-                        text = "Offline Ready",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF059669)
+                        text = meshSubText,
+                        fontSize = 9.sp,
+                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF059669),
+                        maxLines = 1
                     )
                 }
             }
@@ -565,22 +666,51 @@ private fun WhatMattersNowCenterpiece(
                         .padding(top = 8.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color(0xFFF8FAFC))
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "DECISION ENGINE EXPLAINABILITY",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF4338CA),
+                            letterSpacing = 0.6.sp
+                        )
+                        Text(
+                            text = "Deterministic",
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                     recommendation.factors.forEach { factor ->
                         Row(
-                            verticalAlignment = Alignment.Top,
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = "✦",
-                                color = Color(0xFF4F46E5),
-                                fontSize = 10.sp,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Column {
+                            val pts = (factor.scoreContribution * 100).toInt()
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFFEEF2FF))
+                                    .padding(horizontal = 5.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = if (pts > 0) "+$pts" else "$pts",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4338CA)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = factor.name,
                                     fontSize = 11.sp,
@@ -595,6 +725,13 @@ private fun WhatMattersNowCenterpiece(
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Scored transparently across urgency, effort fit, circadian alignment, and behavioral momentum.",
+                        fontSize = 9.sp,
+                        color = Color(0xFF94A3B8),
+                        lineHeight = 13.sp
+                    )
                 }
             }
         }
@@ -812,11 +949,20 @@ private fun TelemetryGridCell(
 }
 
 /**
- * BEHAVIOR MODEL: LIFEOS IS LEARNING
- * Real behavioral signals with calibration progress.
+ * BEHAVIOR MODEL: LIFEOS ADAPTATION
+ * Real behavioral signals, cognitive profile, and calibration progress.
  */
 @Composable
 private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
+    val totalSignals = model.totalTasksCompleted + model.totalTasksAbandoned
+    val calibrationRatio = (totalSignals / 3f).coerceIn(0f, 1f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = calibrationRatio,
+        animationSpec = androidx.compose.animation.core.tween(durationMillis = 700),
+        label = "calibrationProgress"
+    )
+    val calibrationPct = (calibrationRatio * 100).toInt()
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -825,101 +971,193 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
         shadowElevation = 1.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LifeOsEyebrow(text = "LIFEOS IS LEARNING")
-            Text(
-                text = "Adaptive Feedback Loop",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                fontSize = 10.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        val totalSignals = model.totalTasksCompleted + model.totalTasksAbandoned
-        val calibrationRatio = (totalSignals / 3f).coerceIn(0f, 1f)
-        val calibrationPct = (calibrationRatio * 100).toInt()
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Behavior Calibration",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "$totalSignals / 3 signals ($calibrationPct%)",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                fontFamily = FontFamily.Monospace
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        LinearProgressIndicator(
-            progress = { calibrationRatio },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .clip(CircleShape),
-            color = MaterialTheme.colorScheme.primary,
-            trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (!model.hasSufficientData) {
-            Text(
-                text = "Still learning your work patterns. As you complete or abandon tasks, LIFEOS calibrates when you focus best and which categories gain momentum.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 18.sp
-            )
-        } else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                model.completionRate?.let { rate ->
-                    TelemetryColumn(
-                        label = "COMPLETION",
-                        value = "${(rate * 100).toInt()}%"
+                LifeOsEyebrow(text = "LIFEOS ADAPTATION")
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color(0xFFEEF2FF))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (model.hasSufficientData) "CALIBRATED" else "LEARNING",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4338CA)
                     )
                 }
-                model.postponementRate?.let { rate ->
-                    TelemetryColumn(
-                        label = "POSTPONE",
-                        value = "${(rate * 100).toInt()}%"
-                    )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Behavior Calibration",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "$totalSignals / 3 signals ($calibrationPct%)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = FontFamily.Monospace
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LinearProgressIndicator(
+                progress = { animatedProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(CircleShape),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Cognitive Profile Grid: Duration, Peak Window, Habit Momentum
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val durationLabel = model.preferredTaskSize?.label ?: "Calibrating..."
+                val peakLabel = model.peakProductivityTimeOfDay?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Calibrating..."
+                val topCat = model.preferredCategories.maxByOrNull { it.value }?.key?.name ?: "Building..."
+
+                CognitiveProfileMiniCard(
+                    icon = "⏱️",
+                    label = "DURATION",
+                    value = durationLabel,
+                    modifier = Modifier.weight(1f)
+                )
+                CognitiveProfileMiniCard(
+                    icon = "☀️",
+                    label = "PEAK WINDOW",
+                    value = peakLabel,
+                    modifier = Modifier.weight(1f)
+                )
+                CognitiveProfileMiniCard(
+                    icon = "🚀",
+                    label = "MOMENTUM",
+                    value = topCat,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (!model.hasSufficientData) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF8FAFC))
+                        .padding(10.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "💡", fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Calibrating your baseline. Complete or postpone 3 tasks to train circadian energy and focus duration scoring.",
+                            fontSize = 11.sp,
+                            color = Color(0xFF64748B),
+                            lineHeight = 15.sp
+                        )
+                    }
                 }
-                model.averageCompletedDurationMinutes?.let { dur ->
-                    TelemetryColumn(
-                        label = "AVG TIME",
-                        value = "${dur.toInt()}m"
-                    )
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    model.completionRate?.let { rate ->
+                        TelemetryColumn(
+                            label = "COMPLETION",
+                            value = "${(rate * 100).toInt()}%"
+                        )
+                    }
+                    model.postponementRate?.let { rate ->
+                        TelemetryColumn(
+                            label = "POSTPONE",
+                            value = "${(rate * 100).toInt()}%"
+                        )
+                    }
+                    model.averageCompletedDurationMinutes?.let { dur ->
+                        TelemetryColumn(
+                            label = "AVG TIME",
+                            value = "${dur.toInt()}m"
+                        )
+                    }
+                    val topCat = model.preferredCategories.maxByOrNull { it.value }?.key
+                    topCat?.let { cat ->
+                        TelemetryColumn(
+                            label = "MOMENTUM",
+                            value = cat.name
+                        )
+                    }
                 }
-                val topCat = model.preferredCategories.maxByOrNull { it.value }?.key
-                topCat?.let { cat ->
-                    TelemetryColumn(
-                        label = "MOMENTUM",
-                        value = cat.name
-                    )
-                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Observed patterns directly bias recommendation heuristics: favoring your peak energy window and preferred duration without cloud profiling.",
+                    fontSize = 10.sp,
+                    color = Color(0xFF64748B),
+                    lineHeight = 14.sp
+                )
             }
         }
     }
 }
+
+@Composable
+private fun CognitiveProfileMiniCard(
+    icon: String,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(10.dp),
+        color = Color(0xFFF8FAFC),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = icon, fontSize = 10.sp)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = label,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF94A3B8),
+                    letterSpacing = 0.4.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = value,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E1B4B),
+                maxLines = 1
+            )
+        }
+    }
 }
 
 @Composable

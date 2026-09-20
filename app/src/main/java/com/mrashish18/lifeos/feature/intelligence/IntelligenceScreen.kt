@@ -2,6 +2,7 @@ package com.mrashish18.lifeos.feature.intelligence
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +35,12 @@ import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
 import com.mrashish18.lifeos.ui.theme.*
 
 @Composable
-fun IntelligenceScreen(modifier: Modifier = Modifier) {
+fun IntelligenceScreen(
+    onNavigateToPersonal: () -> Unit = {},
+    onNavigateToTruth: () -> Unit = {},
+    onNavigateToResilience: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -62,7 +68,7 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(3.dp))
             Text(
-                text = "How LIFEOS adapts to you.",
+                text = "Observe. Understand. Decide. Act. Measure. Adapt.",
                 fontSize = 12.sp,
                 color = Color(0xFF64748B)
             )
@@ -70,7 +76,7 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Closed-Loop 4-Stage Adaptive Pipeline
+        // Closed-Loop 6-Stage Adaptive Pipeline
         val stages = listOf(
             StageData(
                 num = "01",
@@ -78,7 +84,7 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
                 stage = "OBSERVE",
                 subsystem = "Context Engine",
                 subsystemColor = Color(0xFF0284C7),
-                desc = "Monitors your environment, activity and context.",
+                desc = "Monitors environment, real-time clock, connectivity, and workload state.",
                 icon = "🌐",
                 iconBg = Color(0xFFE0F2FE)
             ),
@@ -88,7 +94,7 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
                 stage = "UNDERSTAND",
                 subsystem = "Behavior Model",
                 subsystemColor = Color(0xFF059669),
-                desc = "Learns from your patterns and past behavior.",
+                desc = "Learns completion velocities, preferred task size, and circadian peak focus.",
                 icon = "🧠",
                 iconBg = Color(0xFFD1FAE5)
             ),
@@ -98,17 +104,37 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
                 stage = "DECIDE",
                 subsystem = "Decision Engine",
                 subsystemColor = Color(0xFF4F46E5),
-                desc = "Evaluates options, scores priority, and recommends.",
+                desc = "Scores priority, urgency, and effort fit with deterministic heuristics.",
                 icon = "⚖️",
                 iconBg = Color(0xFFEEF2FF)
             ),
             StageData(
                 num = "04",
+                numColor = Color(0xFF8B5CF6),
+                stage = "ACT",
+                subsystem = "User Execution",
+                subsystemColor = Color(0xFF7C3AED),
+                desc = "User initiates focus sessions, completes tasks, or investigates claims.",
+                icon = "⚡",
+                iconBg = Color(0xFFF3E8FF)
+            ),
+            StageData(
+                num = "05",
+                numColor = Color(0xFFF59E0B),
+                stage = "MEASURE",
+                subsystem = "Outcome Telemetry",
+                subsystemColor = Color(0xFFD97706),
+                desc = "Tracks task completion, focus session duration, and verification outcomes.",
+                icon = "📊",
+                iconBg = Color(0xFFFEF3C7)
+            ),
+            StageData(
+                num = "06",
                 numColor = Color(0xFF3B82F6),
                 stage = "ADAPT",
                 subsystem = "Learning Loop",
                 subsystemColor = Color(0xFF2563EB),
-                desc = "Improves continuously with your feedback.",
+                desc = "Calibrates on-device model weights to continuously improve future guidance.",
                 icon = "🔄",
                 iconBg = Color(0xFFEFF6FF)
             )
@@ -265,32 +291,40 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
                 icon = "🎯",
                 title = "Personal Intelligence",
                 subtitle = "Cognitive Optimization",
-                description = "Closed-loop adaptation: Context + Behavior + Decision Engine with deterministic explainability.",
+                description = "Closed-loop adaptation: Context + Behavior Model + Decision Engine with deterministic explainability.",
                 badge = "ACTIVE",
                 badgeBg = Color(0xFFDCFCE7),
-                badgeColor = Color(0xFF16A34A)
+                badgeColor = Color(0xFF16A34A),
+                ctaLabel = "Open Action Queue →",
+                onClick = onNavigateToPersonal
             ),
             PillarData(
                 icon = "🛡️",
                 title = "Trust Intelligence",
-                subtitle = "RealityCheck Engine",
-                description = "10-stage mathematical claim verification separating authoritative fact from inference.",
+                subtitle = "RealityCheck Verification",
+                description = "10-stage mathematical claim verification separating authoritative fact from inference using offline corpora.",
                 badge = "STANDBY",
                 badgeBg = Color(0xFFEEF2FF),
-                badgeColor = Color(0xFF4338CA)
+                badgeColor = Color(0xFF4338CA),
+                ctaLabel = "Open Truth Inquiry →",
+                onClick = onNavigateToTruth
             ),
             PillarData(
                 icon = "📡",
                 title = "Resilience Intelligence",
                 subtitle = "RescueMesh Offline Comms",
-                description = "Hop-limited store-and-forward mesh propagation when network infrastructure fails.",
+                description = "Hop-limited store-and-forward mesh propagation and gateway sync when normal networks fail.",
                 badge = "ARMED",
                 badgeBg = Color(0xFFFEF3C7),
-                badgeColor = Color(0xFFD97706)
+                badgeColor = Color(0xFFD97706),
+                ctaLabel = "Open RescueMesh Center →",
+                onClick = onNavigateToResilience
             )
         ).forEach { pillar ->
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = pillar.onClick),
                 shape = RoundedCornerShape(14.dp),
                 color = Color.White,
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
@@ -341,6 +375,13 @@ fun IntelligenceScreen(modifier: Modifier = Modifier) {
                         color = Color(0xFF64748B),
                         lineHeight = 15.sp
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = pillar.ctaLabel,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4338CA)
+                    )
                 }
             }
         }
@@ -356,7 +397,9 @@ private data class PillarData(
     val description: String,
     val badge: String,
     val badgeBg: Color,
-    val badgeColor: Color
+    val badgeColor: Color,
+    val ctaLabel: String,
+    val onClick: () -> Unit
 )
 
 private data class StageData(

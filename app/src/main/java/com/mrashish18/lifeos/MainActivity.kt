@@ -137,10 +137,12 @@ class MainActivity : ComponentActivity() {
         // 7. ViewModels
         val learningLoop = com.mrashish18.lifeos.core.decision.DefaultLearningLoop(behaviorEventRepository)
         val dashboardFactory = DashboardViewModel.Factory(
-            getDashboardDataUseCase,
-            transitionTaskStatusUseCase,
-            behaviorEventRepository,
-            learningLoop
+            getDashboardDataUseCase = getDashboardDataUseCase,
+            transitionTaskStatusUseCase = transitionTaskStatusUseCase,
+            behaviorEventRepository = behaviorEventRepository,
+            learningLoop = learningLoop,
+            investigationRepository = investigationRepository,
+            emergencyRepository = emergencyRepository
         )
         val dashboardViewModel = ViewModelProvider(this, dashboardFactory)[DashboardViewModel::class.java]
 

@@ -22,10 +22,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
+import com.mrashish18.lifeos.core.model.InvestigationRecord
+import com.mrashish18.lifeos.core.model.MessagePriority
+import com.mrashish18.lifeos.core.model.MessageStatus
+import com.mrashish18.lifeos.domain.repository.EmergencyMessageRepository
+import com.mrashish18.lifeos.domain.repository.InvestigationRepository
 import java.util.UUID
 
 /**
- * UI State for the LIFEOS foundational dashboard with real persisted data.
+ * UI State for the LIFEOS foundational dashboard with real persisted data and cross-pillar awareness.
  */
 data class DashboardUiState(
     val isLoading: Boolean = true,
@@ -36,7 +41,12 @@ data class DashboardUiState(
     val pendingCount: Int = 0,
     val completedCount: Int = 0,
     val behaviorModel: UserBehaviorModel? = null,
-    val lastFeedbackMessage: String? = null
+    val lastFeedbackMessage: String? = null,
+    val investigationCount: Int = 0,
+    val latestInvestigation: InvestigationRecord? = null,
+    val emergencyQueuedCount: Int = 0,
+    val emergencyRelayingCount: Int = 0,
+    val hasCriticalEmergency: Boolean = false
 )
 
 /**
@@ -46,7 +56,9 @@ class DashboardViewModel(
     private val getDashboardDataUseCase: GetDashboardDataUseCase,
     private val transitionTaskStatusUseCase: TransitionTaskStatusUseCase,
     private val behaviorEventRepository: BehaviorEventRepository,
-    private val learningLoop: LearningLoop? = null
+    private val learningLoop: LearningLoop? = null,
+    private val investigationRepository: InvestigationRepository? = null,
+    private val emergencyRepository: EmergencyMessageRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -54,6 +66,39 @@ class DashboardViewModel(
 
     init {
         observeDashboardData()
+        observeCrossPillars()
+    }
+
+    private fun observeCrossPillars() {
+        investigationRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.observeRecentInvestigations(10).collect { list ->
+                    _uiState.update { current ->
+                        current.copy(
+                            investigationCount = list.size,
+                            latestInvestigation = list.firstOrNull()
+                        )
+                    }
+                }
+            }
+        }
+
+        emergencyRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.observeAllMessages().collect { list ->
+                    _uiState.update { current ->
+                        current.copy(
+                            emergencyQueuedCount = list.count { it.status == MessageStatus.QUEUED },
+                            emergencyRelayingCount = list.count { it.status == MessageStatus.RELAYING },
+                            hasCriticalEmergency = list.any {
+                                it.priority == MessagePriority.CRITICAL &&
+                                    (it.status == MessageStatus.QUEUED || it.status == MessageStatus.RELAYING)
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun observeDashboardData() {
@@ -110,7 +155,7 @@ class DashboardViewModel(
             _uiState.update { current ->
                 current.copy(
                     recommendations = current.recommendations.filterNot { it.id == recommendation.id },
-                    lastFeedbackMessage = "Accepted: \"${recommendation.title}\""
+                    lastFeedbackMessage = "Focus initiated: \"${recommendation.title}\" • Behavior model tracking circadian & duration signals"
                 )
             }
         }
@@ -145,7 +190,7 @@ class DashboardViewModel(
             _uiState.update { current ->
                 current.copy(
                     recommendations = current.recommendations.filterNot { it.id == recommendation.id },
-                    lastFeedbackMessage = "Dismissed: \"${recommendation.title}\""
+                    lastFeedbackMessage = "Dismissed: \"${recommendation.title}\" • Decision engine calibrated priority weights"
                 )
             }
         }
@@ -160,7 +205,9 @@ class DashboardViewModel(
         private val getDashboardDataUseCase: GetDashboardDataUseCase,
         private val transitionTaskStatusUseCase: TransitionTaskStatusUseCase,
         private val behaviorEventRepository: BehaviorEventRepository,
-        private val learningLoop: LearningLoop? = null
+        private val learningLoop: LearningLoop? = null,
+        private val investigationRepository: InvestigationRepository? = null,
+        private val emergencyRepository: EmergencyMessageRepository? = null
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
@@ -168,7 +215,9 @@ class DashboardViewModel(
                     getDashboardDataUseCase,
                     transitionTaskStatusUseCase,
                     behaviorEventRepository,
-                    learningLoop
+                    learningLoop,
+                    investigationRepository,
+                    emergencyRepository
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
