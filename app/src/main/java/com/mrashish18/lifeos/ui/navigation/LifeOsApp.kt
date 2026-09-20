@@ -141,7 +141,7 @@ private fun LifeOsBottomNavigationBar(
         color = Color.White,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
     ) {
         Column(
             modifier = Modifier
@@ -151,7 +151,7 @@ private fun LifeOsBottomNavigationBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp)
+                    .height(60.dp)
                     .padding(horizontal = 4.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
@@ -247,8 +247,8 @@ private fun LifeOsNavigationTab(
 
         Text(
             text = spec.label,
-            fontSize = 10.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            fontSize = 10.5.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
             color = animatedTextColor,
             maxLines = 1
         )

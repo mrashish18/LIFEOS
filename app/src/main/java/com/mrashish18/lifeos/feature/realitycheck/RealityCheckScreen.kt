@@ -225,9 +225,9 @@ private fun TruthInputScreen(
             shape = RoundedCornerShape(16.dp),
             color = Color.White,
             shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 // Inner input box with link icon
                 Box(
                     modifier = Modifier
@@ -245,7 +245,7 @@ private fun TruthInputScreen(
                             if (claimText.isEmpty()) {
                                 Text(
                                     text = "Enter a claim, question, or URL...",
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     color = Color(0xFF94A3B8)
                                 )
                             }
@@ -253,7 +253,7 @@ private fun TruthInputScreen(
                                 value = claimText,
                                 onValueChange = onClaimChanged,
                                 textStyle = TextStyle(
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     color = Color(0xFF1E1B4B),
                                     fontWeight = FontWeight.Medium
                                 ),
@@ -263,7 +263,7 @@ private fun TruthInputScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "🔗",
-                            fontSize = 14.sp
+                            fontSize = 15.sp
                         )
                     }
                 }
@@ -277,7 +277,7 @@ private fun TruthInputScreen(
                 ) {
                     Text(
                         text = "${claimText.length}/500",
-                        fontSize = 10.sp,
+                        fontSize = 10.5.sp,
                         color = Color(0xFF94A3B8)
                     )
                 }
@@ -288,7 +288,7 @@ private fun TruthInputScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(46.dp)
+                        .height(48.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             Brush.horizontalGradient(
@@ -306,13 +306,13 @@ private fun TruthInputScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Text(text = "🔍", fontSize = 14.sp)
+                        Text(text = "🔍", fontSize = 15.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Investigate Claim",
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
+                            fontSize = 13.5.sp
                         )
                     }
                 }
@@ -324,9 +324,10 @@ private fun TruthInputScreen(
         // Quick Examples Section matching Screen 6
         Text(
             text = "Quick examples",
-            fontSize = 13.sp,
+            fontSize = 14.5.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B)
+            color = Color(0xFF1E1B4B),
+            letterSpacing = (-0.2).sp
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -342,15 +343,15 @@ private fun TruthInputScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFF1F5F9))
+                        .background(Color(0xFFF8FAFC))
                         .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
                         .clickable { onSelectQuick(example) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 9.dp)
                 ) {
                     Text(
                         text = example,
-                        fontSize = 11.sp,
-                        color = Color(0xFF334155),
+                        fontSize = 12.sp,
+                        color = Color(0xFF1E293B),
                         fontWeight = FontWeight.Normal
                     )
                 }
@@ -362,38 +363,39 @@ private fun TruthInputScreen(
         // Recent Investigations Section matching Screen 6 with dynamic Room history
         Text(
             text = "Recent Investigations",
-            fontSize = 13.sp,
+            fontSize = 14.5.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E1B4B)
+            color = Color(0xFF1E1B4B),
+            letterSpacing = (-0.2).sp
         )
         Spacer(modifier = Modifier.height(10.dp))
 
         if (recentInvestigations.isEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 20.dp),
+                        .padding(horizontal = 18.dp, vertical = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "🛡️", fontSize = 24.sp)
+                    Text(text = "🛡️", fontSize = 26.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "No investigations yet",
-                        fontSize = 13.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Investigate a claim to build your trusted evidence history.",
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
                         color = Color(0xFF64748B),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
@@ -415,8 +417,8 @@ private fun TruthInputScreen(
                         Verdict.INSUFFICIENT_EVIDENCE -> "?"
                     }
 
-                    val displayClaim = if (record.claimText.length > 32) {
-                        record.claimText.take(30) + "..."
+                    val displayClaim = if (record.claimText.length > 34) {
+                        record.claimText.take(32) + "..."
                     } else {
                         record.claimText
                     }
@@ -425,25 +427,25 @@ private fun TruthInputScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { onSelectInvestigation(record) },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = Color.White,
                         shadowElevation = 1.dp,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
+                                    .size(40.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(iconBg),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = iconText,
-                                    fontSize = 16.sp,
+                                    fontSize = 17.sp,
                                     fontWeight = FontWeight.Black,
                                     color = badgeTextColor
                                 )
@@ -454,7 +456,7 @@ private fun TruthInputScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = displayClaim,
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF1E1B4B)
                                 )
@@ -462,22 +464,22 @@ private fun TruthInputScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
+                                            .clip(RoundedCornerShape(5.dp))
                                             .background(badgeBg)
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            .padding(horizontal = 7.dp, vertical = 2.5.dp)
                                     ) {
                                         Text(
                                             text = record.verdict.name,
-                                            fontSize = 9.sp,
+                                            fontSize = 9.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = badgeTextColor
                                         )
                                     }
                                 }
-                                 Spacer(modifier = Modifier.height(2.dp))
+                                 Spacer(modifier = Modifier.height(3.dp))
                                  Text(
                                      text = "${record.confidencePercentage}% • ${record.sourcesCount} source${if (record.sourcesCount == 1) "" else "s"}",
-                                     fontSize = 10.sp,
+                                     fontSize = 10.5.sp,
                                      color = Color(0xFF64748B)
                                  )
                             }
@@ -572,7 +574,7 @@ private fun TruthResultScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(95.dp)
+                        .height(100.dp)
                         .background(Brush.linearGradient(bannerGradients))
                 ) {
                     // Stylized layered mountain ridges
@@ -590,7 +592,7 @@ private fun TruthResultScreen(
                             lineTo(w, h)
                             close()
                         }
-                        drawPath(backRidge, color = iconColor.copy(alpha = 0.2f))
+                        drawPath(backRidge, color = iconColor.copy(alpha = 0.22f))
 
                         // Front ridge
                         val frontRidge = Path().apply {
@@ -603,7 +605,7 @@ private fun TruthResultScreen(
                             lineTo(w, h)
                             close()
                         }
-                        drawPath(frontRidge, color = iconColor.copy(alpha = 0.35f))
+                        drawPath(frontRidge, color = iconColor.copy(alpha = 0.38f))
                     }
 
                     // Content over banner
@@ -616,14 +618,14 @@ private fun TruthResultScreen(
                         // White badge with verdict icon
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = iconSymbol,
-                                fontSize = 20.sp,
+                                fontSize = 21.sp,
                                 fontWeight = FontWeight.Black,
                                 color = iconColor
                             )
@@ -634,7 +636,7 @@ private fun TruthResultScreen(
                         Column {
                             Text(
                                 text = result.verdict.name,
-                                fontSize = 18.sp,
+                                fontSize = 19.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White,
                                 letterSpacing = 0.5.sp
@@ -642,8 +644,8 @@ private fun TruthResultScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "${result.confidence.percentage}% confidence",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = subColor
                             )
                         }
@@ -659,13 +661,13 @@ private fun TruthResultScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(Color(0xFFEEF2FF))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = "LIFEOS INTERPRETATION",
-                                fontSize = 9.sp,
+                                fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color(0xFF4338CA),
                                 letterSpacing = 0.5.sp
@@ -674,7 +676,7 @@ private fun TruthResultScreen(
 
                         Text(
                             text = result.claim.domainCategory.name,
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF64748B)
                         )
@@ -684,10 +686,10 @@ private fun TruthResultScreen(
 
                     Text(
                         text = "\"${result.claim.rawText}\"",
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B),
-                        lineHeight = 20.sp
+                        lineHeight = 22.sp
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -706,11 +708,11 @@ private fun TruthResultScreen(
                                     .clip(RoundedCornerShape(6.dp))
                                     .background(Color(0xFFEFF6FF))
                                     .border(1.dp, Color(0xFFBFDBFE), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                    .padding(horizontal = 8.dp, vertical = 3.5.dp)
                             ) {
                                 Text(
                                     text = tag,
-                                    fontSize = 9.sp,
+                                    fontSize = 9.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF2563EB)
                                 )
@@ -722,32 +724,32 @@ private fun TruthResultScreen(
 
                     Text(
                         text = "Deterministic Assessment",
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = result.interpretation,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = Color(0xFF475569),
-                        lineHeight = 16.sp
+                        lineHeight = 17.5.sp
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
                         text = "Scoring Rationale",
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF64748B)
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = result.confidence.rationale,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         color = Color(0xFF64748B),
-                        lineHeight = 15.sp
+                        lineHeight = 16.sp
                     )
                 }
             }
@@ -763,7 +765,7 @@ private fun TruthResultScreen(
         ) {
             Text(
                 text = "AUTHORITATIVE EVIDENCE (${result.analyzedEvidence.size})",
-                fontSize = 13.sp,
+                fontSize = 13.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF2563EB)
             )
@@ -771,11 +773,11 @@ private fun TruthResultScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                 .background(Color(0xFFF1F5F9))
-                .padding(horizontal = 6.dp, vertical = 2.dp)
+                .padding(horizontal = 7.dp, vertical = 2.5.dp)
             ) {
                 Text(
                     text = "GROUND TRUTH SOURCES",
-                    fontSize = 9.sp,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF64748B)
                 )
@@ -788,12 +790,12 @@ private fun TruthResultScreen(
             result.analyzedEvidence.forEachIndexed { index, analyzed ->
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = Color.White,
                     shadowElevation = 1.dp,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -801,7 +803,7 @@ private fun TruthResultScreen(
                         ) {
                             Text(
                                 text = "Source 0${index + 1}",
-                                fontSize = 11.sp,
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2563EB)
                             )
@@ -810,7 +812,7 @@ private fun TruthResultScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(6.dp))
                                     .background(Color(0xFFF1F5F9))
-                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                    .padding(horizontal = 8.dp, vertical = 2.5.dp)
                             ) {
                                 Text(
                                     text = analyzed.evidence.source.quality.label,
@@ -825,7 +827,7 @@ private fun TruthResultScreen(
 
                         Text(
                             text = analyzed.evidence.source.name,
-                            fontSize = 13.sp,
+                            fontSize = 13.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E1B4B)
                         )
@@ -834,7 +836,7 @@ private fun TruthResultScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Institutional Criteria: ${analyzed.evidence.source.authorityRationale}",
-                                fontSize = 10.sp,
+                                fontSize = 10.5.sp,
                                 color = Color(0xFF64748B)
                             )
                         }
@@ -843,16 +845,16 @@ private fun TruthResultScreen(
 
                         Text(
                             text = "\"${analyzed.evidence.snippet}\"",
-                            fontSize = 11.sp,
-                            color = Color(0xFF475569),
-                            lineHeight = 16.sp
+                            fontSize = 12.sp,
+                            color = Color(0xFF334155),
+                            lineHeight = 17.sp
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
                             text = "URL: ${analyzed.evidence.source.url ?: "Verified Institutional Database"}",
-                            fontSize = 10.sp,
+                            fontSize = 10.5.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF2563EB)
                         )

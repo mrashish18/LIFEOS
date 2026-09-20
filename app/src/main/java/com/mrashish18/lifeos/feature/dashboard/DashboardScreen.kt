@@ -399,17 +399,17 @@ private fun IntelligencePillarsStrip(
             modifier = Modifier
                 .weight(1f)
                 .clickable(onClick = onNavigateToTruth),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
             shadowElevation = 1.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "🛡️", fontSize = 15.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "🛡️", fontSize = 18.sp)
+                Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -418,36 +418,38 @@ private fun IntelligencePillarsStrip(
                     ) {
                         Text(
                             text = "TRUTH ENGINE",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
                             color = Color(0xFF64748B),
-                            letterSpacing = 0.5.sp
+                            letterSpacing = 0.6.sp
                         )
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(Color(0xFFEEF2FF))
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = if (uiState.investigationCount > 0) "CACHED" else "ARMED",
-                                fontSize = 7.sp,
+                                text = if (uiState.investigationCount > 0) "CACHED" else "READY",
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF4338CA)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = truthStatusText,
-                        fontSize = 11.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E1B4B)
+                        color = Color(0xFF0F172A)
                     )
+                    Spacer(modifier = Modifier.height(1.dp))
                     Text(
                         text = truthSubText,
-                        fontSize = 9.sp,
-                        color = Color(0xFF6366F1),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF4F46E5),
                         maxLines = 1
                     )
                 }
@@ -471,20 +473,20 @@ private fun IntelligencePillarsStrip(
             modifier = Modifier
                 .weight(1f)
                 .clickable(onClick = onNavigateToResilience),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             color = Color.White,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
-                if (uiState.hasCriticalEmergency) Color(0xFFFECACA) else Color(0xFFF1F5F9)
+                if (uiState.hasCriticalEmergency) Color(0xFFFECACA) else Color(0xFFE2E8F0)
             ),
             shadowElevation = 1.dp
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "📡", fontSize = 15.sp)
-                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "📡", fontSize = 18.sp)
+                Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -493,44 +495,40 @@ private fun IntelligencePillarsStrip(
                     ) {
                         Text(
                             text = "RESCUEMESH",
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Black,
                             color = Color(0xFF64748B),
-                            letterSpacing = 0.5.sp
+                            letterSpacing = 0.6.sp
                         )
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(6.dp))
                                 .background(
-                                    if (uiState.hasCriticalEmergency) Color(0xFFFEE2E2)
-                                    else if (uiState.emergencyQueuedCount > 0) Color(0xFFFEF3C7)
-                                    else Color(0xFFDCFCE7)
+                                    if (uiState.hasCriticalEmergency) Color(0xFFFEE2E2) else Color(0xFFFEF3C7)
                                 )
-                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = if (uiState.hasCriticalEmergency) "ALERT"
-                                else if (uiState.emergencyQueuedCount > 0) "OFFLINE"
-                                else "READY",
-                                fontSize = 7.sp,
+                                text = if (uiState.hasCriticalEmergency) "ALERT" else "OFFLINE",
+                                fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626)
-                                else if (uiState.emergencyQueuedCount > 0) Color(0xFFD97706)
-                                else Color(0xFF16A34A)
+                                color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFFB45309)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(3.dp))
                     Text(
                         text = meshStatusText,
-                        fontSize = 11.sp,
+                        fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF1E1B4B)
+                        color = Color(0xFF0F172A)
                     )
+                    Spacer(modifier = Modifier.height(1.dp))
                     Text(
                         text = meshSubText,
-                        fontSize = 9.sp,
-                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF059669),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = if (uiState.hasCriticalEmergency) Color(0xFFDC2626) else Color(0xFF0D9488),
                         maxLines = 1
                     )
                 }
@@ -607,9 +605,10 @@ private fun WhatMattersNowCenterpiece(
             // Main Recommendation Title
             Text(
                 text = recommendation.title,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFF0F172A),
+                letterSpacing = (-0.3).sp
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -617,13 +616,13 @@ private fun WhatMattersNowCenterpiece(
             // Rationale Description
             Text(
                 text = recommendation.reason,
-                fontSize = 11.sp,
-                color = Color(0xFF64748B),
-                lineHeight = 16.sp,
+                fontSize = 12.5.sp,
+                color = Color(0xFF475569),
+                lineHeight = 17.sp,
                 maxLines = 2
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Action Buttons Row: [ ▶ Start Focus ]  [ Dismiss ]
             Row(
@@ -645,19 +644,37 @@ private fun WhatMattersNowCenterpiece(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Bottom Link: Why this recommendation? →
-            Text(
-                text = "Why this recommendation? →",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF3B82F6),
+            // Secondary Explainability Pill Button
+            Surface(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .clickable { isExplanationExpanded = !isExplanationExpanded }
-                    .padding(vertical = 2.dp)
-            )
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { isExplanationExpanded = !isExplanationExpanded },
+                color = if (isExplanationExpanded) Color(0xFFEEF2FF) else Color(0xFFF8FAFC),
+                shape = RoundedCornerShape(8.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (isExplanationExpanded) Color(0xFFC7D2FE) else Color(0xFFE2E8F0)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isExplanationExpanded) "✦" else "ℹ️",
+                        fontSize = 11.sp
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isExplanationExpanded) "Hide Decision Engine Explainability ▲" else "Why this recommendation? ▼",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF4338CA)
+                    )
+                }
+            }
 
             AnimatedVisibility(visible = isExplanationExpanded) {
                 Column(
@@ -879,35 +896,35 @@ private fun TelemetryGridCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
         shadowElevation = 1.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(30.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = icon, fontSize = 13.sp)
+                Text(text = icon, fontSize = 15.sp)
             }
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Column {
                 Text(
                     text = label,
-                    fontSize = 9.sp,
-                    color = Color(0xFF94A3B8),
+                    fontSize = 10.sp,
+                    color = Color(0xFF64748B),
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = value,
-                    fontSize = 11.sp,
+                    fontSize = 12.5.sp,
                     color = Color(0xFF0F172A),
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
@@ -1063,18 +1080,19 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(Color(0xFFF8FAFC))
-                        .padding(10.dp)
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "💡", fontSize = 12.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "💡", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = "Calibrating your baseline. Complete or postpone 3 tasks to train circadian energy and focus duration scoring.",
-                            fontSize = 11.sp,
-                            color = Color(0xFF64748B),
-                            lineHeight = 15.sp
+                            fontSize = 11.5.sp,
+                            color = Color(0xFF475569),
+                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -1114,9 +1132,9 @@ private fun LifeOsIsLearningSection(model: UserBehaviorModel) {
 
                 Text(
                     text = "Observed patterns directly bias recommendation heuristics: favoring your peak energy window and preferred duration without cloud profiling.",
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     color = Color(0xFF64748B),
-                    lineHeight = 14.sp
+                    lineHeight = 15.sp
                 )
             }
         }
@@ -1132,28 +1150,28 @@ private fun CognitiveProfileMiniCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         color = Color(0xFFF8FAFC),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = icon, fontSize = 10.sp)
-                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = icon, fontSize = 12.sp)
+                Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = label,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF94A3B8),
-                    letterSpacing = 0.4.sp
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFF64748B),
+                    letterSpacing = 0.5.sp
                 )
             }
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
-                fontSize = 10.sp,
+                fontSize = 11.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E1B4B),
+                color = Color(0xFF0F172A),
                 maxLines = 1
             )
         }

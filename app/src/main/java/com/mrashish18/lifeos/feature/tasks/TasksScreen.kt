@@ -186,12 +186,12 @@ fun TasksScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .background(pillBg)
                             .clickable { viewModel.setFilter(filter) }
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = label,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = pillTextColor
                         )
@@ -505,30 +505,32 @@ private fun PremiumTaskCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Row 2: Title
             Text(
                 text = task.title,
-                fontSize = 15.sp,
+                fontSize = 16.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                color = Color(0xFF0F172A),
+                letterSpacing = (-0.2).sp
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Row 3: Calendar Icon + Today • duration
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "📅", fontSize = 11.sp)
-                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "📅", fontSize = 12.sp)
+                Spacer(modifier = Modifier.width(5.dp))
                 Text(
                     text = "Today • ${task.estimatedMinutes ?: 30} min",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
                     color = Color(0xFF64748B)
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Row 4: Wide Action Button + 3-Dot Overflow Menu
             Row(
@@ -541,15 +543,15 @@ private fun PremiumTaskCard(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(LifeOsGradients.primary)
                                 .clickable(onClick = onComplete),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "✓  Complete",
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
@@ -559,15 +561,15 @@ private fun PremiumTaskCard(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(LifeOsGradients.primary)
                                 .clickable(onClick = onStart),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "▶  Start",
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
@@ -577,8 +579,8 @@ private fun PremiumTaskCard(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(38.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFFF1F5F9))
                                 .clickable(onClick = onEdit),
                             contentAlignment = Alignment.Center
@@ -587,10 +589,10 @@ private fun PremiumTaskCard(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Text(text = "👁", fontSize = 11.sp)
+                                Text(text = "👁", fontSize = 12.sp)
                                 Text(
                                     text = "View Details",
-                                    fontSize = 12.sp,
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF475569)
                                 )
@@ -719,11 +721,11 @@ private fun TaskEditorBottomSheet(
                 Column {
                     Text(
                         text = "Priority",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4F46E5)
+                        color = Color(0xFF1E293B)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -738,7 +740,7 @@ private fun TaskEditorBottomSheet(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(32.dp)
+                                    .height(36.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
                                     .clickable { selectedPriority = priority },
@@ -746,7 +748,7 @@ private fun TaskEditorBottomSheet(
                             ) {
                                 Text(
                                     text = label,
-                                    fontSize = 11.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) Color.White else Color(0xFF475569)
                                 )
@@ -759,11 +761,11 @@ private fun TaskEditorBottomSheet(
                 Column {
                     Text(
                         text = "Category",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4F46E5)
+                        color = Color(0xFF1E293B)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -786,14 +788,14 @@ private fun TaskEditorBottomSheet(
                                         RoundedCornerShape(10.dp)
                                     )
                                     .clickable { selectedCategory = category }
-                                    .padding(vertical = 6.dp),
+                                    .padding(vertical = 8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(text = icon, fontSize = 14.sp)
-                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(text = icon, fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
                                     text = label,
-                                    fontSize = 10.sp,
+                                    fontSize = 10.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) Color(0xFF4F46E5) else Color(0xFF64748B)
                                 )
@@ -806,11 +808,11 @@ private fun TaskEditorBottomSheet(
                 Column {
                     Text(
                         text = "Estimated Duration",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4F46E5)
+                        color = Color(0xFF1E293B)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -820,7 +822,7 @@ private fun TaskEditorBottomSheet(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(32.dp)
+                                    .height(36.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9))
                                     .clickable { estimatedMinutesStr = mins.toString() },
@@ -828,7 +830,7 @@ private fun TaskEditorBottomSheet(
                             ) {
                                 Text(
                                     text = "${mins}m",
-                                    fontSize = 11.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) Color.White else Color(0xFF475569)
                                 )

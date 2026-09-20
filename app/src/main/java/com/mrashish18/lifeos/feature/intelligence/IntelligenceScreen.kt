@@ -153,14 +153,14 @@ fun IntelligenceScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(28.dp)
+                                .size(30.dp)
                                 .clip(CircleShape)
                                 .background(item.numColor),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = item.num,
-                                fontSize = 11.sp,
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
                             )
@@ -168,8 +168,8 @@ fun IntelligenceScreen(
                         if (index < stages.lastIndex) {
                             Box(
                                 modifier = Modifier
-                                    .width(2.dp)
-                                    .height(28.dp)
+                                    .width(2.5.dp)
+                                    .height(30.dp)
                                     .background(Color(0xFFCBD5E1))
                             )
                         }
@@ -184,41 +184,42 @@ fun IntelligenceScreen(
                             .padding(vertical = 4.dp),
                         shape = RoundedCornerShape(14.dp),
                         color = Color(0xFFF8FAFC),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(10.dp))
                                     .background(item.iconBg),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = item.icon, fontSize = 15.sp)
+                                Text(text = item.icon, fontSize = 17.sp)
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
                                     text = item.stage,
-                                    fontSize = 12.sp,
+                                    fontSize = 12.5.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color(0xFF0F172A),
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
                                     text = item.subsystem,
-                                    fontSize = 11.sp,
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = item.subsystemColor
                                 )
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = item.desc,
-                                    fontSize = 10.sp,
-                                    color = Color(0xFF64748B),
-                                    lineHeight = 14.sp
+                                    fontSize = 11.5.sp,
+                                    color = Color(0xFF475569),
+                                    lineHeight = 16.sp
                                 )
                             }
                         }
@@ -227,17 +228,18 @@ fun IntelligenceScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Core Principles matching reference
         Text(
             text = "Core Principles",
-            fontSize = 14.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF0F172A)
+            color = Color(0xFF0F172A),
+            letterSpacing = (-0.2).sp
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         listOf(
             Triple("🔒", "On-Device Privacy", Color(0xFF0284C7)),
@@ -248,25 +250,25 @@ fun IntelligenceScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 color = Color(0xFFF0F9FF),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0F2FE))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBAE6FD))
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(20.dp)
+                            .size(24.dp)
                             .clip(CircleShape)
                             .background(color),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = icon, fontSize = 10.sp)
+                        Text(text = icon, fontSize = 11.sp)
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = title,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF0F172A)
                     )
@@ -274,17 +276,18 @@ fun IntelligenceScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Unified Intelligence Pillars
         Text(
             text = "Unified Intelligence Pillars",
-            fontSize = 14.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF0F172A)
+            color = Color(0xFF0F172A),
+            letterSpacing = (-0.2).sp
         )
 
-        Spacer(modifier = Modifier.height(2.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         listOf(
             PillarData(
@@ -325,30 +328,30 @@ fun IntelligenceScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = pillar.onClick),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = Color.White,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
                 shadowElevation = 1.dp
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = pillar.icon, fontSize = 16.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = pillar.icon, fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
                                     text = pillar.title,
-                                    fontSize = 13.sp,
+                                    fontSize = 14.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF0F172A)
                                 )
                                 Text(
                                     text = pillar.subtitle,
-                                    fontSize = 10.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color(0xFF6366F1)
                                 )
@@ -358,27 +361,27 @@ fun IntelligenceScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(pillar.badgeBg)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
                                 text = pillar.badge,
-                                fontSize = 9.sp,
+                                fontSize = 9.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = pillar.badgeColor
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = pillar.description,
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        lineHeight = 15.sp
-                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
+                        text = pillar.description,
+                        fontSize = 12.sp,
+                        color = Color(0xFF475569),
+                        lineHeight = 16.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
                         text = pillar.ctaLabel,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4338CA)
                     )

@@ -405,83 +405,99 @@ private fun RescueMeshCenterScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onOpenQueue),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(16.dp),
             color = Color.White,
             shadowElevation = 1.dp,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "${uiState.queuedCount}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF1E1B4B)
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${uiState.queuedCount}",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Queued",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(Color(0xFFE2E8F0))
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Queued",
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B)
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${uiState.relayingCount}",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Relaying",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .width(1.dp)
+                            .height(28.dp)
+                            .background(Color(0xFFE2E8F0))
                     )
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${uiState.deliveredCount}",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Black,
+                            color = Color(0xFF1E1B4B)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Delivered",
+                            fontSize = 11.5.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF64748B)
+                        )
+                    }
                 }
-
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(28.dp)
-                        .background(Color(0xFFE2E8F0))
-                )
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "${uiState.relayingCount}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF1E1B4B)
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Relaying",
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B)
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(28.dp)
-                        .background(Color(0xFFE2E8F0))
-                )
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "${uiState.deliveredCount}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF1E1B4B)
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Delivered",
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B)
+                        text = "Tap to inspect message queue →",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF4338CA)
                     )
                 }
             }
@@ -592,7 +608,7 @@ private fun EmergencyMessageScreen(
         // Message * Field
         Text(
             text = "Message *",
-            fontSize = 12.sp,
+            fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E1B4B)
         )
@@ -601,7 +617,7 @@ private fun EmergencyMessageScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(85.dp)
+                .height(90.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFFF8FAFC))
                 .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
@@ -610,7 +626,7 @@ private fun EmergencyMessageScreen(
             if (messageText.isEmpty()) {
                 Text(
                     text = "Describe your situation...",
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF94A3B8)
                 )
             }
@@ -618,7 +634,7 @@ private fun EmergencyMessageScreen(
                 value = messageText,
                 onValueChange = { if (it.length <= 256) messageText = it },
                 textStyle = TextStyle(
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF1E1B4B),
                     fontWeight = FontWeight.Medium
                 ),
@@ -636,12 +652,12 @@ private fun EmergencyMessageScreen(
         ) {
             Text(
                 text = "Mesh packet limit: 256 chars",
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = Color(0xFF64748B)
             )
             Text(
                 text = "${messageText.length}/256",
-                fontSize = 10.sp,
+                fontSize = 10.5.sp,
                 color = if (messageText.length >= 240) Color(0xFFDC2626) else Color(0xFF94A3B8),
                 fontWeight = FontWeight.SemiBold
             )
@@ -652,7 +668,7 @@ private fun EmergencyMessageScreen(
         // Priority Field
         Text(
             text = "Priority",
-            fontSize = 12.sp,
+            fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E1B4B)
         )
@@ -667,9 +683,9 @@ private fun EmergencyMessageScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(38.dp)
+                    .height(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (isNormal) Color(0xFF4338CA) else Color(0xFFF1F5F9))
+                    .background(if (isNormal) Color(0xFF4338CA) else Color(0xFFF8FAFC))
                     .border(1.dp, if (isNormal) Color(0xFF4338CA) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                     .clickable { selectedPriority = MessagePriority.NORMAL },
                 contentAlignment = Alignment.Center
@@ -679,7 +695,7 @@ private fun EmergencyMessageScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Normal",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isNormal) Color.White else Color(0xFF334155)
                     )
@@ -691,9 +707,9 @@ private fun EmergencyMessageScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(38.dp)
+                    .height(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (isHigh) Color(0xFFF59E0B) else Color(0xFFF1F5F9))
+                    .background(if (isHigh) Color(0xFFF59E0B) else Color(0xFFF8FAFC))
                     .border(1.dp, if (isHigh) Color(0xFFF59E0B) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                     .clickable { selectedPriority = MessagePriority.HIGH },
                 contentAlignment = Alignment.Center
@@ -703,7 +719,7 @@ private fun EmergencyMessageScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "High",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isHigh) Color.White else Color(0xFF334155)
                     )
@@ -715,10 +731,10 @@ private fun EmergencyMessageScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(38.dp)
+                    .height(40.dp)
                     .shadow(if (isCritical) 6.dp else 0.dp, RoundedCornerShape(10.dp), spotColor = Color(0xFFEF4444))
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (isCritical) Color(0xFFEF4444) else Color(0xFFF1F5F9))
+                    .background(if (isCritical) Color(0xFFEF4444) else Color(0xFFF8FAFC))
                     .border(1.dp, if (isCritical) Color(0xFFDC2626) else Color(0xFFE2E8F0), RoundedCornerShape(10.dp))
                     .clickable { selectedPriority = MessagePriority.CRITICAL },
                 contentAlignment = Alignment.Center
@@ -728,7 +744,7 @@ private fun EmergencyMessageScreen(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Critical",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCritical) Color.White else Color(0xFF334155)
                     )
@@ -741,7 +757,7 @@ private fun EmergencyMessageScreen(
         // Destination (Optional) Field
         Text(
             text = "Destination (Optional)",
-            fontSize = 12.sp,
+            fontSize = 12.5.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E1B4B)
         )
@@ -750,7 +766,7 @@ private fun EmergencyMessageScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .height(46.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color(0xFFF8FAFC))
                 .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
@@ -759,7 +775,7 @@ private fun EmergencyMessageScreen(
             if (destinationText.isEmpty()) {
                 Text(
                     text = "Phone, email or ID...",
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF94A3B8)
                 )
             }
@@ -767,7 +783,7 @@ private fun EmergencyMessageScreen(
                 value = destinationText,
                 onValueChange = { destinationText = it },
                 textStyle = TextStyle(
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = Color(0xFF1E1B4B),
                     fontWeight = FontWeight.Medium
                 ),
@@ -791,9 +807,9 @@ private fun EmergencyMessageScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Your message will be stored locally and sent when connectivity is available.",
-                    fontSize = 11.sp,
+                    fontSize = 11.5.sp,
                     color = Color(0xFF334155),
-                    lineHeight = 15.sp
+                    lineHeight = 16.sp
                 )
             }
         }
@@ -809,7 +825,7 @@ private fun EmergencyMessageScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(46.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.White)
                     .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
@@ -818,7 +834,7 @@ private fun EmergencyMessageScreen(
             ) {
                 Text(
                     text = "Cancel",
-                    fontSize = 13.sp,
+                    fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E1B4B)
                 )
@@ -829,7 +845,7 @@ private fun EmergencyMessageScreen(
             Box(
                 modifier = Modifier
                     .weight(1.6f)
-                    .height(46.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (isSendEnabled) {
@@ -856,11 +872,11 @@ private fun EmergencyMessageScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    Text(text = "🔔", fontSize = 14.sp)
+                    Text(text = "🔔", fontSize = 15.sp)
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Send Message",
-                        fontSize = 13.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -924,7 +940,7 @@ private fun MessageQueueScreen(
             listOf("All", "Queued", "Sent", "Failed").forEach { filter ->
                 val isSelected = selectedFilter == filter
                 val pillBg by animateColorAsState(
-                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9),
+                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF8FAFC),
                     label = "queueFilterBg"
                 )
                 val pillTextColor by animateColorAsState(
@@ -933,15 +949,19 @@ private fun MessageQueueScreen(
                 )
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(pillBg)
+                        .then(
+                            if (!isSelected) Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
+                            else Modifier
+                        )
                         .clickable { selectedFilter = filter }
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                        .padding(horizontal = 16.dp, vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = filter,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = pillTextColor
                     )
@@ -967,20 +987,20 @@ private fun MessageQueueScreen(
             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "LIFECYCLE:",
-                    fontSize = 8.sp,
+                    fontSize = 8.5.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFF64748B),
                     letterSpacing = 0.5.sp
                 )
                 Text(
                     text = "QUEUED (Local) → RELAYING (Mesh) → DELIVERED (Sync)",
-                    fontSize = 9.sp,
+                    fontSize = 9.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF4338CA)
                 )
@@ -992,13 +1012,13 @@ private fun MessageQueueScreen(
         if (filteredList.isEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(26.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(text = "📭", fontSize = 28.sp)
@@ -1011,14 +1031,14 @@ private fun MessageQueueScreen(
                     }
                     Text(
                         text = emptyTitle,
-                        fontSize = 13.sp,
+                        fontSize = 13.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = emptyDesc,
-                        fontSize = 11.sp,
+                        fontSize = 11.5.sp,
                         color = Color(0xFF64748B),
                         textAlign = TextAlign.Center
                     )
@@ -1050,23 +1070,23 @@ private fun MessageQueueScreen(
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = Color.White,
                         shadowElevation = 1.dp,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(38.dp)
+                                    .size(40.dp)
                                     .clip(CircleShape)
                                     .background(iconBg),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = iconEmoji, fontSize = 16.sp)
+                                Text(text = iconEmoji, fontSize = 17.sp)
                             }
 
                             Spacer(modifier = Modifier.width(12.dp))
@@ -1078,26 +1098,26 @@ private fun MessageQueueScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = msg.payload.take(28) + if (msg.payload.length > 28) "..." else "",
-                                        fontSize = 12.sp,
+                                        text = msg.payload.take(30) + if (msg.payload.length > 30) "..." else "",
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF1E1B4B)
                                     )
                                     Box(
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(4.dp))
+                                            .clip(RoundedCornerShape(5.dp))
                                             .background(priorityBg)
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            .padding(horizontal = 7.dp, vertical = 2.5.dp)
                                     ) {
                                         Text(
                                             text = msg.priority.name,
-                                            fontSize = 9.sp,
+                                            fontSize = 9.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = priorityColor
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.height(2.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 val timeStr = try {
                                     msg.createdAt.atZone(java.time.ZoneId.systemDefault()).format(java.time.format.DateTimeFormatter.ofPattern("h:mm a"))
                                 } catch (e: Exception) {
@@ -1115,12 +1135,13 @@ private fun MessageQueueScreen(
                                 }
                                 Text(
                                     text = "${msg.status.name}  •  $timeStr  •  TTL: ${ttlHours}h",
-                                    fontSize = 10.sp,
+                                    fontSize = 10.5.sp,
                                     color = Color(0xFF64748B)
                                 )
+                                Spacer(modifier = Modifier.height(1.dp))
                                 Text(
                                     text = statusDetail,
-                                    fontSize = 10.sp,
+                                    fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = if (msg.status == MessageStatus.QUEUED) Color(0xFF4338CA) else Color(0xFF059669)
                                 )

@@ -90,24 +90,28 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
             listOf("All", "Active", "Completed").forEach { filter ->
                 val isSelected = selectedFilter == filter
                 val pillBg by animateColorAsState(
-                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF1F5F9),
+                    targetValue = if (isSelected) Color(0xFF4338CA) else Color(0xFFF8FAFC),
                     label = "goalFilterBg"
                 )
                 val pillTextColor by animateColorAsState(
-                    targetValue = if (isSelected) Color.White else Color(0xFF64748B),
+                    targetValue = if (isSelected) Color.White else Color(0xFF475569),
                     label = "goalFilterText"
                 )
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(pillBg)
+                        .then(
+                            if (!isSelected) Modifier.border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(20.dp))
+                            else Modifier
+                        )
                         .clickable { selectedFilter = filter }
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                        .padding(horizontal = 16.dp, vertical = 7.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = filter,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = pillTextColor
                     )
@@ -185,29 +189,29 @@ fun GoalsScreen(modifier: Modifier = Modifier) {
         if (filteredGoals.isEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 1.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 24.dp),
+                        .padding(horizontal = 20.dp, vertical = 28.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "🎯", fontSize = 24.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "🎯", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = "No goals in this view.",
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E1B4B)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Switch filters to view active and completed strategic objectives.",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = Color(0xFF64748B),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
@@ -260,21 +264,22 @@ private fun ReferenceGoalCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         color = Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
         shadowElevation = 1.dp
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             // Title
             Text(
                 text = title,
-                fontSize = 14.sp,
+                fontSize = 15.5.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                color = Color(0xFF0F172A),
+                letterSpacing = (-0.2).sp
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Tag Pill & Milestone Row
             Row(
@@ -286,11 +291,11 @@ private fun ReferenceGoalCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
                         .background(tagBg)
-                        .padding(horizontal = 7.dp, vertical = 2.dp)
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = tag,
-                        fontSize = 9.sp,
+                        fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = tagColor
                     )
@@ -299,35 +304,35 @@ private fun ReferenceGoalCard(
                 milestones?.let { ms ->
                     Text(
                         text = ms,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF94A3B8)
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF64748B)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Description
             Text(
                 text = description,
-                fontSize = 11.sp,
-                color = Color(0xFF64748B),
-                lineHeight = 15.sp
+                fontSize = 12.sp,
+                color = Color(0xFF475569),
+                lineHeight = 16.5.sp
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Progress Bar + Percentage Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(6.dp)
+                        .height(7.dp)
                         .clip(CircleShape)
                         .background(Color(0xFFF1F5F9))
                 ) {
@@ -335,7 +340,7 @@ private fun ReferenceGoalCard(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(animatedProgress)
-                                .height(6.dp)
+                                .height(7.dp)
                                 .clip(CircleShape)
                                 .background(
                                     androidx.compose.ui.graphics.Brush.horizontalGradient(
@@ -348,7 +353,7 @@ private fun ReferenceGoalCard(
 
                 Text(
                     text = "${(progress * 100).toInt()}%",
-                    fontSize = 12.sp,
+                    fontSize = 12.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF4338CA)
                 )
