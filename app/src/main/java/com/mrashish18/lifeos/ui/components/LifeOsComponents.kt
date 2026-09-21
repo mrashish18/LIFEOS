@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -172,16 +174,17 @@ fun LifeOsPrimaryButton(
     enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(50.dp),
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = LifeOsIndigo700,
+            containerColor = palette.primary,
             contentColor = Color.White,
-            disabledContainerColor = LifeOsSlate200,
-            disabledContentColor = LifeOsSlate500
+            disabledContainerColor = palette.surfaceInput,
+            disabledContentColor = palette.textMuted
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 0.dp)
     ) {
@@ -200,7 +203,7 @@ fun LifeOsPrimaryButton(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.3.sp
                 ),
-                color = if (enabled) Color.White else LifeOsSlate500
+                color = if (enabled) Color.White else palette.textMuted
             )
         }
     }
@@ -219,18 +222,19 @@ fun LifeOsSecondaryButton(
     isDarkMode: Boolean = false,
     leadingIcon: @Composable (() -> Unit)? = null
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(46.dp),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isDarkMode) Color(0xFF1E293B) else LifeOsSlate100,
-            contentColor = if (isDarkMode) Color(0xFFF8FAFC) else LifeOsSlate800,
-            disabledContainerColor = if (isDarkMode) Color(0xFF1E293B).copy(alpha = 0.5f) else LifeOsSlate100.copy(alpha = 0.5f),
-            disabledContentColor = if (isDarkMode) Color(0xFF64748B) else LifeOsSlate400
+            containerColor = palette.surfaceInput,
+            contentColor = palette.textPrimary,
+            disabledContainerColor = palette.surfaceInput.copy(alpha = 0.5f),
+            disabledContentColor = palette.textMuted
         ),
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (isDarkMode) Color(0xFF334155) else LifeOsSlate200),
+        border = androidx.compose.foundation.BorderStroke(1.dp, palette.border),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 0.dp)
     ) {
         Row(
@@ -247,7 +251,7 @@ fun LifeOsSecondaryButton(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 ),
-                color = if (enabled) (if (isDarkMode) Color(0xFFF8FAFC) else LifeOsSlate800) else (if (isDarkMode) Color(0xFF64748B) else LifeOsSlate400)
+                color = if (enabled) palette.textPrimary else palette.textMuted
             )
         }
     }
@@ -263,6 +267,7 @@ fun LifeOsOutlinedButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -270,7 +275,7 @@ fun LifeOsOutlinedButton(
         shape = RoundedCornerShape(14.dp),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (enabled) LifeOsIndigo700.copy(alpha = 0.4f) else LifeOsSlate300
+            if (enabled) palette.primary.copy(alpha = 0.45f) else palette.border
         )
     ) {
         Text(
@@ -279,7 +284,7 @@ fun LifeOsOutlinedButton(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             ),
-            color = if (enabled) LifeOsIndigo700 else LifeOsSlate400
+            color = if (enabled) palette.primary else palette.textMuted
         )
     }
 }
@@ -292,12 +297,13 @@ fun LifeOsStatusChip(
     status: TaskStatus,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     val (bg, textColor, dotColor) = when (status) {
-        TaskStatus.IN_PROGRESS -> Triple(LifeOsBlue50, LifeOsBlue700, LifeOsBlue700)
-        TaskStatus.PENDING -> Triple(LifeOsIndigo50, LifeOsIndigo700, LifeOsIndigo700)
-        TaskStatus.COMPLETED -> Triple(LifeOsGreen50, LifeOsGreen700, LifeOsGreen700)
-        TaskStatus.POSTPONED -> Triple(LifeOsAmber50, LifeOsAmber700, LifeOsAmber700)
-        TaskStatus.ABANDONED -> Triple(LifeOsSlate100, LifeOsSlate700, LifeOsSlate500)
+        TaskStatus.IN_PROGRESS -> Triple(palette.infoSurface, palette.info, palette.info)
+        TaskStatus.PENDING -> Triple(palette.infoSurface, palette.primary, palette.primary)
+        TaskStatus.COMPLETED -> Triple(palette.successSurface, palette.success, palette.success)
+        TaskStatus.POSTPONED -> Triple(palette.warningSurface, palette.warning, palette.warning)
+        TaskStatus.ABANDONED -> Triple(palette.neutralSurface, palette.textSecondary, palette.textMuted)
     }
 
     Surface(
@@ -341,11 +347,12 @@ fun LifeOsPriorityBadge(
     priority: TaskPriority,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     val (bg, text) = when (priority) {
-        TaskPriority.URGENT -> LifeOsRed50 to LifeOsRed700
-        TaskPriority.HIGH -> LifeOsAmber50 to LifeOsAmber700
-        TaskPriority.MEDIUM -> LifeOsBlue50 to LifeOsBlue700
-        TaskPriority.LOW -> LifeOsSlate100 to LifeOsSlate700
+        TaskPriority.URGENT -> palette.dangerSurface to palette.danger
+        TaskPriority.HIGH -> palette.warningSurface to palette.warning
+        TaskPriority.MEDIUM -> palette.infoSurface to palette.info
+        TaskPriority.LOW -> palette.neutralSurface to palette.textSecondary
     }
 
     Surface(
@@ -372,12 +379,13 @@ fun LifeOsCategoryBadge(
     category: TaskCategory,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     val (bg, text) = when (category) {
-        TaskCategory.WORK -> LifeOsIndigo50 to LifeOsIndigo700
-        TaskCategory.PERSONAL -> LifeOsTeal50 to LifeOsTeal700
-        TaskCategory.HEALTH -> LifeOsGreen50 to LifeOsGreen700
-        TaskCategory.LEARNING -> LifeOsBlue50 to LifeOsBlue700
-        TaskCategory.GENERAL -> LifeOsSlate100 to LifeOsSlate700
+        TaskCategory.WORK -> palette.infoSurface to palette.primary
+        TaskCategory.PERSONAL -> palette.successSurface to palette.truth
+        TaskCategory.HEALTH -> palette.successSurface to palette.success
+        TaskCategory.LEARNING -> palette.infoSurface to palette.info
+        TaskCategory.GENERAL -> palette.neutralSurface to palette.textSecondary
     }
 
     Surface(
@@ -905,6 +913,7 @@ fun MessageLifecycleTimeline(
     status: String,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     val steps = listOf("CREATED", "QUEUED", "RELAY", "SENT", "DELIVERED")
     val currentIndex = when (status.uppercase()) {
         "DRAFT" -> 0
@@ -935,8 +944,8 @@ fun MessageLifecycleTimeline(
                         .clip(CircleShape)
                         .background(
                             when {
-                                isCurrent -> LifeOsIndigo600
-                                isCompleted -> LifeOsGreen600
+                                isCurrent -> palette.primary
+                                isCompleted -> palette.success
                                 else -> MaterialTheme.colorScheme.outlineVariant
                             }
                         ),
@@ -960,7 +969,7 @@ fun MessageLifecycleTimeline(
                             .weight(1f)
                             .height(2.dp)
                             .background(
-                                if (!isFailed && index < currentIndex) LifeOsGreen600
+                                if (!isFailed && index < currentIndex) palette.success
                                 else MaterialTheme.colorScheme.outlineVariant
                             )
                     )
@@ -984,7 +993,7 @@ fun MessageLifecycleTimeline(
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 8.sp,
                     fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isCurrent) LifeOsIndigo700 else if (isCompleted) LifeOsGreen700 else MaterialTheme.colorScheme.outline,
+                    color = if (isCurrent) palette.primary else if (isCompleted) palette.success else MaterialTheme.colorScheme.outline,
                     maxLines = 1
                 )
             }
@@ -994,13 +1003,13 @@ fun MessageLifecycleTimeline(
             Spacer(modifier = Modifier.height(6.dp))
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = LifeOsRed50,
+                color = palette.dangerSurface,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text(
                     text = "STATUS: $status",
                     style = MaterialTheme.typography.labelSmall,
-                    color = LifeOsRed700,
+                    color = palette.danger,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
@@ -1022,6 +1031,7 @@ fun LifeOsGradientButton(
     icon: (@Composable () -> Unit)? = null,
     enabled: Boolean = true
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -1031,7 +1041,7 @@ fun LifeOsGradientButton(
     ) {
         Box(
             modifier = Modifier
-                .background(if (enabled) gradient else Brush.linearGradient(listOf(LifeOsSlate300, LifeOsSlate400)))
+                .background(if (enabled) gradient else Brush.linearGradient(listOf(palette.surfaceInput, palette.border)))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -1065,13 +1075,14 @@ fun LifeOsFilterPill(
     modifier: Modifier = Modifier,
     activeGradient: Brush = LifeOsGradients.primary
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) Color.Transparent else LifeOsColors.surface,
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, LifeOsColors.border)
+        color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.surface,
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, palette.border)
     ) {
         Box(
             modifier = Modifier
@@ -1081,7 +1092,7 @@ fun LifeOsFilterPill(
         ) {
             Text(
                 text = text,
-                color = if (isSelected) Color.White else LifeOsColors.textSecondary,
+                color = if (isSelected) Color.White else palette.textSecondary,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
                 fontSize = 12.sp
             )
@@ -1101,11 +1112,12 @@ fun LifeOsMetricTile(
     value: String,
     modifier: Modifier = Modifier
 ) {
+    val palette = LocalLifeOsSemanticPalette.current
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        color = LifeOsColors.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, LifeOsColors.borderSubtle),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, palette.borderSubtle),
         shadowElevation = 1.dp
     ) {
         Row(
@@ -1132,14 +1144,14 @@ fun LifeOsMetricTile(
                     text = label.uppercase(),
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
-                    color = LifeOsColors.textMuted,
+                    color = palette.textMuted,
                     letterSpacing = 0.5.sp
                 )
                 Text(
                     text = value,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = LifeOsColors.textPrimary
+                    color = palette.textPrimary
                 )
             }
         }
@@ -1293,80 +1305,138 @@ fun ScenicMountainHeader(
 @Composable
 fun ScenicGoalBanner(
     quote: String = "\"Disciplined today.\nA better tomorrow.\"",
-    author: String = "— LIFEOS",
+    author: String = "— LIFEOS STRATEGIC ENGINE",
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent
+            .height(146.dp),
+        shape = RoundedCornerShape(22.dp),
+        shadowElevation = 4.dp
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF1E293B), Color(0xFF0F172A), Color(0xFF064E3B))
-                    )
-                )
-        ) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .matchParentSize()
-            ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
                 val w = size.width
                 val h = size.height
 
+                // Alpine twilight emerald sky gradient
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF062C24),
+                            Color(0xFF064E3B),
+                            Color(0xFF047857),
+                            Color(0xFF0D9488),
+                            Color(0xFF10B981).copy(alpha = 0.65f)
+                        )
+                    )
+                )
+
+                // Alpine celestial starlight
+                val stars = listOf(
+                    Offset(w * 0.12f, h * 0.14f) to 1.6f,
+                    Offset(w * 0.28f, h * 0.22f) to 1.2f,
+                    Offset(w * 0.44f, h * 0.12f) to 2.0f,
+                    Offset(w * 0.68f, h * 0.16f) to 1.5f,
+                    Offset(w * 0.88f, h * 0.20f) to 1.4f
+                )
+                stars.forEach { (pos, r) ->
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.80f),
+                        radius = r.dp.toPx(),
+                        center = pos
+                    )
+                }
+
+                // Aurora emerald glow
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFF34D399).copy(alpha = 0.40f), Color(0xFF059669).copy(alpha = 0.15f), Color.Transparent),
+                        center = Offset(w * 0.75f, h * 0.50f),
+                        radius = w * 0.45f
+                    ),
+                    radius = w * 0.45f,
+                    center = Offset(w * 0.75f, h * 0.50f)
+                )
+
                 // Mountain silhouettes
                 val mtnPath = Path().apply {
-                    moveTo(0f, h * 0.7f)
-                    lineTo(w * 0.35f, h * 0.25f)
-                    lineTo(w * 0.65f, h * 0.6f)
-                    lineTo(w * 0.85f, h * 0.35f)
-                    lineTo(w, h * 0.75f)
+                    moveTo(0f, h * 0.65f)
+                    lineTo(w * 0.30f, h * 0.28f)
+                    lineTo(w * 0.58f, h * 0.58f)
+                    lineTo(w * 0.82f, h * 0.32f)
+                    lineTo(w, h * 0.68f)
                     lineTo(w, h)
                     lineTo(0f, h)
                     close()
                 }
-                drawPath(mtnPath, color = Color(0xFF065F46).copy(alpha = 0.6f))
+                drawPath(
+                    path = mtnPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF065F46).copy(alpha = 0.85f), Color(0xFF022C22))
+                    )
+                )
 
-                // Winding green path
+                // Winding green path ascending to the peak
                 val roadPath = Path().apply {
-                    moveTo(w * 0.45f, h * 0.4f)
-                    cubicTo(w * 0.4f, h * 0.6f, w * 0.6f, h * 0.75f, w * 0.5f, h)
-                    lineTo(w * 0.6f, h)
-                    cubicTo(w * 0.7f, h * 0.75f, w * 0.48f, h * 0.6f, w * 0.48f, h * 0.4f)
+                    moveTo(w * 0.42f, h * 0.38f)
+                    cubicTo(w * 0.38f, h * 0.58f, w * 0.62f, h * 0.72f, w * 0.48f, h)
+                    lineTo(w * 0.60f, h)
+                    cubicTo(w * 0.74f, h * 0.72f, w * 0.48f, h * 0.58f, w * 0.48f, h * 0.38f)
                     close()
                 }
-                drawPath(roadPath, color = Color(0xFF10B981).copy(alpha = 0.85f))
+                drawPath(
+                    path = roadPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF34D399), Color(0xFF059669))
+                    )
+                )
             }
 
+            // Typography & pill overlay
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.Center
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = quote,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    lineHeight = 20.sp
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = author,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF6EE7B7),
-                    letterSpacing = 0.8.sp
-                )
+                Column {
+                    Text(
+                        text = quote,
+                        fontSize = 15.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        lineHeight = 21.sp,
+                        letterSpacing = (-0.2).sp
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = author,
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFFA7F3D0),
+                        letterSpacing = 0.6.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White.copy(alpha = 0.18f))
+                        .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.5.dp)
+                ) {
+                    Text(
+                        text = "\uD83C\uDFAF Strategic Compounding Framework \u2192",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        letterSpacing = 0.2.sp
+                    )
+                }
             }
         }
     }
 }
+

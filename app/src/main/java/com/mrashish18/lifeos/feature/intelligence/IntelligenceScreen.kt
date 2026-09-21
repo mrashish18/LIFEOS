@@ -52,13 +52,14 @@ fun IntelligenceScreen(
     ) {
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Header matching Screen 5
+        // 1. Top Bar matching Global Flagship Header Standard
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -66,13 +67,22 @@ fun IntelligenceScreen(
                     onClick = onOpenDrawer,
                     isDarkMode = isDarkMode
                 )
-                Text(
-                    text = "Intelligence",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
-                    letterSpacing = (-0.3).sp
-                )
+                Column {
+                    Text(
+                        text = "Intelligence",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                        letterSpacing = (-0.3).sp
+                    )
+                    Text(
+                        text = "Autonomous Cognitive Architecture",
+                        fontSize = 11.5.sp,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Surface(
@@ -84,7 +94,7 @@ fun IntelligenceScreen(
                 )
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.5.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
@@ -104,11 +114,47 @@ fun IntelligenceScreen(
             }
         }
 
-        Text(
-            text = "The 6-stage cognitive architecture that powers a more intentional life.",
-            fontSize = 11.5.sp,
-            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
-        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // 2. Scenic Cognitive Cosmos Hero Banner
+        com.mrashish18.lifeos.ui.components.IntelligenceScenicBanner(isDarkMode = isDarkMode)
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // 3. Cognitive Loop Pipeline Strip
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+            )
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                Text(
+                    text = "COGNITIVE CYCLE ARCHITECTURE",
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
+                    letterSpacing = 0.7.sp
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IntelStagePill(step = "\uD83D\uDC41\uFE0F OBSERVE", label = "Sensory", color = Color(0xFF0284C7), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    IntelStagePill(step = "\uD83E\uDDE0 MODEL", label = "Patterns", color = Color(0xFF4F46E5), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    IntelStagePill(step = "\u2696\uFE0F DECIDE", label = "Heuristics", color = Color(0xFF7C3AED), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    IntelStagePill(step = "\uD83C\uDF31 ADAPT", label = "Learning", color = Color(0xFF16A34A), isDarkMode = isDarkMode)
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -460,3 +506,35 @@ private data class StageData(
     val icon: String,
     val iconBg: Color
 )
+
+@Composable
+private fun IntelStagePill(
+    step: String,
+    label: String,
+    color: Color,
+    isDarkMode: Boolean = false
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (isDarkMode) color.copy(alpha = 0.25f) else color.copy(alpha = 0.12f))
+                .padding(horizontal = 6.dp, vertical = 2.5.dp)
+        ) {
+            Text(
+                text = step,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isDarkMode) color.copy(alpha = 0.95f) else color
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 7.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+

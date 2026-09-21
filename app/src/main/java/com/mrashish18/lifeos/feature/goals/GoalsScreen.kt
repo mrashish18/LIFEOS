@@ -41,6 +41,7 @@ import com.mrashish18.lifeos.ui.components.LifeOsEyebrow
 import com.mrashish18.lifeos.ui.components.LifeOsFilterPill
 import com.mrashish18.lifeos.ui.components.ScenicGoalBanner
 import com.mrashish18.lifeos.ui.components.LifeOsNotificationBell
+import com.mrashish18.lifeos.ui.components.LifeOsMenuButton
 import com.mrashish18.lifeos.ui.theme.*
 
 @Composable
@@ -69,10 +70,11 @@ fun GoalsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
+                modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
+                LifeOsMenuButton(
                     onClick = onOpenDrawer,
                     isDarkMode = isDarkMode
                 )
@@ -87,7 +89,9 @@ fun GoalsScreen(
                     Text(
                         text = "Big goals. Intentional actions. Real outcomes.",
                         fontSize = 11.5.sp,
-                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }
@@ -99,8 +103,12 @@ fun GoalsScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
         // 1. Scenic Mountain Banner with quote matching Screen 4
         ScenicGoalBanner()
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Strategic Alignment Hierarchy Strip (Goal -> Milestone -> Task -> Outcome)
         Surface(

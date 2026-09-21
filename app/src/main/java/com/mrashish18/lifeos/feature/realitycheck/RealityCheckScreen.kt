@@ -51,6 +51,8 @@ import com.mrashish18.lifeos.ui.theme.*
 @Composable
 fun RealityCheckScreen(
     viewModel: RealityCheckViewModel,
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
@@ -95,6 +97,8 @@ fun RealityCheckScreen(
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
                     },
+                    unreadNotificationCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
                     onOpenDrawer = onOpenDrawer,
                     isDarkMode = isDarkMode
                 )
@@ -112,6 +116,8 @@ fun RealityCheckScreen(
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
                     },
+                    unreadNotificationCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
                     onOpenDrawer = onOpenDrawer,
                     isDarkMode = isDarkMode
                 )
@@ -158,6 +164,8 @@ fun RealityCheckScreen(
                     onSelectInvestigation = { record ->
                         viewModel.selectInvestigation(record)
                     },
+                    unreadNotificationCount = unreadNotificationCount,
+                    onOpenNotifications = onOpenNotifications,
                     onOpenDrawer = onOpenDrawer,
                     isDarkMode = isDarkMode
                 )
@@ -178,6 +186,8 @@ private fun TruthInputScreen(
     onAnalyze: () -> Unit,
     onSelectQuick: (String) -> Unit,
     onSelectInvestigation: (InvestigationRecord) -> Unit,
+    unreadNotificationCount: Int = 0,
+    onOpenNotifications: () -> Unit = {},
     onOpenDrawer: () -> Unit = {},
     isDarkMode: Boolean = false
 ) {
@@ -189,110 +199,150 @@ private fun TruthInputScreen(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ── RealityCheck Header Card (ABOVE scenic image) ──
-        Surface(
+        // ── 1. REALITYCHECK TOP APP BAR (matching Dashboard, Tasks, Goals, Mesh) ──
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = if (isDarkMode) Color(0xFF111827) else Color.White,
-            shadowElevation = if (isDarkMode) 0.dp else 2.dp,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier.weight(1f, fill = false),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
+                    onClick = onOpenDrawer,
+                    isDarkMode = isDarkMode
+                )
+                Column {
+                    Text(
+                        text = "RealityCheck",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
+                        letterSpacing = (-0.3).sp
+                    )
+                    Text(
+                        text = "Good questions. Better evidence. Real clarity.",
+                        fontSize = 11.5.sp,
+                        color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            com.mrashish18.lifeos.ui.components.LifeOsNotificationBell(
+                unreadCount = unreadNotificationCount,
+                onClick = onOpenNotifications,
+                isDarkMode = isDarkMode
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── 2. SCENIC MOUNTAIN HERO BANNER (Rich twilight canvas, quote, and badges) ──
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(146.dp),
+            shape = RoundedCornerShape(22.dp),
+            shadowElevation = if (isDarkMode) 0.dp else 4.dp,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
-                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+                if (isDarkMode) Color(0xFF334155).copy(alpha = 0.6f) else Color(0xFFE2E8F0)
             )
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Top row: hamburger + title
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Atmospheric layered mountain canvas
+                com.mrashish18.lifeos.ui.components.RealityCheckScenicHeader(
+                    isDarkMode = isDarkMode,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Inspiring quote & pill overlay
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    com.mrashish18.lifeos.ui.components.LifeOsMenuButton(
-                        onClick = onOpenDrawer,
-                        isDarkMode = isDarkMode
-                    )
                     Column {
                         Text(
-                            text = "RealityCheck",
-                            fontSize = 23.sp,
+                            text = "\u201CBetter information\nleads to a brighter tomorrow.\u201D",
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
-                            letterSpacing = (-0.3).sp
+                            color = Color.White,
+                            lineHeight = 22.sp,
+                            letterSpacing = (-0.2).sp
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Good questions. Better information.\nA clearer view of reality.",
-                            fontSize = 11.5.sp,
-                            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
-                            lineHeight = 16.sp
+                            text = "\u2014 LIFEOS TRUTH ENGINE",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = 0.85f),
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color.White.copy(alpha = 0.18f))
+                            .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 12.dp, vertical = 4.5.dp)
+                    ) {
+                        Text(
+                            text = "\u2728 Multi-Source Evidence Engine \u2192",
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                            letterSpacing = 0.2.sp
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Supporting text
-                Text(
-                    text = "Verify claims. Compare evidence.\nMake a clearer decision.",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF475569),
-                    lineHeight = 19.sp
-                )
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ── Scenic Mountain Visual (BELOW header) ──
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .clip(RoundedCornerShape(18.dp))
-        ) {
-            com.mrashish18.lifeos.ui.components.RealityCheckScenicHeader(
-                isDarkMode = isDarkMode,
-                modifier = Modifier.fillMaxSize()
+        // ── 3. EVIDENCE VERIFICATION PIPELINE STRIP ──
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
             )
-
-            // Overlay text on scenic image
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "\u201CBetter information\nleads to a brighter\ntomorrow.\u201D",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDarkMode) Color.White.copy(alpha = 0.92f) else Color(0xFF4C1D95),
-                        lineHeight = 16.sp
-                    )
-                }
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                Text(
+                    text = "EVIDENCE VERIFICATION PIPELINE",
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
+                    letterSpacing = 0.7.sp
+                )
+                Spacer(modifier = Modifier.height(5.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        listOf("QUESTION", "EXPLORE", "VERIFY", "UNDERSTAND").forEach { word ->
-                            Text(
-                                text = word,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Black,
-                                color = if (isDarkMode) Color.White.copy(alpha = 0.75f) else Color(0xFF6D28D9).copy(alpha = 0.7f),
-                                letterSpacing = 1.5.sp,
-                                lineHeight = 11.sp
-                            )
-                        }
-                    }
+                    TruthStagePill(step = "\uD83D\uDD0D QUESTION", label = "Inquiry", color = Color(0xFF4338CA), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    TruthStagePill(step = "\uD83C\uDF10 EXPLORE", label = "Sources", color = Color(0xFF2563EB), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    TruthStagePill(step = "\u2696\uFE0F VERIFY", label = "Consensus", color = Color(0xFF0D9488), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    TruthStagePill(step = "\uD83D\uDCA1 DECIDE", label = "Clarity", color = Color(0xFF16A34A), isDarkMode = isDarkMode)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // ── Error message (if any) ──
         errorMessage?.let { errorMsg ->
@@ -332,13 +382,42 @@ private fun TruthInputScreen(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             color = if (isDarkMode) Color(0xFF111827) else Color.White,
-            shadowElevation = if (isDarkMode) 0.dp else 1.dp,
+            shadowElevation = if (isDarkMode) 0.dp else 2.dp,
             border = androidx.compose.foundation.BorderStroke(
                 1.dp,
                 if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
             )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
+                // Header inside the card
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "INVESTIGATE PROPOSITION",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA),
+                        letterSpacing = 0.5.sp
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEEF2FF))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "AI-POWERED",
+                            fontSize = 8.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isDarkMode) Color(0xFFA5B4FC) else Color(0xFF6366F1)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
                 // Inner input box with link icon
                 Box(
                     modifier = Modifier
@@ -366,7 +445,7 @@ private fun TruthInputScreen(
                             }
                             BasicTextField(
                                 value = claimText,
-                                onValueChange = onClaimChanged,
+                                onValueChange = { if (it.length <= 500) onClaimChanged(it) },
                                 textStyle = TextStyle(
                                     fontSize = 13.sp,
                                     color = if (isDarkMode) Color(0xFFF8FAFC) else Color(0xFF1E1B4B),
@@ -1042,3 +1121,35 @@ private fun TruthResultScreen(
         Spacer(modifier = Modifier.height(60.dp))
     }
 }
+
+@Composable
+private fun TruthStagePill(
+    step: String,
+    label: String,
+    color: Color,
+    isDarkMode: Boolean = false
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (isDarkMode) color.copy(alpha = 0.25f) else color.copy(alpha = 0.12f))
+                .padding(horizontal = 6.dp, vertical = 2.5.dp)
+        ) {
+            Text(
+                text = step,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isDarkMode) color.copy(alpha = 0.95f) else color
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 7.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+

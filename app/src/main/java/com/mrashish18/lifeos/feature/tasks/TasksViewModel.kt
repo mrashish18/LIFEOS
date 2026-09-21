@@ -128,7 +128,12 @@ class TasksViewModel(
                 )
                 _uiState.update { it.copy(isCreateDialogOpen = false, userMessage = "Task created • Candidate queued for Decision Engine") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(userMessage = "Failed to create task: ${e.message}") }
+                val safeMessage = if (e is IllegalArgumentException) {
+                    e.message ?: "Invalid task data"
+                } else {
+                    "Unable to create task. Please check your input and try again."
+                }
+                _uiState.update { it.copy(userMessage = safeMessage) }
             }
         }
     }
@@ -139,7 +144,12 @@ class TasksViewModel(
                 updateTaskUseCase(task)
                 _uiState.update { it.copy(editingTask = null, userMessage = "Task updated") }
             } catch (e: Exception) {
-                _uiState.update { it.copy(userMessage = "Failed to update task: ${e.message}") }
+                val safeMessage = if (e is IllegalArgumentException) {
+                    e.message ?: "Invalid task data"
+                } else {
+                    "Unable to update task. Please try again."
+                }
+                _uiState.update { it.copy(userMessage = safeMessage) }
             }
         }
     }

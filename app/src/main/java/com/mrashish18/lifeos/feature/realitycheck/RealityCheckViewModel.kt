@@ -54,13 +54,17 @@ class RealityCheckViewModel(
     )
 
     fun onClaimTextChanged(text: String) {
-        currentClaimText = text
-        _uiState.value = RealityCheckUiState.Input(claimText = currentClaimText, sourceUrl = currentSourceUrl)
+        if (text.length <= 500) {
+            currentClaimText = text
+            _uiState.value = RealityCheckUiState.Input(claimText = currentClaimText, sourceUrl = currentSourceUrl)
+        }
     }
 
     fun onSourceUrlChanged(url: String) {
-        currentSourceUrl = url
-        _uiState.value = RealityCheckUiState.Input(claimText = currentClaimText, sourceUrl = currentSourceUrl)
+        if (url.length <= 2048) {
+            currentSourceUrl = url
+            _uiState.value = RealityCheckUiState.Input(claimText = currentClaimText, sourceUrl = currentSourceUrl)
+        }
     }
 
     fun selectSampleClaim(claim: String) {
@@ -98,8 +102,13 @@ class RealityCheckViewModel(
                     _uiState.value = RealityCheckUiState.Success(result)
                 }
                 .onFailure { error ->
+                    val safeMessage = if (error is IllegalArgumentException) {
+                        error.message ?: "Invalid claim input"
+                    } else {
+                        "An unexpected error occurred during investigation. Please try again."
+                    }
                     _uiState.value = RealityCheckUiState.Error(
-                        message = error.message ?: "An unexpected error occurred during investigation.",
+                        message = safeMessage,
                         lastClaimText = textToAnalyze
                     )
                 }

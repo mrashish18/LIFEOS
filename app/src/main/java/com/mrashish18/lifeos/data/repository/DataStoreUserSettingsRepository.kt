@@ -57,6 +57,9 @@ class DataStoreUserSettingsRepository(
 
     override suspend fun getSettings(): UserSettings = settingsFlow.first()
 
+    private val TIME_FORMAT_REGEX = Regex("^([01]\\d|2[0-3]):([0-5]\\d)$")
+    private val SAFE_CATEGORY_REGEX = Regex("^[A-Z0-9_]{1,32}$")
+
     override suspend fun updateThemeMode(themeMode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.THEME_MODE] = themeMode.name
@@ -64,10 +67,12 @@ class DataStoreUserSettingsRepository(
     }
 
     override suspend fun updateAutoDayNight(enabled: Boolean, dayStart: String, nightStart: String) {
+        val safeDayStart = if (TIME_FORMAT_REGEX.matches(dayStart.trim())) dayStart.trim() else "06:00"
+        val safeNightStart = if (TIME_FORMAT_REGEX.matches(nightStart.trim())) nightStart.trim() else "18:00"
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.AUTO_DAY_NIGHT] = enabled
-            preferences[PreferencesKeys.DAY_START] = dayStart
-            preferences[PreferencesKeys.NIGHT_START] = nightStart
+            preferences[PreferencesKeys.DAY_START] = safeDayStart
+            preferences[PreferencesKeys.NIGHT_START] = safeNightStart
         }
     }
 
@@ -78,13 +83,15 @@ class DataStoreUserSettingsRepository(
     }
 
     override suspend fun toggleNotificationCategory(category: String, enabled: Boolean) {
+        val sanitized = category.trim().uppercase()
+        if (!SAFE_CATEGORY_REGEX.matches(sanitized)) return
         context.dataStore.edit { preferences ->
             val current = preferences[PreferencesKeys.NOTIF_CATEGORIES]?.toMutableSet()
                 ?: mutableSetOf("PERSONAL", "TRUTH", "MESH", "LEARNING", "EMERGENCY")
             if (enabled) {
-                current.add(category)
+                current.add(sanitized)
             } else {
-                current.remove(category)
+                current.remove(sanitized)
             }
             preferences[PreferencesKeys.NOTIF_CATEGORIES] = current
         }

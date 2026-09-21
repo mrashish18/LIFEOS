@@ -130,8 +130,13 @@ class ResilienceViewModel(
                     )
                 }
             }.onFailure { err ->
+                val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
+                    err.message ?: "Unable to queue message"
+                } else {
+                    "An unexpected error occurred while queueing the message."
+                }
                 _uiState.update {
-                    it.copy(feedbackMessage = "Failed to queue message: ${err.message}")
+                    it.copy(feedbackMessage = "Failed to queue message: $safeErr")
                 }
             }
         }
@@ -154,8 +159,13 @@ class ResilienceViewModel(
                     )
                 }
             }.onFailure { err ->
+                val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
+                    err.message ?: "Unable to relay message"
+                } else {
+                    "An unexpected error occurred while relaying the message."
+                }
                 _uiState.update {
-                    it.copy(feedbackMessage = "Relay rejected: ${err.message}")
+                    it.copy(feedbackMessage = "Relay rejected: $safeErr")
                 }
             }
         }

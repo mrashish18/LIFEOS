@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DashboardScenicBanner(
     title: String = "A little focus today\nA much better tomorrow",
-    pillText: String = "Your life. More possible.",
+    pillText: String = "Your life. More possible. \u2192",
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -64,7 +64,7 @@ fun DashboardScenicBanner(
             .fillMaxWidth()
             .height(148.dp),
         shape = RoundedCornerShape(22.dp),
-        shadowElevation = 3.dp
+        shadowElevation = 4.dp
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Scenic Canvas Background
@@ -85,11 +85,39 @@ fun DashboardScenicBanner(
                     )
                 )
 
+                // Celestial starlight in upper sky
+                val stars = listOf(
+                    Offset(w * 0.12f, h * 0.14f) to 1.8f,
+                    Offset(w * 0.28f, h * 0.24f) to 1.2f,
+                    Offset(w * 0.44f, h * 0.12f) to 2.0f,
+                    Offset(w * 0.60f, h * 0.18f) to 1.4f,
+                    Offset(w * 0.76f, h * 0.10f) to 1.8f,
+                    Offset(w * 0.88f, h * 0.22f) to 1.5f
+                )
+                stars.forEach { (pos, r) ->
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.80f),
+                        radius = r.dp.toPx(),
+                        center = pos
+                    )
+                }
+
+                // Atmospheric warm glow near horizon
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFFFFB703).copy(alpha = 0.45f), Color(0xFFF43F5E).copy(alpha = 0.20f), Color.Transparent),
+                        center = Offset(w * 0.70f, h * 0.65f),
+                        radius = w * 0.45f
+                    ),
+                    radius = w * 0.45f,
+                    center = Offset(w * 0.70f, h * 0.65f)
+                )
+
                 // Background mountain ridge
                 val bgPath = Path().apply {
-                    moveTo(0f, h * 0.70f)
-                    cubicTo(w * 0.20f, h * 0.45f, w * 0.40f, h * 0.65f, w * 0.65f, h * 0.50f)
-                    cubicTo(w * 0.80f, h * 0.40f, w * 0.90f, h * 0.58f, w, h * 0.52f)
+                    moveTo(0f, h * 0.68f)
+                    cubicTo(w * 0.20f, h * 0.45f, w * 0.40f, h * 0.62f, w * 0.65f, h * 0.48f)
+                    cubicTo(w * 0.80f, h * 0.38f, w * 0.90f, h * 0.55f, w, h * 0.50f)
                     lineTo(w, h)
                     lineTo(0f, h)
                     close()
@@ -97,15 +125,15 @@ fun DashboardScenicBanner(
                 drawPath(
                     path = bgPath,
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF4C1D95).copy(alpha = 0.75f), Color(0xFF1E1B4B))
+                        colors = listOf(Color(0xFF4C1D95).copy(alpha = 0.85f), Color(0xFF1E1B4B))
                     )
                 )
 
                 // Middle mountain ridge
                 val midPath = Path().apply {
-                    moveTo(0f, h * 0.82f)
-                    cubicTo(w * 0.25f, h * 0.60f, w * 0.45f, h * 0.78f, w * 0.75f, h * 0.65f)
-                    cubicTo(w * 0.88f, h * 0.60f, w * 0.95f, h * 0.72f, w, h * 0.68f)
+                    moveTo(0f, h * 0.80f)
+                    cubicTo(w * 0.25f, h * 0.58f, w * 0.45f, h * 0.74f, w * 0.75f, h * 0.62f)
+                    cubicTo(w * 0.88f, h * 0.56f, w * 0.95f, h * 0.68f, w, h * 0.65f)
                     lineTo(w, h)
                     lineTo(0f, h)
                     close()
@@ -113,14 +141,14 @@ fun DashboardScenicBanner(
                 drawPath(
                     path = midPath,
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF2E1065).copy(alpha = 0.85f), Color(0xFF0F172A))
+                        colors = listOf(Color(0xFF2E1065).copy(alpha = 0.90f), Color(0xFF0F172A))
                     )
                 )
 
                 // Foreground smooth ridge
                 val forePath = Path().apply {
-                    moveTo(0f, h * 0.90f)
-                    cubicTo(w * 0.35f, h * 0.78f, w * 0.65f, h * 0.88f, w, h * 0.80f)
+                    moveTo(0f, h * 0.88f)
+                    cubicTo(w * 0.35f, h * 0.76f, w * 0.65f, h * 0.86f, w, h * 0.78f)
                     lineTo(w, h)
                     lineTo(0f, h)
                     close()
@@ -128,17 +156,6 @@ fun DashboardScenicBanner(
                 drawPath(
                     path = forePath,
                     color = Color(0xFF090D1A)
-                )
-
-                // Atmospheric warm glow near bottom left
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0xFFFFB703).copy(alpha = 0.35f), Color.Transparent),
-                        center = Offset(w * 0.30f, h * 0.80f),
-                        radius = w * 0.35f
-                    ),
-                    radius = w * 0.35f,
-                    center = Offset(w * 0.30f, h * 0.80f)
                 )
             }
 
@@ -157,6 +174,14 @@ fun DashboardScenicBanner(
                         color = Color.White,
                         lineHeight = 21.sp,
                         letterSpacing = (-0.2).sp
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "\u2014 LIFEOS AUTONOMOUS ENGINE",
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.80f),
+                        letterSpacing = 0.6.sp
                     )
                 }
 
@@ -181,6 +206,275 @@ fun DashboardScenicBanner(
 }
 
 /**
+ * Scenic dawn mountain banner for Tasks Screen.
+ * Features early morning sunrise sky, mountain ridges, and execution momentum.
+ */
+@Composable
+fun TasksScenicBanner(
+    isDarkMode: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(146.dp),
+        shape = RoundedCornerShape(22.dp),
+        shadowElevation = if (isDarkMode) 0.dp else 4.dp,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155).copy(alpha = 0.6f) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+
+                // Morning dawn sky gradient: indigo to warm amber/coral sunrise
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = if (isDarkMode) {
+                            listOf(Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF4C1D95), Color(0xFF831843))
+                        } else {
+                            listOf(Color(0xFF1E1B4B), Color(0xFF3730A3), Color(0xFF6366F1), Color(0xFFF43F5E), Color(0xFFFBBF24))
+                        }
+                    )
+                )
+
+                // Morning stars
+                val stars = listOf(
+                    Offset(w * 0.10f, h * 0.15f) to 1.6f,
+                    Offset(w * 0.25f, h * 0.25f) to 1.2f,
+                    Offset(w * 0.40f, h * 0.12f) to 1.8f,
+                    Offset(w * 0.70f, h * 0.16f) to 1.4f,
+                    Offset(w * 0.88f, h * 0.20f) to 1.5f
+                )
+                stars.forEach { (pos, r) ->
+                    drawCircle(color = Color.White.copy(alpha = 0.75f), radius = r.dp.toPx(), center = pos)
+                }
+
+                // Radiant sunrise crest
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFFFDE047).copy(alpha = 0.55f), Color(0xFFFB923C).copy(alpha = 0.25f), Color.Transparent),
+                        center = Offset(w * 0.80f, h * 0.55f),
+                        radius = w * 0.40f
+                    ),
+                    radius = w * 0.40f,
+                    center = Offset(w * 0.80f, h * 0.55f)
+                )
+
+                // Distant mountain ridge
+                val bgPath = Path().apply {
+                    moveTo(0f, h * 0.60f)
+                    cubicTo(w * 0.20f, h * 0.42f, w * 0.40f, h * 0.58f, w * 0.65f, h * 0.44f)
+                    cubicTo(w * 0.80f, h * 0.36f, w * 0.92f, h * 0.50f, w, h * 0.46f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(
+                    path = bgPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color(0xFF4338CA).copy(alpha = 0.75f), Color(0xFF1E1B4B))
+                    )
+                )
+
+                // Foreground mountain ridge
+                val forePath = Path().apply {
+                    moveTo(0f, h * 0.76f)
+                    cubicTo(w * 0.30f, h * 0.60f, w * 0.60f, h * 0.72f, w, h * 0.64f)
+                    lineTo(w, h)
+                    lineTo(0f, h)
+                    close()
+                }
+                drawPath(
+                    path = forePath,
+                    color = if (isDarkMode) Color(0xFF090D1A) else Color(0xFF1E1B4B).copy(alpha = 0.92f)
+                )
+            }
+
+            // Typography overlay
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "\u201CSmall consistent steps\nbuild extraordinary outcomes.\u201D",
+                        fontSize = 15.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        lineHeight = 21.sp,
+                        letterSpacing = (-0.2).sp
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "\u2014 LIFEOS EXECUTION ENGINE",
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.85f),
+                        letterSpacing = 0.6.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White.copy(alpha = 0.18f))
+                        .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.5.dp)
+                ) {
+                    Text(
+                        text = "\u26A1 Adaptive Priority Engine \u2192",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        letterSpacing = 0.2.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Scenic cognitive cosmos banner for Intelligence Screen.
+ * Features neural constellation nodes, interconnected lines, and cosmic aurora.
+ */
+@Composable
+fun IntelligenceScenicBanner(
+    isDarkMode: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(146.dp),
+        shape = RoundedCornerShape(22.dp),
+        shadowElevation = if (isDarkMode) 0.dp else 4.dp,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155).copy(alpha = 0.6f) else Color(0xFFE2E8F0)
+        )
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+
+                // Deep cosmos sky gradient
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF090D1A),
+                            Color(0xFF1E1B4B),
+                            Color(0xFF312E81),
+                            Color(0xFF4C1D95),
+                            Color(0xFF6366F1).copy(alpha = 0.70f)
+                        )
+                    )
+                )
+
+                // Cognitive neural nodes & connections
+                val nodes = listOf(
+                    Offset(w * 0.15f, h * 0.30f),
+                    Offset(w * 0.32f, h * 0.18f),
+                    Offset(w * 0.50f, h * 0.38f),
+                    Offset(w * 0.72f, h * 0.22f),
+                    Offset(w * 0.88f, h * 0.42f),
+                    Offset(w * 0.65f, h * 0.62f),
+                    Offset(w * 0.38f, h * 0.68f)
+                )
+
+                val edges = listOf(
+                    0 to 1, 1 to 2, 2 to 3, 3 to 4, 2 to 5, 5 to 6, 0 to 6, 1 to 3
+                )
+
+                edges.forEach { (i, j) ->
+                    drawLine(
+                        color = Color(0xFFA5B4FC).copy(alpha = 0.35f),
+                        start = nodes[i],
+                        end = nodes[j],
+                        strokeWidth = 1.2.dp.toPx()
+                    )
+                }
+
+                nodes.forEach { pos ->
+                    drawCircle(
+                        color = Color(0xFF818CF8).copy(alpha = 0.40f),
+                        radius = 6.dp.toPx(),
+                        center = pos
+                    )
+                    drawCircle(
+                        color = Color.White,
+                        radius = 2.dp.toPx(),
+                        center = pos
+                    )
+                }
+
+                // Aurora glow near bottom
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(Color(0xFF6366F1).copy(alpha = 0.40f), Color(0xFFA855F7).copy(alpha = 0.20f), Color.Transparent),
+                        center = Offset(w * 0.50f, h * 0.75f),
+                        radius = w * 0.50f
+                    ),
+                    radius = w * 0.50f,
+                    center = Offset(w * 0.50f, h * 0.75f)
+                )
+            }
+
+            // Typography overlay
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "\u201CObserving patterns.\nCompounding wisdom.\u201D",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        lineHeight = 22.sp,
+                        letterSpacing = (-0.2).sp
+                    )
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = "\u2014 LIFEOS COGNITIVE ARCHITECTURE",
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White.copy(alpha = 0.85f),
+                        letterSpacing = 0.6.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White.copy(alpha = 0.18f))
+                        .border(1.dp, Color.White.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
+                        .padding(horizontal = 12.dp, vertical = 4.5.dp)
+                ) {
+                    Text(
+                        text = "\uD83E\uDDE0 On-Device Neural Architecture \u2192",
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        letterSpacing = 0.2.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+/**
  * Scenic watercolor mountain banner for RealityCheck (Reference Image 2, Screen 6).
  * Theme-aware: renders a dramatic sunset in dark mode, soft pastel in light mode.
  */
@@ -190,124 +484,142 @@ fun RealityCheckScenicHeader(
     modifier: Modifier = Modifier
 ) {
     Canvas(
-        modifier = modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         val w = size.width
         val h = size.height
 
-        if (isDarkMode) {
-            // ── Dark mode: dramatic dusk sky with warm horizon ──
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0F172A),
-                        Color(0xFF1E1B4B),
-                        Color(0xFF4C1D95),
-                        Color(0xFF7C3AED).copy(alpha = 0.7f),
-                        Color(0xFFEC4899).copy(alpha = 0.45f),
-                        Color(0xFFFDE047).copy(alpha = 0.3f)
-                    )
-                )
-            )
-
-            // Distant mountain ridge
-            val bgPath = Path().apply {
-                moveTo(0f, h * 0.55f)
-                cubicTo(w * 0.15f, h * 0.35f, w * 0.35f, h * 0.50f, w * 0.55f, h * 0.38f)
-                cubicTo(w * 0.75f, h * 0.30f, w * 0.88f, h * 0.45f, w, h * 0.40f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            drawPath(
-                path = bgPath,
-                color = Color(0xFF4C1D95).copy(alpha = 0.55f)
-            )
-
-            // Middle mountain ridge
-            val midPath = Path().apply {
-                moveTo(0f, h * 0.72f)
-                cubicTo(w * 0.25f, h * 0.50f, w * 0.45f, h * 0.65f, w * 0.70f, h * 0.52f)
-                cubicTo(w * 0.85f, h * 0.46f, w * 0.95f, h * 0.62f, w, h * 0.58f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            drawPath(
-                path = midPath,
-                color = Color(0xFF2E1065).copy(alpha = 0.7f)
-            )
-
-            // Foreground ridge
-            val forePath = Path().apply {
-                moveTo(0f, h * 0.88f)
-                cubicTo(w * 0.35f, h * 0.78f, w * 0.65f, h * 0.86f, w, h * 0.80f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            drawPath(path = forePath, color = Color(0xFF0B1020))
-
-            // Warm horizon glow
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFFFFB703).copy(alpha = 0.25f), Color.Transparent),
-                    center = Offset(w * 0.50f, h * 0.55f),
-                    radius = w * 0.40f
-                ),
-                radius = w * 0.40f,
-                center = Offset(w * 0.50f, h * 0.55f)
+        // Rich twilight atmospheric sky gradient
+        val skyColors = if (isDarkMode) {
+            listOf(
+                Color(0xFF090D1A),
+                Color(0xFF111827),
+                Color(0xFF1E1B4B),
+                Color(0xFF312E81),
+                Color(0xFF4C1D95),
+                Color(0xFF7C3AED).copy(alpha = 0.75f),
+                Color(0xFF9D174D).copy(alpha = 0.50f)
             )
         } else {
-            // ── Light mode: soft pastel sky ──
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFDDD6FE).copy(alpha = 0.6f),
-                        Color(0xFFE0E7FF).copy(alpha = 0.4f),
-                        Color(0xFFF8FAFC)
-                    )
-                )
-            )
-
-            // Distant soft purple mountains
-            val bgPath = Path().apply {
-                moveTo(0f, h * 0.55f)
-                cubicTo(w * 0.15f, h * 0.35f, w * 0.35f, h * 0.50f, w * 0.55f, h * 0.38f)
-                cubicTo(w * 0.75f, h * 0.30f, w * 0.88f, h * 0.45f, w, h * 0.40f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            drawPath(
-                path = bgPath,
-                color = Color(0xFFC4B5FD).copy(alpha = 0.35f)
-            )
-
-            // Middle mountain ridge
-            val midPath = Path().apply {
-                moveTo(0f, h * 0.72f)
-                cubicTo(w * 0.25f, h * 0.50f, w * 0.45f, h * 0.65f, w * 0.70f, h * 0.52f)
-                cubicTo(w * 0.85f, h * 0.46f, w * 0.95f, h * 0.62f, w, h * 0.58f)
-                lineTo(w, h)
-                lineTo(0f, h)
-                close()
-            }
-            drawPath(
-                path = midPath,
-                color = Color(0xFFA78BFA).copy(alpha = 0.25f)
-            )
-
-            // Foreground soft haze
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color(0xFFF8FAFC).copy(alpha = 0.9f)),
-                    startY = h * 0.6f,
-                    endY = h
-                )
+            listOf(
+                Color(0xFF1E1B4B),
+                Color(0xFF2E1065),
+                Color(0xFF4338CA),
+                Color(0xFF6366F1),
+                Color(0xFFA855F7),
+                Color(0xFFEC4899).copy(alpha = 0.85f),
+                Color(0xFFFDE047).copy(alpha = 0.35f)
             )
         }
+
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = skyColors,
+                startY = 0f,
+                endY = h
+            )
+        )
+
+        // Shimmering celestial stars in upper atmosphere
+        val stars = listOf(
+            Offset(w * 0.08f, h * 0.14f) to 1.8f,
+            Offset(w * 0.22f, h * 0.26f) to 1.2f,
+            Offset(w * 0.38f, h * 0.12f) to 2.2f,
+            Offset(w * 0.52f, h * 0.20f) to 1.4f,
+            Offset(w * 0.68f, h * 0.10f) to 2.0f,
+            Offset(w * 0.82f, h * 0.22f) to 1.5f,
+            Offset(w * 0.92f, h * 0.15f) to 1.8f,
+            Offset(w * 0.15f, h * 0.40f) to 1.2f,
+            Offset(w * 0.85f, h * 0.38f) to 1.3f
+        )
+        stars.forEach { (pos, r) ->
+            drawCircle(
+                color = Color.White.copy(alpha = if (isDarkMode) 0.85f else 0.75f),
+                radius = r.dp.toPx(),
+                center = pos
+            )
+        }
+
+        // Warm golden-rose horizon glow
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFFFBBF24).copy(alpha = if (isDarkMode) 0.40f else 0.50f),
+                    Color(0xFFF43F5E).copy(alpha = 0.25f),
+                    Color.Transparent
+                ),
+                center = Offset(w * 0.72f, h * 0.55f),
+                radius = w * 0.45f
+            ),
+            radius = w * 0.45f,
+            center = Offset(w * 0.72f, h * 0.55f)
+        )
+
+        // Celestial moon / starlight crest
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = if (isDarkMode) 0.35f else 0.45f),
+                    Color.White.copy(alpha = 0.10f),
+                    Color.Transparent
+                ),
+                center = Offset(w * 0.16f, h * 0.18f),
+                radius = w * 0.22f
+            ),
+            radius = w * 0.22f,
+            center = Offset(w * 0.16f, h * 0.18f)
+        )
+
+        // Distant mountain ridge (atmospheric purple-indigo)
+        val bgPath = Path().apply {
+            moveTo(0f, h * 0.56f)
+            cubicTo(w * 0.18f, h * 0.38f, w * 0.36f, h * 0.54f, w * 0.56f, h * 0.42f)
+            cubicTo(w * 0.74f, h * 0.32f, w * 0.88f, h * 0.48f, w, h * 0.44f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(
+            path = bgPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF6D28D9).copy(alpha = if (isDarkMode) 0.70f else 0.85f),
+                    Color(0xFF312E81)
+                )
+            )
+        )
+
+        // Middle mountain ridge (deep violet silhouette)
+        val midPath = Path().apply {
+            moveTo(0f, h * 0.70f)
+            cubicTo(w * 0.22f, h * 0.52f, w * 0.45f, h * 0.68f, w * 0.70f, h * 0.56f)
+            cubicTo(w * 0.85f, h * 0.48f, w * 0.94f, h * 0.62f, w, h * 0.58f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(
+            path = midPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF4338CA).copy(alpha = if (isDarkMode) 0.85f else 0.92f),
+                    Color(0xFF1E1B4B)
+                )
+            )
+        )
+
+        // Foreground smooth mountain ridge (dark rich contrast)
+        val forePath = Path().apply {
+            moveTo(0f, h * 0.84f)
+            cubicTo(w * 0.30f, h * 0.72f, w * 0.60f, h * 0.82f, w, h * 0.76f)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(
+            path = forePath,
+            color = if (isDarkMode) Color(0xFF070B14) else Color(0xFF0F172A).copy(alpha = 0.96f)
+        )
     }
 }
 

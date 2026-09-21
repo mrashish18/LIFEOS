@@ -203,7 +203,7 @@ fun EmergencyModeDialog(
                     Spacer(modifier = Modifier.height(6.dp))
                     OutlinedTextField(
                         value = payload,
-                        onValueChange = { payload = it },
+                        onValueChange = { if (it.length <= 500) payload = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(110.dp),
@@ -223,7 +223,7 @@ fun EmergencyModeDialog(
 
                 OutlinedTextField(
                     value = recipientId,
-                    onValueChange = { recipientId = it },
+                    onValueChange = { if (it.length <= 64) recipientId = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Target Node (optional, default: BROADCAST)", style = MaterialTheme.typography.labelSmall) },
                     placeholder = { Text("e.g. GATEWAY-EGRESS", style = MaterialTheme.typography.bodySmall) },

@@ -18,6 +18,10 @@ import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.util.UUID
 
+private val CONTROL_CHAR_REGEX = Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]")
+private val SAFE_NODE_ID_REGEX = Regex("^[a-zA-Z0-9_.-]{1,64}$")
+private const val MAX_PAYLOAD_LENGTH = 1000
+
 data class SyncResult(
     val processedCount: Int,
     val syncedCount: Int,
@@ -42,17 +46,31 @@ class CreateEmergencyMessageUseCase(
         recipientId: String? = null,
         networkState: NetworkState = NetworkState.UNKNOWN
     ): Result<EmergencyMessage> {
-        if (payload.isBlank()) {
+        val sanitizedSender = senderId.trim()
+        if (!SAFE_NODE_ID_REGEX.matches(sanitizedSender)) {
+            return Result.failure(IllegalArgumentException("Invalid sender identifier: must be 1-64 alphanumeric or safe delimiter characters"))
+        }
+
+        val sanitizedRecipient = recipientId?.trim()?.ifBlank { null }
+        if (sanitizedRecipient != null && !SAFE_NODE_ID_REGEX.matches(sanitizedRecipient)) {
+            return Result.failure(IllegalArgumentException("Invalid recipient identifier: must be 1-64 alphanumeric or safe delimiter characters"))
+        }
+
+        val sanitizedPayload = payload.replace(CONTROL_CHAR_REGEX, "").trim()
+        if (sanitizedPayload.isBlank()) {
             return Result.failure(IllegalArgumentException("Emergency payload cannot be blank"))
+        }
+        if (sanitizedPayload.length > MAX_PAYLOAD_LENGTH) {
+            return Result.failure(IllegalArgumentException("Emergency payload exceeds maximum allowable length of $MAX_PAYLOAD_LENGTH characters"))
         }
 
         return try {
             val message = engine.createMessage(
-                senderId = senderId,
-                payload = payload,
+                senderId = sanitizedSender,
+                payload = sanitizedPayload,
                 type = type,
                 priority = priority,
-                recipientId = recipientId,
+                recipientId = sanitizedRecipient,
                 createdAt = clock.instant()
             )
 
@@ -214,6 +232,16 @@ class ProcessIncomingMessageUseCase(
     private val clock: java.time.Clock = java.time.Clock.systemUTC()
 ) {
     suspend operator fun invoke(incomingMessage: EmergencyMessage): Result<EmergencyMessage> {
+        if (incomingMessage.payload.isBlank() || incomingMessage.payload.length > 2000) {
+            return Result.failure(IllegalArgumentException("Invalid payload size in incoming message"))
+        }
+        if (!SAFE_NODE_ID_REGEX.matches(incomingMessage.senderId.trim())) {
+            return Result.failure(IllegalArgumentException("Invalid sender identifier in incoming message"))
+        }
+        if (incomingMessage.maxHops !in 1..20 || incomingMessage.hopCount < 0) {
+            return Result.failure(IllegalArgumentException("Invalid hop metrics in incoming message"))
+        }
+
         if (emergencyRepository.hasMessage(incomingMessage.messageId) ||
             emergencyRepository.getMessageByFingerprint(incomingMessage.fingerprintSha256) != null
         ) {

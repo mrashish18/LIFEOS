@@ -194,6 +194,8 @@ fun LifeOsApp(
                     )
                     LifeOsDestination.REALITY_CHECK -> RealityCheckScreen(
                         viewModel = realityCheckViewModel,
+                        unreadNotificationCount = notificationUiState.unreadCount,
+                        onOpenNotifications = { notificationViewModel.openNotificationCenter() },
                         onOpenDrawer = { coroutineScope.launch { drawerState.open() } },
                         isDarkMode = isDarkMode
                     )

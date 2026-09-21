@@ -13,6 +13,11 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 
+private val CONTROL_CHAR_REGEX = Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]")
+private const val MAX_TITLE_LENGTH = 200
+private const val MAX_DESCRIPTION_LENGTH = 2000
+private const val MAX_ESTIMATED_MINUTES = 10080
+
 class CreateTaskUseCase(
     private val taskRepository: TaskRepository,
     private val behaviorEventRepository: BehaviorEventRepository
@@ -25,12 +30,23 @@ class CreateTaskUseCase(
         estimatedMinutes: Int? = null,
         dueAt: Instant? = null
     ): Task {
-        require(title.isNotBlank()) { "Task title cannot be blank" }
+        val sanitizedTitle = title.replace(CONTROL_CHAR_REGEX, "").trim()
+        require(sanitizedTitle.isNotBlank()) { "Task title cannot be blank" }
+        require(sanitizedTitle.length <= MAX_TITLE_LENGTH) { "Task title cannot exceed $MAX_TITLE_LENGTH characters" }
+
+        val sanitizedDescription = description.replace(CONTROL_CHAR_REGEX, "").trim()
+        require(sanitizedDescription.length <= MAX_DESCRIPTION_LENGTH) { "Task description cannot exceed $MAX_DESCRIPTION_LENGTH characters" }
+
+        if (estimatedMinutes != null) {
+            require(estimatedMinutes in 1..MAX_ESTIMATED_MINUTES) {
+                "Estimated duration must be between 1 and $MAX_ESTIMATED_MINUTES minutes"
+            }
+        }
 
         val task = Task(
             id = UUID.randomUUID().toString(),
-            title = title.trim(),
-            description = description.trim(),
+            title = sanitizedTitle,
+            description = sanitizedDescription,
             priority = priority,
             status = TaskStatus.PENDING,
             category = category,
@@ -65,7 +81,26 @@ class UpdateTaskUseCase(
     private val taskRepository: TaskRepository
 ) {
     suspend operator fun invoke(task: Task) {
-        taskRepository.updateTask(task.copy(updatedAt = Instant.now()))
+        val sanitizedTitle = task.title.replace(CONTROL_CHAR_REGEX, "").trim()
+        require(sanitizedTitle.isNotBlank()) { "Task title cannot be blank" }
+        require(sanitizedTitle.length <= MAX_TITLE_LENGTH) { "Task title cannot exceed $MAX_TITLE_LENGTH characters" }
+
+        val sanitizedDescription = task.description.replace(CONTROL_CHAR_REGEX, "").trim()
+        require(sanitizedDescription.length <= MAX_DESCRIPTION_LENGTH) { "Task description cannot exceed $MAX_DESCRIPTION_LENGTH characters" }
+
+        if (task.estimatedMinutes != null) {
+            require(task.estimatedMinutes in 1..MAX_ESTIMATED_MINUTES) {
+                "Estimated duration must be between 1 and $MAX_ESTIMATED_MINUTES minutes"
+            }
+        }
+
+        taskRepository.updateTask(
+            task.copy(
+                title = sanitizedTitle,
+                description = sanitizedDescription,
+                updatedAt = Instant.now()
+            )
+        )
     }
 }
 

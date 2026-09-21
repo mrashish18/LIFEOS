@@ -1,5 +1,7 @@
 package com.mrashish18.lifeos.ui.theme
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // ==========================================
@@ -130,6 +132,80 @@ object LifeOsGradients {
         listOf(Color(0xFFEEF2FF), Color(0xFFF8FAFC))
     )
 }
+
+/**
+ * Theme-aware semantic surfaces shared by LIFEOS components. Keeping these
+ * values here prevents light-only card and chip colors from leaking into the
+ * dark experience while retaining intentional semantic accents.
+ */
+@Immutable
+data class LifeOsSemanticPalette(
+    val surfaceElevated: Color,
+    val surfaceInput: Color,
+    val border: Color,
+    val borderSubtle: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textMuted: Color,
+    val primary: Color,
+    val primaryStrong: Color,
+    val success: Color,
+    val truth: Color,
+    val warning: Color,
+    val danger: Color,
+    val info: Color,
+    val successSurface: Color,
+    val warningSurface: Color,
+    val dangerSurface: Color,
+    val infoSurface: Color,
+    val neutralSurface: Color
+)
+
+val LifeOsLightSemanticPalette = LifeOsSemanticPalette(
+    surfaceElevated = Color(0xFFEDE9FE),
+    surfaceInput = Color(0xFFF1F5F9),
+    border = Color(0xFFE2E8F0),
+    borderSubtle = Color(0xFFF1F5F9),
+    textPrimary = Color(0xFF0F172A),
+    textSecondary = Color(0xFF475569),
+    textMuted = Color(0xFF64748B),
+    primary = Color(0xFF4F46E5),
+    primaryStrong = Color(0xFF4338CA),
+    success = Color(0xFF10B981),
+    truth = Color(0xFF059669),
+    warning = Color(0xFFF59E0B),
+    danger = Color(0xFFEF4444),
+    info = Color(0xFF2563EB),
+    successSurface = Color(0xFFF0FDF4),
+    warningSurface = Color(0xFFFFFBEB),
+    dangerSurface = Color(0xFFFEF2F2),
+    infoSurface = Color(0xFFEFF6FF),
+    neutralSurface = Color(0xFFF1F5F9)
+)
+
+val LifeOsDarkSemanticPalette = LifeOsSemanticPalette(
+    surfaceElevated = Color(0xFF172033),
+    surfaceInput = Color(0xFF1E293B),
+    border = Color(0xFF334155),
+    borderSubtle = Color(0xFF1E293B),
+    textPrimary = Color(0xFFF8FAFC),
+    textSecondary = Color(0xFFCBD5E1),
+    textMuted = Color(0xFF94A3B8),
+    primary = Color(0xFF6366F1),
+    primaryStrong = Color(0xFF818CF8),
+    success = Color(0xFF10B981),
+    truth = Color(0xFF34D399),
+    warning = Color(0xFFF59E0B),
+    danger = Color(0xFFFB7185),
+    info = Color(0xFF3B82F6),
+    successSurface = Color(0xFF064E3B),
+    warningSurface = Color(0xFF451A03),
+    dangerSurface = Color(0xFF450A0A),
+    infoSurface = Color(0xFF172554),
+    neutralSurface = Color(0xFF172033)
+)
+
+val LocalLifeOsSemanticPalette = staticCompositionLocalOf { LifeOsLightSemanticPalette }
 
 // ==========================================
 // RescueMesh Dark Showcase Design Tokens (Reference Image 1)

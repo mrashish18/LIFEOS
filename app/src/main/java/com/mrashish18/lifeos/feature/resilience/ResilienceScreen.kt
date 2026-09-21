@@ -308,7 +308,44 @@ private fun RescueMeshCenterScreen(
             relayingCount = uiState.relayingCount
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── OFFLINE MESH TRANSMISSION PIPELINE STRIP ──
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = if (isDarkMode) Color(0xFF172033) else Color(0xFFF8FAFC),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+            )
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                Text(
+                    text = "OFFLINE MESH TRANSMISSION PIPELINE",
+                    fontSize = 8.5.sp,
+                    fontWeight = FontWeight.Black,
+                    color = if (isDarkMode) Color(0xFF38BDF8) else Color(0xFF0284C7),
+                    letterSpacing = 0.7.sp
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MeshStagePill(step = "\uD83D\uDCE1 DISCOVER", label = "BLE Sense", color = Color(0xFF0284C7), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    MeshStagePill(step = "\uD83E\uDD1D HANDSHAKE", label = "Encrypted", color = Color(0xFF2563EB), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    MeshStagePill(step = "\uD83D\uDD04 RELAY", label = "Multi-Hop", color = Color(0xFF7C3AED), isDarkMode = isDarkMode)
+                    Text("→", fontSize = 10.sp, color = if (isDarkMode) Color(0xFF64748B) else Color(0xFF94A3B8), fontWeight = FontWeight.Bold)
+                    MeshStagePill(step = "\u2705 DELIVERED", label = "Confirmed", color = Color(0xFF16A34A), isDarkMode = isDarkMode)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Clean White 3-Metrics Surface Card (Reference Image 2, Screen 8)
         Surface(
@@ -1263,3 +1300,35 @@ private fun MessageQueueScreen(
         Spacer(modifier = Modifier.height(60.dp))
     }
 }
+
+@Composable
+private fun MeshStagePill(
+    step: String,
+    label: String,
+    color: Color,
+    isDarkMode: Boolean = false
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (isDarkMode) color.copy(alpha = 0.25f) else color.copy(alpha = 0.12f))
+                .padding(horizontal = 6.dp, vertical = 2.5.dp)
+        ) {
+            Text(
+                text = step,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Black,
+                color = if (isDarkMode) color.copy(alpha = 0.95f) else color
+            )
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            fontSize = 7.5.sp,
+            color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B),
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
