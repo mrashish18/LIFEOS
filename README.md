@@ -438,43 +438,6 @@ python backend/tests/load/load_test.py
 
 ---
 
-## 🎬 3-Minute Hackathon Demonstration Flow
-
-For hackathon judges and evaluators, follow this streamlined 5-step demonstration walkthrough:
-
-```mermaid
-flowchart LR
-    Step1["<b>01. Command Center</b><br/>Circadian Rationale<br/><i>(45 Seconds)</i>"] --> Step2["<b>02. Action Queue</b><br/>Rapid Task Creation<br/><i>(30 Seconds)</i>"]
-    Step2 --> Step3["<b>03. RealityCheck</b><br/>Factual Debunking<br/><i>(45 Seconds)</i>"]
-    Step3 --> Step4["<b>04. RescueMesh</b><br/>Offline SOS & P2P Queue<br/><i>(45 Seconds)</i>"]
-    Step4 --> Step5["<b>05. Cloud Gateway</b><br/>Resilient Sync & Metrics<br/><i>(15 Seconds)</i>"]
-```
-
-### Step-by-Step Evaluator Walkthrough
-
-1. **Step 1 — Command Center & Context Engine (45s)**:
-   - Launch LIFEOS on Android 14+ (or Pixel 6 emulator).
-   - Point out the scenic sunrise hero canvas, the 2×2 live telemetry cards, and the real-time momentum score.
-   - Highlight the **"Why this recommendation?"** explanation capsule dynamically adapting to the user's circadian energy profile.
-2. **Step 2 — Action Queue & Rapid Task Authoring (30s)**:
-   - Tap **Action Queue** in the bottom navigation. Tap the floating action button (`+`).
-   - Create a High-Priority task with a 25-minute focus budget.
-   - Observe the instant reactive re-ordering of the task list computed by the on-device Heuristic Decision Scorer.
-3. **Step 3 — RealityCheck Deterministic Debunking (45s)**:
-   - Open the Navigation Drawer &rarr; select **RealityCheck**.
-   - Tap one of the curated inquiry chips (e.g., scientific claim). Tap **Verify Claim**.
-   - Review the deterministic verdict (`SUPPORTED` / `CONTRADICTED`), the 84% confidence rating, and the authoritative institutional citations (NASA, WHO).
-4. **Step 4 — RescueMesh Offline Emergency SOS (45s)**:
-   - Open the Navigation Drawer &rarr; select **RescueMesh**.
-   - View the active 3-node P2P mesh topology and status counters (`Nodes Online`, `Queued`, `Relaying`).
-   - Tap **Broadcast SOS**, select `Critical` triage, enter an emergency payload, and dispatch.
-   - Switch to the **Message Queue** tab to inspect the cryptographically hashed SHA-256 packet, 0-hop status, and 48-hour TTL countdown.
-5. **Step 5 — Hardened Backend & Automated Verification (15s)**:
-   - Highlight the 177 green passing tests across Android and FastAPI.
-   - Query `/health/ready` and view live Prometheus metrics (`/metrics`) demonstrating sliding-window rate limiting and bounded queue load shedding.
-
----
-
 ## 🛠️ Quick Start & Developer Guide
 
 ### Prerequisites
