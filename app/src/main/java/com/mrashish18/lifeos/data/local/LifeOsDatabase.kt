@@ -28,7 +28,7 @@ import com.mrashish18.lifeos.data.local.entity.TaskEntity
         InvestigationEntity::class,
         NotificationEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class LifeOsDatabase : RoomDatabase() {
@@ -88,6 +88,19 @@ abstract class LifeOsDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_tasks_status_createdAtEpochMillis` ON `tasks` (`status`, `createdAtEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_tasks_category` ON `tasks` (`category`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_emergency_messages_fingerprintSha256` ON `emergency_messages` (`fingerprintSha256`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_emergency_messages_status_priority_createdAtEpochMillis` ON `emergency_messages` (`status`, `priority`, `createdAtEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_behavior_events_type_timestampEpochMillis` ON `behavior_events` (`type`, `timestampEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_behavior_events_timestampEpochMillis` ON `behavior_events` (`timestampEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_investigation_records_timestampEpochMillis` ON `investigation_records` (`timestampEpochMillis`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_investigation_records_domainCategory` ON `investigation_records` (`domainCategory`)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: LifeOsDatabase? = null
 
@@ -98,7 +111,7 @@ abstract class LifeOsDatabase : RoomDatabase() {
                     LifeOsDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

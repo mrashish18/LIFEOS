@@ -78,9 +78,9 @@ fun TasksScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Section Header matching Screen 2
             Row(
@@ -210,7 +210,11 @@ fun TasksScreen(
                 ).forEach { (filter, label) ->
                     val isSelected = uiState.selectedFilter == filter
                     val pillBg by animateColorAsState(
-                        targetValue = if (isSelected) Color(0xFF4338CA) else if (isDarkMode) Color(0xFF172033) else Color(0xFFF1F5F9),
+                        targetValue = if (isSelected) {
+                            if (isDarkMode) Color(0xFF6366F1) else Color(0xFF4338CA)
+                        } else {
+                            if (isDarkMode) Color(0xFF172033) else Color(0xFFF1F5F9)
+                        },
                         label = "taskFilterBg"
                     )
                     val pillTextColor by animateColorAsState(
@@ -221,9 +225,12 @@ fun TasksScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .background(pillBg)
-                            .then(
-                                if (isDarkMode && !isSelected) Modifier.border(1.dp, Color(0xFF334155), RoundedCornerShape(16.dp))
-                                else Modifier
+                            .border(
+                                1.dp,
+                                if (isSelected) Color.Transparent
+                                else if (isDarkMode) Color(0xFF334155)
+                                else Color(0xFFE2E8F0),
+                                RoundedCornerShape(16.dp)
                             )
                             .clickable { viewModel.setFilter(filter) }
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -406,9 +413,9 @@ private fun PremiumTaskCard(
         color = if (isDarkMode) Color(0xFF111827) else Color.White,
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9)
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
         ),
-        shadowElevation = if (isDarkMode) 0.dp else 1.dp
+        shadowElevation = if (isDarkMode) 0.dp else 2.dp
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             // Row 1: Priority + Category + Status on right
@@ -776,6 +783,11 @@ private fun TaskEditorBottomSheet(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.border(
+            1.dp,
+            if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0),
+            RoundedCornerShape(24.dp)
+        ),
         shape = RoundedCornerShape(24.dp),
         containerColor = if (isDarkMode) Color(0xFF111827) else Color.White,
         title = {

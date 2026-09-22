@@ -5,12 +5,19 @@ import androidx.room.PrimaryKey
 import com.mrashish18.lifeos.core.model.BehaviorEvent
 import com.mrashish18.lifeos.core.model.BehaviorEventType
 import org.json.JSONObject
+import androidx.room.Index
 import java.time.Instant
 
 /**
  * Room database entity representing a recorded user or system behavioral event.
  */
-@Entity(tableName = "behavior_events")
+@Entity(
+    tableName = "behavior_events",
+    indices = [
+        Index(value = ["type", "timestampEpochMillis"]),
+        Index(value = ["timestampEpochMillis"])
+    ]
+)
 data class BehaviorEventEntity(
     @PrimaryKey
     val id: String,

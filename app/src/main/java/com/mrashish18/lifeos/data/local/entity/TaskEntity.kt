@@ -8,10 +8,18 @@ import com.mrashish18.lifeos.core.model.TaskPriority
 import com.mrashish18.lifeos.core.model.TaskStatus
 import java.time.Instant
 
+import androidx.room.Index
+
 /**
  * Room database entity representing the persisted task record.
  */
-@Entity(tableName = "tasks")
+@Entity(
+    tableName = "tasks",
+    indices = [
+        Index(value = ["status", "createdAtEpochMillis"]),
+        Index(value = ["category"])
+    ]
+)
 data class TaskEntity(
     @PrimaryKey
     val id: String,

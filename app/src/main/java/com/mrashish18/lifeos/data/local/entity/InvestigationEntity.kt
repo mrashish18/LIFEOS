@@ -7,10 +7,18 @@ import com.mrashish18.lifeos.core.model.DomainCategory
 import com.mrashish18.lifeos.core.model.InvestigationRecord
 import com.mrashish18.lifeos.core.model.Verdict
 
+import androidx.room.Index
+
 /**
  * Room database entity representing a completed RealityCheck investigation.
  */
-@Entity(tableName = "investigation_records")
+@Entity(
+    tableName = "investigation_records",
+    indices = [
+        Index(value = ["timestampEpochMillis"]),
+        Index(value = ["domainCategory"])
+    ]
+)
 data class InvestigationEntity(
     @PrimaryKey val id: String,
     val originalClaim: String,

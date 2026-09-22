@@ -9,11 +9,15 @@ interface EmergencyMessageRepository {
     fun observeMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): Flow<List<EmergencyMessage>>
     suspend fun getAllMessages(): List<EmergencyMessage>
     suspend fun getQueuedMessages(): List<EmergencyMessage>
+    suspend fun getQueuedMessagesBounded(limit: Int = 50): List<EmergencyMessage> = getQueuedMessages().take(limit)
     suspend fun getMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): List<EmergencyMessage>
     suspend fun getMessageById(id: String): EmergencyMessage?
     suspend fun getMessageByFingerprint(sha256: String): EmergencyMessage?
     suspend fun insertMessage(message: EmergencyMessage)
     suspend fun updateMessage(message: EmergencyMessage)
+    suspend fun updateMessages(messages: List<EmergencyMessage>) {
+        messages.forEach { updateMessage(it) }
+    }
     suspend fun deleteMessage(id: String)
     suspend fun hasMessage(messageId: String): Boolean
     suspend fun clearAll()

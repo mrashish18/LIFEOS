@@ -296,7 +296,7 @@ class SyncEmergencyQueueUseCase(
             )
         }
 
-        val rawQueued = emergencyRepository.getQueuedMessages()
+        val rawQueued = emergencyRepository.getQueuedMessagesBounded(50)
         if (rawQueued.isEmpty()) {
             return SyncResult(
                 processedCount = 0,
@@ -322,11 +322,12 @@ class SyncEmergencyQueueUseCase(
         var expired = 0
         var failed = 0
         val now = clock.instant()
+        val messagesToUpdate = mutableListOf<EmergencyMessage>()
 
         for (message in queuedMessages) {
             if (engine.isExpired(message, now)) {
                 val expiredMsg = message.copy(status = MessageStatus.EXPIRED)
-                emergencyRepository.updateMessage(expiredMsg)
+                messagesToUpdate.add(expiredMsg)
                 behaviorEventRepository.recordEvent(
                     BehaviorEvent(
                         id = UUID.randomUUID().toString(),
@@ -340,7 +341,7 @@ class SyncEmergencyQueueUseCase(
 
             when (val res = networkTransport.transmit(message, networkState)) {
                 is TransportResult.Success -> {
-                    emergencyRepository.updateMessage(res.updatedMessage)
+                    messagesToUpdate.add(res.updatedMessage)
                     behaviorEventRepository.recordEvent(
                         BehaviorEvent(
                             id = UUID.randomUUID().toString(),
@@ -354,12 +355,17 @@ class SyncEmergencyQueueUseCase(
                     synced++
                 }
                 is TransportResult.Failed -> {
-                    emergencyRepository.updateMessage(res.message)
+                    messagesToUpdate.add(res.message)
                     failed++
                 }
                 is TransportResult.QueuedLocally -> {
                 }
             }
+        }
+
+        // Batch update all changed messages in a single database operation
+        if (messagesToUpdate.isNotEmpty()) {
+            emergencyRepository.updateMessages(messagesToUpdate)
         }
 
         return SyncResult(

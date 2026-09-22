@@ -276,9 +276,17 @@ private fun CategoryFilterChip(
     onClick: () -> Unit,
     isDarkMode: Boolean = false
 ) {
-    val backgroundColor = if (isSelected) Color(0xFF4338CA) else if (isDarkMode) Color(0xFF172033) else Color.White
+    val backgroundColor = if (isSelected) {
+        if (isDarkMode) Color(0xFF6366F1) else Color(0xFF4338CA)
+    } else {
+        if (isDarkMode) Color(0xFF1E293B) else Color.White
+    }
     val textColor = if (isSelected) Color.White else if (isDarkMode) Color(0xFFCBD5E1) else Color(0xFF64748B)
-    val borderColor = if (isSelected) Color(0xFF4338CA) else if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+    val borderColor = if (isSelected) {
+        if (isDarkMode) Color(0xFF818CF8) else Color(0xFF4338CA)
+    } else {
+        if (isDarkMode) Color(0xFF334155) else Color(0xFFE2E8F0)
+    }
 
     Surface(
         shape = RoundedCornerShape(20.dp),

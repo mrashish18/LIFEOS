@@ -8,9 +8,16 @@ import com.mrashish18.lifeos.core.model.MessageStatus
 import com.mrashish18.lifeos.core.model.MessageType
 import com.mrashish18.lifeos.core.model.RelayHop
 import com.mrashish18.lifeos.core.model.TransportType
+import androidx.room.Index
 import java.time.Instant
 
-@Entity(tableName = "emergency_messages")
+@Entity(
+    tableName = "emergency_messages",
+    indices = [
+        Index(value = ["fingerprintSha256"], unique = true),
+        Index(value = ["status", "priority", "createdAtEpochMillis"])
+    ]
+)
 data class EmergencyMessageEntity(
     @PrimaryKey
     val messageId: String,

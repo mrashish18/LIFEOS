@@ -29,6 +29,9 @@ interface EmergencyMessageDao {
     @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC")
     suspend fun getQueuedMessages(): List<EmergencyMessageEntity>
 
+    @Query("SELECT * FROM emergency_messages WHERE status IN ('QUEUED', 'RELAYING') ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis ASC LIMIT :limit")
+    suspend fun getQueuedMessagesBounded(limit: Int = 50): List<EmergencyMessageEntity>
+
     @Query("SELECT * FROM emergency_messages WHERE status = :status ORDER BY CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'NORMAL' THEN 3 ELSE 4 END ASC, createdAtEpochMillis DESC")
     suspend fun getMessagesByStatus(status: String): List<EmergencyMessageEntity>
 
@@ -41,8 +44,14 @@ interface EmergencyMessageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: EmergencyMessageEntity): Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(messages: List<EmergencyMessageEntity>): List<Long>
+
     @Update
     suspend fun updateMessage(message: EmergencyMessageEntity): Int
+
+    @Update
+    suspend fun updateAll(messages: List<EmergencyMessageEntity>): Int
 
     @Query("DELETE FROM emergency_messages WHERE messageId = :id")
     suspend fun deleteMessage(id: String): Int

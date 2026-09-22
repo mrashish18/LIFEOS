@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lifeos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lifeos_admin
+      POSTGRES_PASSWORD: lifeos_secure_password
+      POSTGRES_DB: lifeos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifeos_admin -d lifeos_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: lifeos-gateway
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://lifeos_admin:lifeos_secure_password@postgres:5432/lifeos_db
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DB_POOL_SIZE: 20
+      DB_MAX_OVERFLOW: 10
+      DB_POOL_TIMEOUT_SECONDS: 5.0
+      AI_WORKER_CONCURRENCY: 25
+      AI_QUEUE_CAPACITY: 200
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

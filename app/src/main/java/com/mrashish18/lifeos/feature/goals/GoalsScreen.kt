@@ -57,7 +57,7 @@ fun GoalsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 18.dp)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {

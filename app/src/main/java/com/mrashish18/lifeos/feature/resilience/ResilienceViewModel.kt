@@ -98,80 +98,96 @@ class ResilienceViewModel(
         _uiState.update { it.copy(feedbackMessage = null) }
     }
 
+    private var isSendingEmergencyMessage = false
+    private val inFlightRelayIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     fun sendEmergencyMessage(
         payload: String,
         type: MessageType = MessageType.EMERGENCY,
         priority: MessagePriority = MessagePriority.NORMAL,
         recipientId: String? = null
     ) {
-        viewModelScope.launch {
-            val currentNetwork = contextEngine.captureSnapshot().networkState
-            _uiState.update { it.copy(networkState = currentNetwork) }
-            val currentState = _uiState.value
-            val result = createEmergencyMessageUseCase(
-                senderId = currentState.localNodeId,
-                payload = payload,
-                type = type,
-                priority = priority,
-                recipientId = recipientId,
-                networkState = currentNetwork
-            )
+        if (isSendingEmergencyMessage) return
+        isSendingEmergencyMessage = true
 
-            result.onSuccess { createdMsg ->
-                val feedback = when (createdMsg.status) {
-                    MessageStatus.SENT -> "Transmitted via network gateway ($currentNetwork)"
-                    MessageStatus.QUEUED -> "Stored locally in offline queue. Will relay opportunistically."
-                    else -> "Message recorded: ${createdMsg.status}"
+        viewModelScope.launch {
+            try {
+                val currentNetwork = contextEngine.captureSnapshot().networkState
+                _uiState.update { it.copy(networkState = currentNetwork) }
+                val currentState = _uiState.value
+                val result = createEmergencyMessageUseCase(
+                    senderId = currentState.localNodeId,
+                    payload = payload,
+                    type = type,
+                    priority = priority,
+                    recipientId = recipientId,
+                    networkState = currentNetwork
+                )
+
+                result.onSuccess { createdMsg ->
+                    val feedback = when (createdMsg.status) {
+                        MessageStatus.SENT -> "Transmitted via network gateway ($currentNetwork)"
+                        MessageStatus.QUEUED -> "Stored locally in offline queue. Will relay opportunistically."
+                        else -> "Message recorded: ${createdMsg.status}"
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isEmergencyModalOpen = false,
+                            feedbackMessage = feedback
+                        )
+                    }
+                }.onFailure { err ->
+                    val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
+                        err.message ?: "Unable to queue message"
+                    } else {
+                        "An unexpected error occurred while queueing the message."
+                    }
+                    _uiState.update {
+                        it.copy(feedbackMessage = "Failed to queue message: $safeErr")
+                    }
                 }
-                _uiState.update {
-                    it.copy(
-                        isEmergencyModalOpen = false,
-                        feedbackMessage = feedback
-                    )
-                }
-            }.onFailure { err ->
-                val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
-                    err.message ?: "Unable to queue message"
-                } else {
-                    "An unexpected error occurred while queueing the message."
-                }
-                _uiState.update {
-                    it.copy(feedbackMessage = "Failed to queue message: $safeErr")
-                }
+            } finally {
+                isSendingEmergencyMessage = false
             }
         }
     }
 
     fun relayMessage(messageId: String) {
+        if (!inFlightRelayIds.add(messageId)) return
         viewModelScope.launch {
-            val nextHopNode = "PEER-HOP-${(1000..9999).random()}"
-            val result = relayEmergencyMessageUseCase(
-                messageId = messageId,
-                relayerNodeId = nextHopNode,
-                transport = TransportType.LOCAL_ONLY
-            )
+            try {
+                val nextHopNode = "PEER-HOP-${(1000..9999).random()}"
+                val result = relayEmergencyMessageUseCase(
+                    messageId = messageId,
+                    relayerNodeId = nextHopNode,
+                    transport = TransportType.LOCAL_ONLY
+                )
 
-            result.onSuccess { updated ->
-                _uiState.update {
-                    it.copy(
-                        selectedMessage = updated,
-                        feedbackMessage = "Relayed to $nextHopNode (Hop ${updated.hopCount}/${updated.maxHops})"
-                    )
+                result.onSuccess { updated ->
+                    _uiState.update {
+                        it.copy(
+                            selectedMessage = updated,
+                            feedbackMessage = "Relayed to $nextHopNode (Hop ${updated.hopCount}/${updated.maxHops})"
+                        )
+                    }
+                }.onFailure { err ->
+                    val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
+                        err.message ?: "Unable to relay message"
+                    } else {
+                        "An unexpected error occurred while relaying the message."
+                    }
+                    _uiState.update {
+                        it.copy(feedbackMessage = "Relay rejected: $safeErr")
+                    }
                 }
-            }.onFailure { err ->
-                val safeErr = if (err is IllegalArgumentException || err is IllegalStateException) {
-                    err.message ?: "Unable to relay message"
-                } else {
-                    "An unexpected error occurred while relaying the message."
-                }
-                _uiState.update {
-                    it.copy(feedbackMessage = "Relay rejected: $safeErr")
-                }
+            } finally {
+                inFlightRelayIds.remove(messageId)
             }
         }
     }
 
     fun syncQueue() {
+        if (_uiState.value.isSyncing) return
         viewModelScope.launch {
             val currentNetwork = contextEngine.captureSnapshot().networkState
             _uiState.update { it.copy(isSyncing = true, networkState = currentNetwork) }

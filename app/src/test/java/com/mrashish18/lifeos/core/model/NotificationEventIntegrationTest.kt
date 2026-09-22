@@ -217,6 +217,10 @@ private class FakeBehaviorEventDao : BehaviorEventDao {
 
     override suspend fun getAllEvents(): List<BehaviorEventEntity> = events.toList()
 
+    override suspend fun getRecentEvents(limit: Int): List<BehaviorEventEntity> {
+        return events.sortedByDescending { it.timestampEpochMillis }.take(limit)
+    }
+
     override suspend fun getEventsByType(type: String): List<BehaviorEventEntity> {
         return events.filter { it.type == type }
     }
@@ -225,6 +229,11 @@ private class FakeBehaviorEventDao : BehaviorEventDao {
         events.removeAll { it.id == event.id }
         events.add(event)
         return 1L
+    }
+
+    override suspend fun insertAll(events: List<BehaviorEventEntity>): List<Long> {
+        events.forEach { insert(it) }
+        return events.map { 1L }
     }
 
     override suspend fun countEventsByType(type: String): Int {

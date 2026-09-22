@@ -37,6 +37,10 @@ class RoomEmergencyMessageRepository(
         return emergencyMessageDao.getQueuedMessages().map { it.toDomain() }
     }
 
+    override suspend fun getQueuedMessagesBounded(limit: Int): List<EmergencyMessage> {
+        return emergencyMessageDao.getQueuedMessagesBounded(limit).map { it.toDomain() }
+    }
+
     override suspend fun getMessagesByStatus(status: com.mrashish18.lifeos.core.model.MessageStatus): List<EmergencyMessage> {
         return emergencyMessageDao.getMessagesByStatus(status.name).map { it.toDomain() }
     }
@@ -55,6 +59,11 @@ class RoomEmergencyMessageRepository(
 
     override suspend fun updateMessage(message: EmergencyMessage) {
         emergencyMessageDao.updateMessage(EmergencyMessageEntity.fromDomain(message))
+    }
+
+    override suspend fun updateMessages(messages: List<EmergencyMessage>) {
+        if (messages.isEmpty()) return
+        emergencyMessageDao.updateAll(messages.map { EmergencyMessageEntity.fromDomain(it) })
     }
 
     override suspend fun deleteMessage(id: String) {

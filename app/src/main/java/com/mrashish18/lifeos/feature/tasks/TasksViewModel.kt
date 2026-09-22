@@ -103,6 +103,9 @@ class TasksViewModel(
         _uiState.update { it.copy(editingTask = null) }
     }
 
+    private val inFlightTaskIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    private var isCreatingTask = false
+
     fun createTask(
         title: String,
         description: String,
@@ -115,6 +118,8 @@ class TasksViewModel(
             _uiState.update { it.copy(userMessage = "Title cannot be empty") }
             return
         }
+        if (isCreatingTask) return
+        isCreatingTask = true
 
         viewModelScope.launch {
             try {
@@ -134,11 +139,14 @@ class TasksViewModel(
                     "Unable to create task. Please check your input and try again."
                 }
                 _uiState.update { it.copy(userMessage = safeMessage) }
+            } finally {
+                isCreatingTask = false
             }
         }
     }
 
     fun updateTask(task: Task) {
+        if (!inFlightTaskIds.add(task.id)) return
         viewModelScope.launch {
             try {
                 updateTaskUseCase(task)
@@ -150,42 +158,69 @@ class TasksViewModel(
                     "Unable to update task. Please try again."
                 }
                 _uiState.update { it.copy(userMessage = safeMessage) }
+            } finally {
+                inFlightTaskIds.remove(task.id)
             }
         }
     }
 
     fun startTask(taskId: String) {
+        if (!inFlightTaskIds.add(taskId)) return
         viewModelScope.launch {
-            transitionTaskStatusUseCase(taskId, TaskStatus.IN_PROGRESS)
-            _uiState.update { it.copy(userMessage = "Focus initiated • Tracking circadian & duration signals") }
+            try {
+                transitionTaskStatusUseCase(taskId, TaskStatus.IN_PROGRESS)
+                _uiState.update { it.copy(userMessage = "Focus initiated • Tracking circadian & duration signals") }
+            } finally {
+                inFlightTaskIds.remove(taskId)
+            }
         }
     }
 
     fun completeTask(taskId: String) {
+        if (!inFlightTaskIds.add(taskId)) return
         viewModelScope.launch {
-            transitionTaskStatusUseCase(taskId, TaskStatus.COMPLETED)
-            _uiState.update { it.copy(userMessage = "Task completed • Behavior recorded for learning loop") }
+            try {
+                transitionTaskStatusUseCase(taskId, TaskStatus.COMPLETED)
+                _uiState.update { it.copy(userMessage = "Task completed • Behavior recorded for learning loop") }
+            } finally {
+                inFlightTaskIds.remove(taskId)
+            }
         }
     }
 
     fun postponeTask(taskId: String) {
+        if (!inFlightTaskIds.add(taskId)) return
         viewModelScope.launch {
-            transitionTaskStatusUseCase(taskId, TaskStatus.POSTPONED)
-            _uiState.update { it.copy(userMessage = "Task postponed • Learning loop recorded postponement") }
+            try {
+                transitionTaskStatusUseCase(taskId, TaskStatus.POSTPONED)
+                _uiState.update { it.copy(userMessage = "Task postponed • Learning loop recorded postponement") }
+            } finally {
+                inFlightTaskIds.remove(taskId)
+            }
         }
     }
 
     fun abandonTask(taskId: String) {
+        if (!inFlightTaskIds.add(taskId)) return
         viewModelScope.launch {
-            transitionTaskStatusUseCase(taskId, TaskStatus.ABANDONED)
-            _uiState.update { it.copy(userMessage = "Task abandoned • Terminal outcome recorded") }
+            try {
+                transitionTaskStatusUseCase(taskId, TaskStatus.ABANDONED)
+                _uiState.update { it.copy(userMessage = "Task abandoned • Terminal outcome recorded") }
+            } finally {
+                inFlightTaskIds.remove(taskId)
+            }
         }
     }
 
     fun deleteTask(taskId: String) {
+        if (!inFlightTaskIds.add(taskId)) return
         viewModelScope.launch {
-            deleteTaskUseCase(taskId)
-            _uiState.update { it.copy(userMessage = "Task deleted") }
+            try {
+                deleteTaskUseCase(taskId)
+                _uiState.update { it.copy(userMessage = "Task deleted") }
+            } finally {
+                inFlightTaskIds.remove(taskId)
+            }
         }
     }
 

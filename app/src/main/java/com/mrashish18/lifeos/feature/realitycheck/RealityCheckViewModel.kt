@@ -79,6 +79,10 @@ class RealityCheckViewModel(
     }
 
     fun analyzeClaim() {
+        if (_uiState.value is RealityCheckUiState.Loading) {
+            return
+        }
+
         val textToAnalyze = currentClaimText.trim()
         if (textToAnalyze.isBlank()) {
             _uiState.value = RealityCheckUiState.Error("Please enter a claim or statement to analyze.")

@@ -25,3 +25,33 @@ secrets.properties
 
 # Kotlin local/build cache
 .kotlin/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+.venv/
+env/
+venv/
+
+# Testing / Coverage
+.coverage
+htmlcov/
+coverage/
+
+# Logs
+*.log
+*.out
+*.err
+*.dump
+
+# OS / Tooling
+Thumbs.db
+.DS_Store
+scratch/

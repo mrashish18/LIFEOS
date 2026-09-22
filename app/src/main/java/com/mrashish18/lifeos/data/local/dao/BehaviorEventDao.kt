@@ -22,11 +22,17 @@ interface BehaviorEventDao {
     @Query("SELECT * FROM behavior_events ORDER BY timestampEpochMillis ASC")
     suspend fun getAllEvents(): List<BehaviorEventEntity>
 
+    @Query("SELECT * FROM behavior_events ORDER BY timestampEpochMillis DESC LIMIT :limit")
+    suspend fun getRecentEvents(limit: Int = 500): List<BehaviorEventEntity>
+
     @Query("SELECT * FROM behavior_events WHERE type = :type ORDER BY timestampEpochMillis DESC")
     suspend fun getEventsByType(type: String): List<BehaviorEventEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(event: BehaviorEventEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(events: List<BehaviorEventEntity>): List<Long>
 
     @Query("SELECT COUNT(*) FROM behavior_events WHERE type = :type")
     suspend fun countEventsByType(type: String): Int
